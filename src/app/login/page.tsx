@@ -1,2 +1,115 @@
-'use client';import {useState} from 'react';import {useRouter} from 'next/navigation';
-export default function Login(){const [role,setRole]=useState('Farmer');const router=useRouter();return <main className="login"><div className="loginbox"><div className="brand">BODHI <span>RURAL</span></div><h1>Portal Login</h1><p className="muted">Demo login for the first release. Secure authentication will be connected in Phase 2.</p><label>Role</label><select value={role} onChange={e=>setRole(e.target.value)}><option>Farmer</option><option>Supervisor</option><option>Block Manager</option><option>District Manager</option><option>State Manager</option><option>CEO / MD</option><option>Super Admin</option></select><label>Mobile / Email</label><input placeholder="Enter mobile or email"/><label>Password</label><input type="password" placeholder="Password"/><button className="btn" style={{width:'100%'}} onClick={()=>router.push('/dashboard?role='+encodeURIComponent(role))}>Sign in to demo</button></div></main>}
+'use client';
+
+import { FormEvent, useState } from 'react';
+import { createClient } from '../../lib/supabase/client';
+
+export default function LoginPage() {
+  const supabase = createClient();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setLoading(true);
+    setMessage('');
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    window.location.href = '/dashboard';
+  }
+
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        background: '#f5f7f4',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          background: '#fff',
+          padding: 32,
+          borderRadius: 16,
+          boxShadow: '0 10px 35px rgba(0,0,0,0.08)',
+        }}
+      >
+        <h1>BODHI RURAL</h1>
+
+        <p>Livelihood & Agriculture Platform</p>
+
+        <form onSubmit={handleLogin}>
+          <label>Email</label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            required
+            style={{
+              width: '100%',
+              padding: 12,
+              marginTop: 8,
+              marginBottom: 18,
+            }}
+          />
+
+          <label>Password</label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            required
+            style={{
+              width: '100%',
+              padding: 12,
+              marginTop: 8,
+              marginBottom: 20,
+            }}
+          />
+
+          {message && (
+            <p style={{ color: '#b00020' }}>
+              {message}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: 13,
+              border: 0,
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
