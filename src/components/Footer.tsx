@@ -1,0 +1,1 @@
+export default function Footer(){return <footer className="footer"><div className="container"><strong>Bodhi Rural Livelihood & Agri Private Limited</strong><p>Technology-enabled rural livelihood, agriculture and farmer enterprise ecosystem.</p><small>© 2026 Bodhi Rural. Demo platform — database and live payments will be connected in Phase 2.</small></div></footer>}
