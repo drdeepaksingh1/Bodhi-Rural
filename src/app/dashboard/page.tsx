@@ -2,11 +2,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../lib/supabase/server';
 import LogoutButton from '../components/LogoutButton';
-type DashboardProps = {
-  searchParams?: {
-    role?: string;
-  };
-};
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -38,73 +33,72 @@ export default async function Dashboard() {
 
           <h2>{role} Dashboard</h2>
 
-         <div className="dashnav">
-  <Link href="/dashboard">Dashboard</Link>
-  <Link href="/bodhifarm">BodhiFarm</Link>
-  <Link href="/bodhimart">BodhiMart</Link>
-  <Link href="/farmer-network">Farmers</Link>
-  <Link href="/">Website</Link>
-  <LogoutButton />
-</div>
+          <div className="dashnav">
+            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/bodhifarm">BodhiFarm</Link>
+            <Link href="/bodhimart">BodhiMart</Link>
+            <Link href="/farmer-network">Farmers</Link>
+            <Link href="/">Website</Link>
+            <LogoutButton />
           </div>
         </div>
       </div>
 
-      <div className="section">
+      <section className="section">
         <div className="container">
           <div className="stats">
             <div className="stat">
               <strong>300</strong>
-              Farmers
+              <span>Farmers</span>
             </div>
 
             <div className="stat">
               <strong>90,000</strong>
-              Bird capacity
+              <span>Bird Capacity</span>
             </div>
 
             <div className="stat">
               <strong>63,500</strong>
-              Demo eggs/day
+              <span>Demo Eggs / Day</span>
             </div>
 
             <div className="stat">
               <strong>₹2.84L</strong>
-              Demo sales
+              <span>Demo Sales</span>
             </div>
           </div>
 
-          <div className="card" style={{ marginTop: 20 }}>
-            <h3>Recent farmer activity</h3>
+          <div className="card">
+            <h3>Recent Farmers</h3>
 
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Farmer ID</th>
-                  <th>Village</th>
-                  <th>Birds</th>
-                  <th>Eggs today</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {farmers.map((farmer) => (
-                  <tr key={farmer[0]}>
-                    <td>{farmer[0]}</td>
-                    <td>{farmer[1]}</td>
-                    <td>{farmer[2]}</td>
-                    <td>{farmer[3]}</td>
-                    <td>
-                      <span className="badge">{farmer[4]}</span>
-                    </td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Farmer ID</th>
+                    <th>Location</th>
+                    <th>Birds</th>
+                    <th>Eggs / Day</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {farmers.map((farmer) => (
+                    <tr key={farmer[0]}>
+                      <td>{farmer[0]}</td>
+                      <td>{farmer[1]}</td>
+                      <td>{farmer[2]}</td>
+                      <td>{farmer[3]}</td>
+                      <td>{farmer[4]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
