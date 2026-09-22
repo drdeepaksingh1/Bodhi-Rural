@@ -28,11 +28,14 @@ export default async function Dashboard() {
 
   const totalFarmers = farmerCountError ? 0 : (farmerCount ?? 0);
 
- const { data: recentFarmers, error: recentFarmersError } = await supabase
-  .from('farmers')
-  .select('farmer_id, full_name, status, created_at')
-  .order('created_at', { ascending: false })
-  .limit(10);
+  const {
+    data: recentFarmers,
+    error: recentFarmersError,
+  } = await supabase
+    .from('farmers')
+    .select('farmer_id, full_name, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(10);
 
   return (
     <main className="dashboard">
@@ -57,10 +60,11 @@ export default async function Dashboard() {
 
       <section className="section">
         <div className="container">
+
           <div className="stats">
             <div className="stat">
               <strong>{totalFarmers}</strong>
-                 <span>Farmers</span>
+              <span>Farmers</span>
             </div>
 
             <div className="stat">
@@ -83,33 +87,49 @@ export default async function Dashboard() {
             <h3>Recent Farmers</h3>
 
             <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Farmer ID</th>
-                    <th>Location</th>
-                    <th>Birds</th>
-                    <th>Eggs / Day</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
 
-                <tbody>
-                  {farmers.map((farmer) => (
-                    <tr key={farmer[0]}>
-                      <td>{farmer[0]}</td>
-                      <td>{farmer[1]}</td>
-                      <td>{farmer[2]}</td>
-                      <td>{farmer[3]}</td>
-                      <td>{farmer[4]}</td>
+              {recentFarmersError ? (
+                <p>Unable to load farmer records.</p>
+              ) : recentFarmers && recentFarmers.length > 0 ? (
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Farmer ID</th>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Joined</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {recentFarmers.map((farmer) => (
+                      <tr key={farmer.farmer_id}>
+                        <td>{farmer.farmer_id}</td>
+                        <td>{farmer.full_name}</td>
+                        <td>{farmer.status}</td>
+                        <td>
+                          {farmer.created_at
+                            ? new Date(
+                                farmer.created_at
+                              ).toLocaleDateString('en-IN')
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+              ) : (
+                <p>No farmers found.</p>
+              )}
+
             </div>
           </div>
+
         </div>
       </section>
     </main>
   );
+}
 }
