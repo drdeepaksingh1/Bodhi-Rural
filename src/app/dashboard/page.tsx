@@ -38,12 +38,14 @@ export default async function Dashboard() {
 
           <h2>{role} Dashboard</h2>
 
-          <div className="dashnav">
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/bodhifarm">BodhiFarm</Link>
-            <Link href="/bodhimart">BodhiMart</Link>
-            <Link href="/farmer-network">Farmers</Link>
-            <Link href="/">Website</Link>
+         <div className="dashnav">
+  <Link href="/dashboard">Dashboard</Link>
+  <Link href="/bodhifarm">BodhiFarm</Link>
+  <Link href="/bodhimart">BodhiMart</Link>
+  <Link href="/farmer-network">Farmers</Link>
+  <Link href="/">Website</Link>
+  <LogoutButton />
+</div>
           </div>
         </div>
       </div>
