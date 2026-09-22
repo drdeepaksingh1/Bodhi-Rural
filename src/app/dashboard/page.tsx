@@ -28,12 +28,11 @@ export default async function Dashboard() {
 
   const totalFarmers = farmerCountError ? 0 : (farmerCount ?? 0);
 
- const farmers = [
-  ['BF-0001', 'Islampur', 300, 218, 'Active'],
-  ['BF-0002', 'Gosaidih', 300, 226, 'Active'],
-  ['BF-0003', 'Kedli Kala', 300, 204, 'Active'],
-  ['BF-0004', 'Jori', 500, 382, 'Active'],
-];
+ const { data: recentFarmers, error: recentFarmersError } = await supabase
+  .from('farmers')
+  .select('farmer_id, full_name, status, created_at')
+  .order('created_at', { ascending: false })
+  .limit(10);
 
   return (
     <main className="dashboard">
