@@ -28,8 +28,7 @@ export default async function Dashboard() {
 
   const totalFarmers = farmerCountError ? 0 : (farmerCount ?? 0);
 
-  const farmers = [
-const farmers = [
+ const farmers = [
   ['BF-0001', 'Islampur', 300, 218, 'Active'],
   ['BF-0002', 'Gosaidih', 300, 226, 'Active'],
   ['BF-0003', 'Kedli Kala', 300, 204, 'Active'],
