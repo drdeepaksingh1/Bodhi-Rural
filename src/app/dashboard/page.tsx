@@ -32,24 +32,25 @@ export default async function Dashboard() {
    * ---------------------------------------------------------
    */
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(`
-      full_name,
-      role_id,
-      roles (
-        code,
-        name
-      )
-    `)
-    .eq('id', user.id)
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('full_name, role_id')
+  .eq('id', user.id)
+  .single();
+
+let roleName = 'User';
+
+if (profile?.role_id) {
+  const { data: role } = await supabase
+    .from('roles')
+    .select('name')
+    .eq('id', profile.role_id)
     .single();
 
-  const roleName =
-    profile?.roles &&
-    !Array.isArray(profile.roles)
-      ? profile.roles.name
-      : 'User';
+  if (role?.name) {
+    roleName = role.name;
+  }
+}
 
   /*
    * ---------------------------------------------------------
