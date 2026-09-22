@@ -353,14 +353,13 @@ export default function BodhiFarmPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
             <div>
-              <div className="text-2xl font-bold">
-                <span className="text-emerald-700">
-                  BODHI
-                </span>{' '}
-                <span className="text-amber-500">
-                  FARM
-                </span>
-              </div>
+             <div className="flex items-center">
+  <img
+    src="/branding/bodhi-rural-logo.png"
+    alt="Bodhi Rural Livelihood and Agri Private Limited"
+    className="h-auto w-[230px] object-contain object-left"
+  />
+</div>
 
               <h1 className="mt-2 text-3xl font-bold text-slate-900">
                 Bird Batch Management
