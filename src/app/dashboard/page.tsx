@@ -16,12 +16,26 @@ export default async function Dashboard() {
 
   const role = 'Super Admin';
 
-  const farmers = [
-    ['BF-0001', 'Islampur', 300, 218, 'Active'],
-    ['BF-0002', 'Gosaidih', 300, 226, 'Active'],
-    ['BF-0003', 'Kedli Kala', 300, 204, 'Active'],
-    ['BF-0004', 'Jori', 500, 382, 'Active'],
-  ];
+ const role = 'Super Admin';
+
+const {
+  count: farmerCount,
+  error: farmerCountError,
+} = await supabase
+  .from('farmers')
+  .select('*', {
+    count: 'exact',
+    head: true,
+  });
+
+const totalFarmers = farmerCountError ? 0 : (farmerCount ?? 0);
+
+const farmers = [
+  ['BF-0001', 'Islampur', 300, 218, 'Active'],
+  ['BF-0002', 'Gosaidih', 300, 226, 'Active'],
+  ['BF-0003', 'Kedli Kala', 300, 204, 'Active'],
+  ['BF-0004', 'Jori', 500, 382, 'Active'],
+];
 
   return (
     <main className="dashboard">
