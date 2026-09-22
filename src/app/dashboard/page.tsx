@@ -8,8 +8,18 @@ type DashboardProps = {
   };
 };
 
-export default function Dashboard({ searchParams }: DashboardProps) {
-  const role = searchParams?.role || 'Super Admin';
+export default async function Dashboard() {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const role = 'Super Admin';
 
   const farmers = [
     ['BF-0001', 'Islampur', 300, 218, 'Active'],
