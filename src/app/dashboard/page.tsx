@@ -193,14 +193,16 @@ if (profile?.role_id) {
         <div className="mx-auto max-w-7xl px-6 py-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-2xl font-bold tracking-tight">
-                <span className="text-emerald-700">
-                  BODHI
-                </span>{' '}
-                <span className="text-amber-500">
-                  RURAL
-                </span>
-              </div>
+            <div className="flex items-center">
+                <Image
+               src="/branding/bodhi-rural-logo.png"
+                  alt="Bodhi Rural Livelihood and Agri Private Limited"
+                    width={320}
+                      height={147}
+                       className="h-auto w-[280px] object-contain object-left"
+                     priority
+                          />
+                           </div>
 
               <h1 className="mt-3 text-3xl font-bold text-slate-900">
                 {roleName} Dashboard
