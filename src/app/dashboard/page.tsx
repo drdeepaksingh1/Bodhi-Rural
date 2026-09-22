@@ -197,9 +197,9 @@ if (profile?.role_id) {
                 <Image
                src="/branding/bodhi-rural-logo.png"
                   alt="Bodhi Rural Livelihood and Agri Private Limited"
-                    width={320}
-                      height={147}
-                       className="h-auto w-[280px] object-contain object-left"
+                    width={260}
+                      height={120}
+                       className="h-auto w-[230px] object-contain object-left"
                      priority
                           />
                            </div>
