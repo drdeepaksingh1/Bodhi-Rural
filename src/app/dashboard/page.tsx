@@ -62,8 +62,8 @@ const farmers = [
         <div className="container">
           <div className="stats">
             <div className="stat">
-              <strong>300</strong>
-              <span>Farmers</span>
+              <strong>{totalFarmers}</strong>
+                 <span>Farmers</span>
             </div>
 
             <div className="stat">
