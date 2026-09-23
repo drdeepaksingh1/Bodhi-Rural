@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '../../../lib/supabase/client';
+import { createClient } from '../../lib/supabase/client';
 
 type Farmer = {
   id: string;
-  farmer_id: string;
-  full_name: string;
+  farmer_id: string | null;
+  full_name: string | null;
+  mobile: string | null;
+  status: string | null;
 };
 
 type Farm = {
@@ -23,45 +25,30 @@ type BirdBatch = {
   id: string;
   farmer_id: string;
   farm_id: string | null;
-  batch_code: string;
-  breed: string;
-  initial_quantity: number | null;
+  batch_code: string | null;
+  breed: string | null;
   current_quantity: number | null;
-  mortality_quantity: number | null;
   status: string | null;
 };
 
-const farmTypes = [
-  'Poultry Farm',
-  'Layer Farm',
-  'Broiler Farm',
-  'Dual Purpose Farm',
-  'Mixed Farm',
-  'Dairy Farm',
-  'Goat Farm',
-  'Other',
-];
-
-export default function FarmManagementPage() {
+export default function FarmManagement() {
   const supabase = createClient();
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [batches, setBatches] = useState<BirdBatch[]>([]);
 
-  const [selectedFarmer, setSelectedFarmer] = useState('');
-  const [farmName, setFarmName] = useState('');
-  const [farmType, setFarmType] = useState('Poultry Farm');
-  const [shedCapacity, setShedCapacity] = useState('');
-  const [status, setStatus] = useState('ACTIVE');
+  const [selectedFarmerId, setSelectedFarmerId] = useState('');
+  const [selectedFarmId, setSelectedFarmId] = useState('');
+  const [selectedBatchId, setSelectedBatchId] = useState('');
 
-  const [assignFarmId, setAssignFarmId] = useState('');
-  const [assignBatchId, setAssignBatchId] = useState('');
+  const [farmName, setFarmName] = useState('');
+  const [farmType, setFarmType] = useState('Dual Purpose Farm');
+  const [shedCapacity, setShedCapacity] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [assigning, setAssigning] = useState(false);
-
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -76,23 +63,20 @@ export default function FarmManagementPage() {
     ] = await Promise.all([
       supabase
         .from('farmers')
-        .select('id, farmer_id, full_name')
-        .eq('status', 'ACTIVE')
-        .order('full_name'),
+        .select('id, farmer_id, full_name, mobile, status')
+        .order('farmer_id'),
 
       supabase
         .from('farms')
-        .select(
-          'id, farmer_id, farm_name, farm_type, shed_capacity, status'
-        )
+        .select('id, farmer_id, farm_name, farm_type, shed_capacity, status')
         .order('farm_name'),
 
       supabase
         .from('bird_batches')
         .select(
-          'id, farmer_id, farm_id, batch_code, breed, initial_quantity, current_quantity, mortality_quantity, status'
+          'id, farmer_id, farm_id, batch_code, breed, current_quantity, status'
         )
-        .order('placement_date', { ascending: false }),
+        .order('batch_code'),
     ]);
 
     if (farmersResult.error) {
@@ -120,50 +104,65 @@ export default function FarmManagementPage() {
     loadData();
   }, []);
 
-  const farmerFarms = useMemo(() => {
-    if (!selectedFarmer) return [];
-
-    return farms.filter(
-      (farm) => farm.farmer_id === selectedFarmer
-    );
-  }, [farms, selectedFarmer]);
-
-  const farmerBatches = useMemo(() => {
-    if (!selectedFarmer) return [];
-
-    return batches.filter(
-      (batch) => batch.farmer_id === selectedFarmer
-    );
-  }, [batches, selectedFarmer]);
-
-  const totalCapacity = farms.reduce(
-    (sum, farm) => sum + Number(farm.shed_capacity || 0),
-    0
+  const selectedFarmer = useMemo(
+    () => farmers.find((f) => f.id === selectedFarmerId) || null,
+    [farmers, selectedFarmerId]
   );
 
-  const totalLiveBirds = batches.reduce(
-    (sum, batch) => sum + Number(batch.current_quantity || 0),
-    0
+  const selectedFarmerFarms = useMemo(
+    () => farms.filter((farm) => farm.farmer_id === selectedFarmerId),
+    [farms, selectedFarmerId]
   );
 
-  async function saveFarm() {
+  const selectedFarmerBatches = useMemo(
+    () => batches.filter((batch) => batch.farmer_id === selectedFarmerId),
+    [batches, selectedFarmerId]
+  );
+
+  const selectedFarm = useMemo(
+    () => farms.find((farm) => farm.id === selectedFarmId) || null,
+    [farms, selectedFarmId]
+  );
+
+  const unassignedBatches = useMemo(
+    () =>
+      selectedFarmerBatches.filter(
+        (batch) => !batch.farm_id || batch.farm_id !== selectedFarmId
+      ),
+    [selectedFarmerBatches, selectedFarmId]
+  );
+
+  const totalShedCapacity = useMemo(
+    () =>
+      farms.reduce(
+        (sum, farm) => sum + Number(farm.shed_capacity || 0),
+        0
+      ),
+    [farms]
+  );
+
+  const totalLiveBirds = useMemo(
+    () =>
+      batches.reduce(
+        (sum, batch) => sum + Number(batch.current_quantity || 0),
+        0
+      ),
+    [batches]
+  );
+
+  async function createFarm(e: React.FormEvent) {
+    e.preventDefault();
+
     setMessage('');
     setError('');
 
-    if (!selectedFarmer) {
+    if (!selectedFarmerId) {
       setError('Please select a farmer.');
       return;
     }
 
     if (!farmName.trim()) {
-      setError('Please enter farm name.');
-      return;
-    }
-
-    const capacity = Number(shedCapacity);
-
-    if (!Number.isInteger(capacity) || capacity < 0) {
-      setError('Shed capacity must be a whole number.');
+      setError('Farm name is required.');
       return;
     }
 
@@ -172,11 +171,13 @@ export default function FarmManagementPage() {
     const { error: insertError } = await supabase
       .from('farms')
       .insert({
-        farmer_id: selectedFarmer,
+        farmer_id: selectedFarmerId,
         farm_name: farmName.trim(),
         farm_type: farmType,
-        shed_capacity: capacity,
-        status,
+        shed_capacity: shedCapacity
+          ? Number(shedCapacity)
+          : null,
+        status: 'ACTIVE',
       });
 
     if (insertError) {
@@ -186,8 +187,9 @@ export default function FarmManagementPage() {
     }
 
     setFarmName('');
+    setFarmType('Dual Purpose Farm');
     setShedCapacity('');
-    setMessage('Farm created successfully.');
+    setMessage('Farm registered successfully.');
 
     await loadData();
 
@@ -198,52 +200,29 @@ export default function FarmManagementPage() {
     setMessage('');
     setError('');
 
-    if (!assignFarmId) {
+    if (!selectedFarmerId) {
+      setError('Please select a farmer.');
+      return;
+    }
+
+    if (!selectedFarmId) {
       setError('Please select a farm.');
       return;
     }
 
-    if (!assignBatchId) {
+    if (!selectedBatchId) {
       setError('Please select a bird batch.');
       return;
     }
 
     setAssigning(true);
 
-    const selectedBatch = batches.find(
-      (batch) => batch.id === assignBatchId
-    );
-
-    if (!selectedBatch) {
-      setError('Bird batch not found.');
-      setAssigning(false);
-      return;
-    }
-
-    const selectedFarm = farms.find(
-      (farm) => farm.id === assignFarmId
-    );
-
-    if (!selectedFarm) {
-      setError('Farm not found.');
-      setAssigning(false);
-      return;
-    }
-
-    if (selectedBatch.farmer_id !== selectedFarm.farmer_id) {
-      setError(
-        'This bird batch and farm belong to different farmers.'
-      );
-      setAssigning(false);
-      return;
-    }
-
     const { error: updateError } = await supabase
       .from('bird_batches')
       .update({
-        farm_id: assignFarmId,
+        farm_id: selectedFarmId,
       })
-      .eq('id', assignBatchId);
+      .eq('id', selectedBatchId);
 
     if (updateError) {
       setError(updateError.message);
@@ -251,23 +230,42 @@ export default function FarmManagementPage() {
       return;
     }
 
+    setSelectedBatchId('');
     setMessage('Bird batch assigned to farm successfully.');
 
     await loadData();
 
-    setAssignBatchId('');
     setAssigning(false);
   }
 
-  const farmerName = (farmerId: string) => {
-    const farmer = farmers.find(
-      (item) => item.id === farmerId
-    );
+  async function unassignBatch(batchId: string) {
+    setMessage('');
+    setError('');
 
-    return farmer
-      ? `${farmer.farmer_id} — ${farmer.full_name}`
-      : 'Unknown farmer';
-  };
+    const { error: updateError } = await supabase
+      .from('bird_batches')
+      .update({
+        farm_id: null,
+      })
+      .eq('id', batchId);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    setMessage('Bird batch removed from this farm.');
+
+    await loadData();
+  }
+
+  function selectFarmer(id: string) {
+    setSelectedFarmerId(id);
+    setSelectedFarmId('');
+    setSelectedBatchId('');
+    setMessage('');
+    setError('');
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -278,12 +276,12 @@ export default function FarmManagementPage() {
           <div>
             <Link
               href="/bodhifarm/farmers"
-              className="mb-2 inline-block text-sm font-medium text-green-700 hover:text-green-800"
+              className="text-sm font-medium text-green-700 hover:text-green-800"
             >
               ← Back to Farmer Management
             </Link>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">
               Farm Management
             </h1>
 
@@ -294,465 +292,569 @@ export default function FarmManagementPage() {
 
           <button
             onClick={loadData}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
             Refresh
           </button>
         </div>
 
-        {/* KPIs */}
-        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-
-          <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p className="text-sm text-slate-500">
-              Total Farmers
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {farmers.length}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p className="text-sm text-slate-500">
-              Total Farms
-            </p>
-            <p className="mt-2 text-3xl font-bold text-green-700">
-              {farms.length}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p className="text-sm text-slate-500">
-              Shed Capacity
-            </p>
-            <p className="mt-2 text-3xl font-bold text-amber-600">
-              {totalCapacity.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <p className="text-sm text-slate-500">
-              Live Birds
-            </p>
-            <p className="mt-2 text-3xl font-bold text-green-700">
-              {totalLiveBirds.toLocaleString()}
-            </p>
-          </div>
-
-        </div>
-
+        {/* Messages */}
         {message && (
-          <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+          <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
             {error}
           </div>
         )}
 
+        {/* KPI */}
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Kpi
+            label="Total Farmers"
+            value={farmers.length}
+          />
+
+          <Kpi
+            label="Total Farms"
+            value={farms.length}
+          />
+
+          <Kpi
+            label="Shed Capacity"
+            value={totalShedCapacity.toLocaleString()}
+          />
+
+          <Kpi
+            label="Live Birds"
+            value={totalLiveBirds.toLocaleString()}
+          />
+        </div>
+
         {loading ? (
-          <div className="rounded-xl bg-white p-10 text-center text-slate-500">
-            Loading farm data...
+          <div className="rounded-xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
+            <p className="text-sm text-slate-500">
+              Loading farm management...
+            </p>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <>
+            {/* Main grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
 
-            {/* Create Farm */}
-            <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">
-                Register Farm
-              </h2>
+              {/* Farmer selection */}
+              <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div className="mb-4">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Select Farmer
+                  </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Create a farm under an existing farmer.
-              </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Choose the farmer under whom the farm will be registered.
+                  </p>
+                </div>
 
-              <div className="mt-5 space-y-4">
+                <div className="space-y-2">
+                  {farmers.length === 0 ? (
+                    <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
+                      No farmers available.
+                    </p>
+                  ) : (
+                    farmers.map((farmer) => (
+                      <button
+                        key={farmer.id}
+                        onClick={() => selectFarmer(farmer.id)}
+                        className={`w-full rounded-lg border p-3 text-left transition ${
+                          selectedFarmerId === farmer.id
+                            ? 'border-green-600 bg-green-50'
+                            : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <p className="text-sm font-bold text-green-700">
+                          {farmer.farmer_id || 'No Farmer ID'}
+                        </p>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Farmer *
-                  </label>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {farmer.full_name || 'Unnamed Farmer'}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          {farmer.mobile || 'Mobile not available'}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              {/* Create farm */}
+              <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Register Farm
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Create a farm under an existing farmer.
+                  </p>
+                </div>
+
+                <form onSubmit={createFarm} className="space-y-4">
+
+                  <FieldLabel label="Farmer *" />
 
                   <select
-                    value={selectedFarmer}
-                    onChange={(e) => {
-                      setSelectedFarmer(e.target.value);
-                      setAssignFarmId('');
-                    }}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                    value={selectedFarmerId}
+                    onChange={(e) => selectFarmer(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                   >
-                    <option value="">
-                      Select farmer
-                    </option>
+                    <option value="">Select farmer</option>
 
                     {farmers.map((farmer) => (
-                      <option
-                        key={farmer.id}
-                        value={farmer.id}
-                      >
+                      <option key={farmer.id} value={farmer.id}>
                         {farmer.farmer_id} — {farmer.full_name}
                       </option>
                     ))}
                   </select>
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Farm Name *
-                  </label>
+                  <FieldLabel label="Farm Name *" />
 
                   <input
                     value={farmName}
-                    onChange={(e) =>
-                      setFarmName(e.target.value)
-                    }
+                    onChange={(e) => setFarmName(e.target.value)}
                     placeholder="Example: GVVH Poultry Farm"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                   />
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Farm Type
-                  </label>
+                  <FieldLabel label="Farm Type" />
 
                   <select
                     value={farmType}
-                    onChange={(e) =>
-                      setFarmType(e.target.value)
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                    onChange={(e) => setFarmType(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                   >
-                    {farmTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
+                    <option>Dual Purpose Farm</option>
+                    <option>Layer Farm</option>
+                    <option>Broiler Farm</option>
+                    <option>Sonali Farm</option>
+                    <option>Backyard Poultry</option>
+                    <option>Mixed Farm</option>
+                    <option>Other</option>
                   </select>
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Shed Capacity
-                  </label>
+                  <FieldLabel label="Shed Capacity" />
 
                   <input
                     type="number"
                     min="0"
                     value={shedCapacity}
-                    onChange={(e) =>
-                      setShedCapacity(e.target.value)
-                    }
+                    onChange={(e) => setShedCapacity(e.target.value)}
                     placeholder="Example: 500"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                   />
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Status
-                  </label>
-
-                  <select
-                    value={status}
-                    onChange={(e) =>
-                      setStatus(e.target.value)
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                  </select>
+                    {saving ? 'Saving...' : 'Save Farm'}
+                  </button>
+                </form>
+              </section>
+
+              {/* Batch assignment */}
+              <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Assign Bird Batch
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Connect an existing bird batch to its farm.
+                  </p>
                 </div>
 
-                <button
-                  onClick={saveFarm}
-                  disabled={saving}
-                  className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
-                >
-                  {saving
-                    ? 'Saving...'
-                    : 'Create Farm'}
-                </button>
+                <div className="space-y-4">
 
-              </div>
-            </section>
+                  <div>
+                    <FieldLabel label="Farmer" />
 
-            {/* Assign Batch */}
-            <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">
-                Assign Bird Batch
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Connect an existing bird batch to its farm.
-              </p>
-
-              <div className="mt-5 space-y-4">
-
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Farmer
-                  </label>
-
-                  <select
-                    value={selectedFarmer}
-                    onChange={(e) => {
-                      setSelectedFarmer(e.target.value);
-                      setAssignFarmId('');
-                      setAssignBatchId('');
-                    }}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
-                  >
-                    <option value="">
-                      Select farmer
-                    </option>
-
-                    {farmers.map((farmer) => (
-                      <option
-                        key={farmer.id}
-                        value={farmer.id}
-                      >
-                        {farmer.farmer_id} — {farmer.full_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Farm
-                  </label>
-
-                  <select
-                    value={assignFarmId}
-                    onChange={(e) =>
-                      setAssignFarmId(e.target.value)
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
-                  >
-                    <option value="">
-                      Select farm
-                    </option>
-
-                    {farmerFarms.map((farm) => (
-                      <option
-                        key={farm.id}
-                        value={farm.id}
-                      >
-                        {farm.farm_name || 'Unnamed Farm'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Bird Batch
-                  </label>
-
-                  <select
-                    value={assignBatchId}
-                    onChange={(e) =>
-                      setAssignBatchId(e.target.value)
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
-                  >
-                    <option value="">
-                      Select batch
-                    </option>
-
-                    {farmerBatches.map((batch) => (
-                      <option
-                        key={batch.id}
-                        value={batch.id}
-                      >
-                        {batch.batch_code} —{' '}
-                        {batch.current_quantity || 0} live
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  onClick={assignBatch}
-                  disabled={assigning}
-                  className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {assigning
-                    ? 'Assigning...'
-                    : 'Assign Batch to Farm'}
-                </button>
-
-              </div>
-            </section>
-
-            {/* Farmer Farms */}
-            <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">
-                Selected Farmer Farms
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedFarmer
-                  ? 'Farms registered under the selected farmer.'
-                  : 'Select a farmer to view farms.'}
-              </p>
-
-              <div className="mt-5 space-y-3">
-
-                {!selectedFarmer ? (
-                  <div className="rounded-lg bg-slate-50 p-5 text-center text-sm text-slate-500">
-                    Select a farmer above.
-                  </div>
-                ) : farmerFarms.length === 0 ? (
-                  <div className="rounded-lg bg-amber-50 p-5 text-center text-sm text-amber-700">
-                    No farms registered for this farmer.
-                  </div>
-                ) : (
-                  farmerFarms.map((farm) => (
-                    <div
-                      key={farm.id}
-                      className="rounded-lg border border-slate-200 p-4"
+                    <select
+                      value={selectedFarmerId}
+                      onChange={(e) => selectFarmer(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-bold text-slate-900">
-                            {farm.farm_name ||
-                              'Unnamed Farm'}
-                          </h3>
+                      <option value="">Select farmer</option>
 
-                          <p className="mt-1 text-xs text-slate-500">
-                            {farm.farm_type ||
-                              'Farm type not specified'}
-                          </p>
-                        </div>
+                      {farmers.map((farmer) => (
+                        <option key={farmer.id} value={farmer.id}>
+                          {farmer.farmer_id} — {farmer.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                        <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                          {farm.status || 'ACTIVE'}
-                        </span>
-                      </div>
+                  <div>
+                    <FieldLabel label="Farm" />
 
-                      <div className="mt-3 text-sm text-slate-600">
+                    <select
+                      value={selectedFarmId}
+                      onChange={(e) => {
+                        setSelectedFarmId(e.target.value);
+                        setSelectedBatchId('');
+                      }}
+                      disabled={!selectedFarmerId}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm disabled:bg-slate-100"
+                    >
+                      <option value="">Select farm</option>
+
+                      {selectedFarmerFarms.map((farm) => (
+                        <option key={farm.id} value={farm.id}>
+                          {farm.farm_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <FieldLabel label="Bird Batch" />
+
+                    <select
+                      value={selectedBatchId}
+                      onChange={(e) => setSelectedBatchId(e.target.value)}
+                      disabled={!selectedFarmId}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm disabled:bg-slate-100"
+                    >
+                      <option value="">Select batch</option>
+
+                      {unassignedBatches.map((batch) => (
+                        <option key={batch.id} value={batch.id}>
+                          {batch.batch_code || 'Unnamed Batch'} —{' '}
+                          {batch.breed || 'Breed not specified'} —{' '}
+                          {batch.current_quantity || 0} birds
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={assignBatch}
+                    disabled={assigning}
+                    className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {assigning ? 'Assigning...' : 'Assign Batch to Farm'}
+                  </button>
+
+                  {selectedFarm && (
+                    <div className="rounded-lg bg-green-50 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-green-700">
+                        Selected Farm
+                      </p>
+
+                      <p className="mt-1 font-bold text-slate-900">
+                        {selectedFarm.farm_name}
+                      </p>
+
+                      <p className="mt-1 text-sm text-slate-600">
                         Shed Capacity:{' '}
-                        <strong>
-                          {Number(
-                            farm.shed_capacity || 0
-                          ).toLocaleString()}
-                        </strong>
-                      </div>
+                        {selectedFarm.shed_capacity || 0}
+                      </p>
                     </div>
-                  ))
-                )}
-
-              </div>
-            </section>
-
-          </div>
-        )}
-
-        {/* All Farms */}
-        {!loading && (
-          <section className="mt-6 rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="font-bold text-slate-900">
-                All Farms
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                {farms.length} farm(s) registered
-              </p>
+                  )}
+                </div>
+              </section>
             </div>
 
-            {farms.length === 0 ? (
-              <div className="p-10 text-center text-sm text-slate-500">
-                No farms registered yet.
+            {/* Selected farmer farms */}
+            <section className="mt-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-slate-900">
+                  Selected Farmer Farms
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Farms registered under the selected farmer.
+                </p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-5 py-3 text-left">
-                        Farm
-                      </th>
 
-                      <th className="px-5 py-3 text-left">
-                        Farmer
-                      </th>
+              {!selectedFarmer ? (
+                <div className="rounded-lg bg-slate-50 p-8 text-center">
+                  <p className="text-sm text-slate-500">
+                    Select a farmer above to view their farms.
+                  </p>
+                </div>
+              ) : selectedFarmerFarms.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
+                  <p className="font-semibold text-slate-700">
+                    No farms registered
+                  </p>
 
-                      <th className="px-5 py-3 text-left">
-                        Type
-                      </th>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Use the Register Farm section above.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {selectedFarmerFarms.map((farm) => {
+                    const farmBatches = batches.filter(
+                      (batch) => batch.farm_id === farm.id
+                    );
 
-                      <th className="px-5 py-3 text-left">
-                        Capacity
-                      </th>
+                    const liveBirds = farmBatches.reduce(
+                      (sum, batch) =>
+                        sum + Number(batch.current_quantity || 0),
+                      0
+                    );
 
-                      <th className="px-5 py-3 text-left">
-                        Status
-                      </th>
+                    return (
+                      <div
+                        key={farm.id}
+                        className="rounded-xl border border-slate-200 p-5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-bold text-slate-900">
+                              {farm.farm_name || 'Unnamed Farm'}
+                            </h3>
 
-                      <th className="px-5 py-3 text-left">
-                        Batches
-                      </th>
-                    </tr>
-                  </thead>
+                            <p className="mt-1 text-sm text-slate-500">
+                              {farm.farm_type || 'Farm'}
+                            </p>
+                          </div>
 
-                  <tbody className="divide-y divide-slate-100">
-                    {farms.map((farm) => {
-                      const farmBatches = batches.filter(
-                        (batch) =>
-                          batch.farm_id === farm.id
-                      );
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                            {farm.status || 'ACTIVE'}
+                          </span>
+                        </div>
 
-                      return (
-                        <tr key={farm.id}>
-                          <td className="px-5 py-4 font-semibold text-slate-900">
-                            {farm.farm_name ||
-                              'Unnamed Farm'}
-                          </td>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <Metric
+                            label="Shed Capacity"
+                            value={farm.shed_capacity || 0}
+                          />
 
-                          <td className="px-5 py-4 text-slate-600">
-                            {farmerName(farm.farmer_id)}
-                          </td>
+                          <Metric
+                            label="Batches"
+                            value={farmBatches.length}
+                          />
 
-                          <td className="px-5 py-4 text-slate-600">
-                            {farm.farm_type || '—'}
-                          </td>
+                          <Metric
+                            label="Live Birds"
+                            value={liveBirds}
+                          />
 
-                          <td className="px-5 py-4 text-slate-600">
-                            {Number(
-                              farm.shed_capacity || 0
-                            ).toLocaleString()}
-                          </td>
+                          <Metric
+                            label="Capacity Used"
+                            value={
+                              farm.shed_capacity
+                                ? `${Math.round(
+                                    (liveBirds /
+                                      farm.shed_capacity) *
+                                      100
+                                  )}%`
+                                : '—'
+                            }
+                          />
+                        </div>
 
-                          <td className="px-5 py-4">
-                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                              {farm.status || 'ACTIVE'}
-                            </span>
-                          </td>
+                        {farmBatches.length > 0 && (
+                          <div className="mt-4 border-t border-slate-200 pt-4">
+                            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                              Bird Batches
+                            </p>
 
-                          <td className="px-5 py-4 font-semibold text-slate-900">
-                            {farmBatches.length}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            <div className="space-y-2">
+                              {farmBatches.map((batch) => (
+                                <div
+                                  key={batch.id}
+                                  className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+                                >
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                      {batch.batch_code || 'Batch'}
+                                    </p>
+
+                                    <p className="text-xs text-slate-500">
+                                      {batch.breed || 'Breed not specified'}
+                                    </p>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-900">
+                                      {batch.current_quantity || 0}
+                                    </p>
+
+                                    <button
+                                      onClick={() =>
+                                        unassignBatch(batch.id)
+                                      }
+                                      className="text-xs font-medium text-red-600 hover:text-red-700"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* All farms */}
+            <section className="mt-6 rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+              <div className="border-b border-slate-200 p-5">
+                <h2 className="text-xl font-bold text-slate-900">
+                  All Farms
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {farms.length} farm(s) registered.
+                </p>
               </div>
-            )}
 
-          </section>
+              {farms.length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-500">
+                  No farms have been registered yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-5 py-3">Farm</th>
+                        <th className="px-5 py-3">Farmer</th>
+                        <th className="px-5 py-3">Type</th>
+                        <th className="px-5 py-3">Capacity</th>
+                        <th className="px-5 py-3">Status</th>
+                        <th className="px-5 py-3">Batches</th>
+                        <th className="px-5 py-3">Live Birds</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-200">
+                      {farms.map((farm) => {
+                        const farmer = farmers.find(
+                          (f) => f.id === farm.farmer_id
+                        );
+
+                        const farmBatches = batches.filter(
+                          (batch) => batch.farm_id === farm.id
+                        );
+
+                        const liveBirds = farmBatches.reduce(
+                          (sum, batch) =>
+                            sum +
+                            Number(batch.current_quantity || 0),
+                          0
+                        );
+
+                        return (
+                          <tr
+                            key={farm.id}
+                            className="hover:bg-slate-50"
+                          >
+                            <td className="px-5 py-4">
+                              <p className="font-semibold text-slate-900">
+                                {farm.farm_name || 'Unnamed Farm'}
+                              </p>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <p className="font-medium text-slate-900">
+                                {farmer?.farmer_id || '—'}
+                              </p>
+
+                              <p className="text-xs text-slate-500">
+                                {farmer?.full_name || '—'}
+                              </p>
+                            </td>
+
+                            <td className="px-5 py-4 text-slate-600">
+                              {farm.farm_type || '—'}
+                            </td>
+
+                            <td className="px-5 py-4 font-semibold text-slate-700">
+                              {farm.shed_capacity || 0}
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                                {farm.status || 'ACTIVE'}
+                              </span>
+                            </td>
+
+                            <td className="px-5 py-4 font-semibold">
+                              {farmBatches.length}
+                            </td>
+
+                            <td className="px-5 py-4 font-semibold">
+                              {liveBirds}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+          </>
         )}
-
       </div>
     </main>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <p className="text-sm text-slate-500">{label}</p>
+
+      <p className="mt-2 text-2xl font-bold text-slate-900">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-3">
+      <p className="text-xs text-slate-500">{label}</p>
+
+      <p className="mt-1 font-bold text-slate-900">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function FieldLabel({ label }: { label: string }) {
+  return (
+    <label className="mb-1 block text-sm font-semibold text-slate-700">
+      {label}
+    </label>
   );
 }
