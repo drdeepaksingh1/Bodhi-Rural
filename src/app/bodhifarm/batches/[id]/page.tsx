@@ -5,6 +5,21 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/client';
 
+type Batch = {
+  id: string;
+  farmer_id: string;
+  farm_id: string | null;
+  batch_code: string | null;
+  breed: string | null;
+  bird_type: string | null;
+  placement_date: string | null;
+  initial_quantity: number | null;
+  current_quantity: number | null;
+  mortality_quantity: number | null;
+  source: string | null;
+  status: string | null;
+};
+
 type Farmer = {
   id: string;
   farmer_id: string | null;
@@ -19,21 +34,6 @@ type Farm = {
   farm_name: string | null;
   farm_type: string | null;
   shed_capacity: number | null;
-  status: string | null;
-};
-
-type BirdBatch = {
-  id: string;
-  farmer_id: string;
-  farm_id: string | null;
-  batch_code: string | null;
-  breed: string | null;
-  bird_type: string | null;
-  placement_date: string | null;
-  initial_quantity: number | null;
-  current_quantity: number | null;
-  mortality_quantity: number | null;
-  source: string | null;
   status: string | null;
 };
 
@@ -68,23 +68,20 @@ type VeterinaryRecord = {
   diagnosis: string | null;
   treatment: string | null;
   veterinary_name: string | null;
-  veterinary_visit: boolean | null;
-  follow_up_date: string | null;
-  medicine_quantity: number | null;
 };
 
-export default function BirdBatch360() {
+export default function BirdBatch360Page() {
   const params = useParams();
+
   const batchId = Array.isArray(params.id)
     ? params.id[0]
     : params.id;
 
   const supabase = createClient();
 
-  const [batch, setBatch] = useState<BirdBatch | null>(null);
+  const [batch, setBatch] = useState<Batch | null>(null);
   const [farmer, setFarmer] = useState<Farmer | null>(null);
   const [farm, setFarm] = useState<Farm | null>(null);
-
   const [eggs, setEggs] = useState<EggRecord[]>([]);
   const [feeds, setFeeds] = useState<FeedRecord[]>([]);
   const [veterinary, setVeterinary] = useState<VeterinaryRecord[]>([]);
@@ -135,34 +132,51 @@ export default function BirdBatch360() {
 
     setBatch(batchData);
 
+    const [farmerResult, farmResult] =
+      await Promise.all([
+        supabase
+          .from('farmers')
+          .select(
+            `
+            id,
+            farmer_id,
+            full_name,
+            mobile,
+            status
+            `
+          )
+          .eq('id', batchData.farmer_id)
+          .maybeSingle(),
+
+        batchData.farm_id
+          ? supabase
+              .from('farms')
+              .select(
+                `
+                id,
+                farmer_id,
+                farm_name,
+                farm_type,
+                shed_capacity,
+                status
+                `
+              )
+              .eq('id', batchData.farm_id)
+              .maybeSingle()
+          : Promise.resolve({
+              data: null,
+              error: null,
+            }),
+      ]);
+
+    setFarmer(farmerResult.data || null);
+    setFarm(farmResult.data || null);
+
     const [
-      farmerResult,
-      farmResult,
       eggsResult,
-      feedResult,
+      feedsResult,
       veterinaryResult,
     ] = await Promise.all([
-      supabase
-        .from('farmers')
-        .select(
-          'id, farmer_id, full_name, mobile, status'
-        )
-        .eq('id', batchData.farmer_id)
-        .maybeSingle(),
-
-      batchData.farm_id
-        ? supabase
-            .from('farms')
-            .select(
-              'id, farmer_id, farm_name, farm_type, shed_capacity, status'
-            )
-            .eq('id', batchData.farm_id)
-            .maybeSingle()
-        : Promise.resolve({
-            data: null,
-            error: null,
-          }),
-
       supabase
         .from('egg_production')
         .select(
@@ -212,10 +226,7 @@ export default function BirdBatch360() {
           symptoms,
           diagnosis,
           treatment,
-          veterinary_name,
-          veterinary_visit,
-          follow_up_date,
-          medicine_quantity
+          veterinary_name
           `
         )
         .eq('bird_batch_id', batchId)
@@ -224,46 +235,9 @@ export default function BirdBatch360() {
         }),
     ]);
 
-    if (farmerResult.data) {
-      setFarmer(farmerResult.data);
-    }
-
-    if (farmResult.data) {
-      setFarm(farmResult.data);
-    }
-
-    if (eggsResult.data) {
-      setEggs(eggsResult.data);
-    }
-
-    if (feedResult.data) {
-      setFeeds(feedResult.data);
-    }
-
-    if (veterinaryResult.data) {
-      setVeterinary(veterinaryResult.data);
-    }
-
-    if (eggsResult.error) {
-      console.warn(
-        'Egg production:',
-        eggsResult.error.message
-      );
-    }
-
-    if (feedResult.error) {
-      console.warn(
-        'Feed:',
-        feedResult.error.message
-      );
-    }
-
-    if (veterinaryResult.error) {
-      console.warn(
-        'Veterinary:',
-        veterinaryResult.error.message
-      );
-    }
+    setEggs(eggsResult.data || []);
+    setFeeds(feedsResult.data || []);
+    setVeterinary(veterinaryResult.data || []);
 
     setLoading(false);
   }
@@ -297,8 +271,8 @@ export default function BirdBatch360() {
   const totalEggs = useMemo(
     () =>
       eggs.reduce(
-        (sum, item) =>
-          sum + Number(item.total_eggs || 0),
+        (sum, record) =>
+          sum + Number(record.total_eggs || 0),
         0
       ),
     [eggs]
@@ -307,8 +281,8 @@ export default function BirdBatch360() {
   const saleableEggs = useMemo(
     () =>
       eggs.reduce(
-        (sum, item) =>
-          sum + Number(item.saleable_eggs || 0),
+        (sum, record) =>
+          sum + Number(record.saleable_eggs || 0),
         0
       ),
     [eggs]
@@ -317,8 +291,8 @@ export default function BirdBatch360() {
   const crackedEggs = useMemo(
     () =>
       eggs.reduce(
-        (sum, item) =>
-          sum + Number(item.cracked_eggs || 0),
+        (sum, record) =>
+          sum + Number(record.cracked_eggs || 0),
         0
       ),
     [eggs]
@@ -327,8 +301,8 @@ export default function BirdBatch360() {
   const damagedEggs = useMemo(
     () =>
       eggs.reduce(
-        (sum, item) =>
-          sum + Number(item.damaged_eggs || 0),
+        (sum, record) =>
+          sum + Number(record.damaged_eggs || 0),
         0
       ),
     [eggs]
@@ -339,47 +313,60 @@ export default function BirdBatch360() {
       ? (saleableEggs / totalEggs) * 100
       : 0;
 
-  const feedKg = useMemo(
+  const eggsPerLiveBird =
+    liveBirds > 0
+      ? totalEggs / liveBirds
+      : 0;
+
+  const totalFeedKg = useMemo(
     () =>
       feeds.reduce(
-        (sum, item) =>
-          sum + Number(item.quantity_kg || 0),
+        (sum, record) =>
+          sum + Number(record.quantity_kg || 0),
         0
       ),
     [feeds]
   );
 
-  const feedCost = useMemo(
+  const totalFeedCost = useMemo(
     () =>
       feeds.reduce(
-        (sum, item) =>
-          sum + Number(item.total_cost || 0),
+        (sum, record) =>
+          sum + Number(record.total_cost || 0),
         0
       ),
     [feeds]
   );
 
   const averageFeedCost =
-    feedKg > 0 ? feedCost / feedKg : 0;
-
-  const eggsPerLiveBird =
-    liveBirds > 0
-      ? totalEggs / liveBirds
+    totalFeedKg > 0
+      ? totalFeedCost / totalFeedKg
       : 0;
 
-  const mortalityEvents = veterinary.filter(
-    (item) =>
-      String(item.record_type || '').toUpperCase() ===
-      'MORTALITY'
-  ).length;
+  const feedPerLiveBird =
+    liveBirds > 0
+      ? totalFeedKg / liveBirds
+      : 0;
 
-  const veterinaryVisits = veterinary.filter(
-    (item) => item.veterinary_visit
-  ).length;
+  const veterinaryMortality = useMemo(
+    () =>
+      veterinary.reduce(
+        (sum, record) =>
+          sum +
+          Number(
+            record.mortality_quantity || 0
+          ),
+        0
+      ),
+    [veterinary]
+  );
 
   const capacityUtilization =
-    farm?.shed_capacity && farm.shed_capacity > 0
-      ? (liveBirds / farm.shed_capacity) * 100
+    farm?.shed_capacity &&
+    Number(farm.shed_capacity) > 0
+      ? (liveBirds /
+          Number(farm.shed_capacity)) *
+        100
       : null;
 
   function formatDate(value: string | null) {
@@ -401,9 +388,9 @@ export default function BirdBatch360() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mx-auto max-w-7xl px-6 py-10">
           <div className="rounded-2xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
-            <p className="text-slate-600">
+            <p className="text-sm text-slate-500">
               Loading Bird Batch 360°...
             </p>
           </div>
@@ -415,22 +402,25 @@ export default function BirdBatch360() {
   if (error || !batch) {
     return (
       <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-3xl px-6 py-12">
+        <div className="mx-auto max-w-3xl px-6 py-10">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
+
             <h1 className="text-xl font-bold text-red-800">
               Bird Batch Not Found
             </h1>
 
             <p className="mt-2 text-sm text-red-700">
-              {error || 'This bird batch does not exist.'}
+              {error ||
+                'This bird batch does not exist.'}
             </p>
 
             <Link
               href="/bodhifarm"
               className="mt-5 inline-block rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white"
             >
-              ← Back to BodhiFarm
+              ← Back to Bird Batch Management
             </Link>
+
           </div>
         </div>
       </main>
@@ -443,58 +433,65 @@ export default function BirdBatch360() {
       {/* HEADER */}
 
       <header className="border-b bg-white">
+
         <div className="mx-auto max-w-7xl px-6 py-6">
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
             <div>
+
               <div className="flex flex-wrap items-center gap-2 text-sm">
+
                 <Link
                   href="/bodhifarm"
-                  className="font-medium text-green-700 hover:text-green-800"
+                  className="font-semibold text-green-700 hover:text-green-800"
                 >
-                  ← BodhiFarm
+                  ← Bird Batch Management
                 </Link>
 
                 <span className="text-slate-400">
                   /
                 </span>
 
-                <Link
-                  href="/bodhifarm/farms"
-                  className="font-medium text-green-700 hover:text-green-800"
-                >
-                  Farm Management
-                </Link>
+                <span className="text-slate-500">
+                  Batch 360°
+                </span>
+
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
+
                 <h1 className="text-3xl font-bold text-slate-900">
-                  Bird Batch 360°
+                  {batch.batch_code ||
+                    'Bird Batch'}
                 </h1>
 
-                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
                   {batch.status || 'ACTIVE'}
                 </span>
+
               </div>
 
               <p className="mt-2 text-sm text-slate-500">
-                Complete operational profile of this poultry batch.
+                Complete operational profile of this bird batch.
               </p>
+
             </div>
 
             <div className="flex flex-wrap gap-2">
 
-              <Link
-                href={`/bodhifarm/farmers/${batch.farmer_id}`}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Farmer 360°
-              </Link>
-
-              {batch.farm_id && (
+              {farmer && (
                 <Link
-                  href={`/bodhifarm/farms/${batch.farm_id}`}
+                  href={`/bodhifarm/farmers/${farmer.id}`}
+                  className="rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100"
+                >
+                  Farmer 360°
+                </Link>
+              )}
+
+              {farm && (
+                <Link
+                  href={`/bodhifarm/farms/${farm.id}`}
                   className="rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-100"
                 >
                   Farm 360°
@@ -509,132 +506,268 @@ export default function BirdBatch360() {
               </button>
 
             </div>
+
           </div>
 
         </div>
+
       </header>
 
       <div className="mx-auto max-w-7xl px-6 py-6">
 
-        {/* BATCH IDENTITY */}
+        {/* BATCH PROFILE */}
 
         <section className="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
 
-          <div className="bg-green-700 px-6 py-6 text-white">
+          <div className="bg-green-700 px-6 py-7 text-white">
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-green-100">
-                  Batch Code
+
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-100">
+                  Bird Batch Profile
                 </p>
 
                 <h2 className="mt-1 text-3xl font-bold">
-                  {batch.batch_code || 'Unnamed Batch'}
+                  {batch.batch_code ||
+                    'Bird Batch'}
                 </h2>
 
-                <p className="mt-2 text-green-50">
-                  {batch.breed || 'Breed not specified'}
+                <p className="mt-2 text-sm text-green-100">
+                  {batch.breed ||
+                    'Breed not specified'}
                   {' · '}
-                  {batch.bird_type || 'Bird type not specified'}
+                  {batch.bird_type ||
+                    'Bird type not specified'}
                 </p>
+
               </div>
 
-              <div className="rounded-xl bg-white/10 p-4 backdrop-blur">
+              <div className="rounded-xl bg-white/10 p-4">
+
                 <p className="text-xs uppercase tracking-wide text-green-100">
-                  Placement Date
+                  Batch ID
                 </p>
 
-                <p className="mt-1 text-lg font-bold">
-                  {formatDate(batch.placement_date)}
+                <p className="mt-1 break-all text-sm font-semibold">
+                  {batch.id}
                 </p>
+
               </div>
 
             </div>
+
           </div>
 
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 md:grid-cols-4 md:divide-y-0">
 
             <Summary
               label="Initial Birds"
-              value={initialBirds}
+              value={initialBirds.toLocaleString('en-IN')}
             />
 
             <Summary
               label="Live Birds"
-              value={liveBirds}
+              value={liveBirds.toLocaleString('en-IN')}
             />
 
             <Summary
               label="Mortality"
-              value={mortality}
+              value={mortality.toLocaleString('en-IN')}
             />
 
             <Summary
-              label="Mortality Rate"
-              value={`${mortalityRate.toFixed(2)}%`}
+              label="Survival"
+              value={`${survivalRate.toFixed(2)}%`}
             />
 
           </div>
+
         </section>
 
-        {/* NAVIGATION */}
+        {/* KPI */}
 
-        <div className="mb-6 overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-          <div className="flex min-w-max">
+        <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-            <a
-              href="#overview"
-              className="border-b-2 border-green-700 px-5 py-4 text-sm font-semibold text-green-700"
-            >
-              Overview
-            </a>
+          <MetricCard
+            label="Mortality Rate"
+            value={`${mortalityRate.toFixed(2)}%`}
+            description={`${mortality} birds lost`}
+          />
 
-            <a
-              href="#identity"
-              className="px-5 py-4 text-sm font-semibold text-slate-600 hover:text-green-700"
-            >
-              Batch Identity
-            </a>
+          <MetricCard
+            label="Total Eggs"
+            value={totalEggs}
+            description={`${eggs.length} production records`}
+          />
 
-            <a
-              href="#production"
-              className="px-5 py-4 text-sm font-semibold text-slate-600 hover:text-green-700"
-            >
-              Production
-            </a>
+          <MetricCard
+            label="Saleable Eggs"
+            value={saleableEggs}
+            description={`${saleableRate.toFixed(2)}% saleable`}
+          />
 
-            <a
-              href="#feed"
-              className="px-5 py-4 text-sm font-semibold text-slate-600 hover:text-green-700"
-            >
-              Feed
-            </a>
+          <MetricCard
+            label="Feed Consumed"
+            value={`${totalFeedKg.toFixed(2)} kg`}
+            description={`₹${totalFeedCost.toFixed(2)} recorded cost`}
+          />
 
-            <a
-              href="#veterinary"
-              className="px-5 py-4 text-sm font-semibold text-slate-600 hover:text-green-700"
-            >
-              Veterinary
-            </a>
+        </section>
 
-            <a
-              href="#performance"
-              className="px-5 py-4 text-sm font-semibold text-slate-600 hover:text-green-700"
-            >
-              Performance
-            </a>
+        {/* BATCH + FARMER + FARM */}
+
+        <section className="mb-6 grid gap-6 lg:grid-cols-3">
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
+            <SectionTitle
+              title="Batch Information"
+              description="Core batch registration details."
+            />
+
+            <div className="space-y-3">
+
+              <InfoItem
+                label="Batch Code"
+                value={batch.batch_code || '—'}
+              />
+
+              <InfoItem
+                label="Breed"
+                value={batch.breed || '—'}
+              />
+
+              <InfoItem
+                label="Bird Type"
+                value={batch.bird_type || '—'}
+              />
+
+              <InfoItem
+                label="Placement Date"
+                value={formatDate(
+                  batch.placement_date
+                )}
+              />
+
+              <InfoItem
+                label="Source"
+                value={batch.source || '—'}
+              />
+
+              <InfoItem
+                label="Status"
+                value={batch.status || 'ACTIVE'}
+              />
+
+            </div>
 
           </div>
-        </div>
 
-        {/* OVERVIEW */}
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
-        <section id="overview" className="mb-6">
+            <SectionTitle
+              title="Farmer"
+              description="Farmer responsible for this batch."
+            />
+
+            {farmer ? (
+              <>
+                <div className="rounded-xl bg-slate-50 p-5">
+
+                  <p className="text-sm font-bold text-green-700">
+                    {farmer.farmer_id ||
+                      'No Farmer ID'}
+                  </p>
+
+                  <h3 className="mt-1 text-xl font-bold text-slate-900">
+                    {farmer.full_name ||
+                      'Unnamed Farmer'}
+                  </h3>
+
+                  <p className="mt-2 text-sm text-slate-600">
+                    {farmer.mobile ||
+                      'Mobile not available'}
+                  </p>
+
+                </div>
+
+                <Link
+                  href={`/bodhifarm/farmers/${farmer.id}`}
+                  className="mt-4 block rounded-lg bg-green-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-green-800"
+                >
+                  Open Farmer 360° →
+                </Link>
+              </>
+            ) : (
+              <EmptyState message="Farmer information is not available." />
+            )}
+
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
+            <SectionTitle
+              title="Farm"
+              description="Farm where this batch is placed."
+            />
+
+            {farm ? (
+              <>
+                <div className="rounded-xl bg-slate-50 p-5">
+
+                  <h3 className="text-xl font-bold text-slate-900">
+                    {farm.farm_name ||
+                      'Unnamed Farm'}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    {farm.farm_type || 'Farm'}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+
+                    <InfoItem
+                      label="Shed Capacity"
+                      value={
+                        farm.shed_capacity || 0
+                      }
+                    />
+
+                    <InfoItem
+                      label="Status"
+                      value={
+                        farm.status || 'ACTIVE'
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+                <Link
+                  href={`/bodhifarm/farms/${farm.id}`}
+                  className="mt-4 block rounded-lg bg-green-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-green-800"
+                >
+                  Open Farm 360° →
+                </Link>
+              </>
+            ) : (
+              <EmptyState message="This batch is not currently linked to a farm." />
+            )}
+
+          </div>
+
+        </section>
+
+        {/* FLOCK STATUS */}
+
+        <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
           <SectionTitle
-            title="Batch Overview"
-            description="Current operational status of the bird batch."
+            title="Flock Status"
+            description="Current bird population and mortality position."
           />
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -648,7 +781,13 @@ export default function BirdBatch360() {
             <MetricCard
               label="Live Birds"
               value={liveBirds}
-              description="Current flock"
+              description="Current quantity"
+            />
+
+            <MetricCard
+              label="Mortality"
+              value={mortality}
+              description="Recorded mortality"
             />
 
             <MetricCard
@@ -657,135 +796,155 @@ export default function BirdBatch360() {
               description="Live / initial"
             />
 
-            <MetricCard
-              label="Mortality"
-              value={`${mortalityRate.toFixed(2)}%`}
-              description={`${mortality} birds`}
-            />
+          </div>
+
+          <div className="mt-5">
+
+            <div className="mb-2 flex justify-between text-xs font-semibold text-slate-500">
+
+              <span>
+                Flock survival
+              </span>
+
+              <span>
+                {survivalRate.toFixed(2)}%
+              </span>
+
+            </div>
+
+            <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+
+              <div
+                className="h-full rounded-full bg-green-600"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, survivalRate)
+                  )}%`,
+                }}
+              />
+
+            </div>
 
           </div>
+
         </section>
 
-        {/* FARMER + FARM */}
+        {/* EGG PRODUCTION */}
 
-        <section className="mb-6 grid gap-6 lg:grid-cols-2">
+        <section className="mb-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <div className="border-b border-slate-200 p-6">
 
-            <SectionTitle
-              title="Farmer"
-              description="Owner connected with this bird batch."
-            />
+            <h2 className="text-xl font-bold text-slate-900">
+              Egg Production
+            </h2>
 
-            {farmer ? (
-              <>
-                <div className="rounded-xl bg-slate-50 p-4">
-
-                  <p className="text-sm font-bold text-green-700">
-                    {farmer.farmer_id || 'No Farmer ID'}
-                  </p>
-
-                  <h3 className="mt-1 text-xl font-bold text-slate-900">
-                    {farmer.full_name || 'Unnamed Farmer'}
-                  </h3>
-
-                  <p className="mt-2 text-sm text-slate-600">
-                    {farmer.mobile || 'Mobile not available'}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    Status: {farmer.status || 'ACTIVE'}
-                  </p>
-
-                </div>
-
-                <Link
-                  href={`/bodhifarm/farmers/${farmer.id}`}
-                  className="mt-4 inline-block rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
-                >
-                  Open Farmer 360° →
-                </Link>
-              </>
-            ) : (
-              <p className="text-sm text-slate-500">
-                Farmer information unavailable.
-              </p>
-            )}
+            <p className="mt-1 text-sm text-slate-500">
+              Production records linked to this bird batch.
+            </p>
 
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <div className="p-6">
 
-            <SectionTitle
-              title="Farm"
-              description="Farm where this batch is assigned."
-            />
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-            {farm ? (
-              <>
-                <div className="rounded-xl bg-slate-50 p-4">
+              <MetricCard
+                label="Total Eggs"
+                value={totalEggs}
+                description="Recorded production"
+              />
 
-                  <h3 className="text-xl font-bold text-slate-900">
-                    {farm.farm_name || 'Unnamed Farm'}
-                  </h3>
+              <MetricCard
+                label="Saleable"
+                value={saleableEggs}
+                description={`${saleableRate.toFixed(2)}% of total`}
+              />
 
-                  <p className="mt-1 text-sm text-slate-600">
-                    {farm.farm_type || 'Farm'}
-                  </p>
+              <MetricCard
+                label="Cracked"
+                value={crackedEggs}
+                description="Recorded cracked eggs"
+              />
 
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+              <MetricCard
+                label="Damaged"
+                value={damagedEggs}
+                description="Recorded damaged eggs"
+              />
 
-                    <InfoItem
-                      label="Shed Capacity"
-                      value={farm.shed_capacity || 0}
-                    />
+            </div>
 
-                    <InfoItem
-                      label="Farm Status"
-                      value={farm.status || 'ACTIVE'}
-                    />
-
-                    <InfoItem
-                      label="Live Birds"
-                      value={liveBirds}
-                    />
-
-                    <InfoItem
-                      label="Utilization"
-                      value={
-                        capacityUtilization !== null
-                          ? `${capacityUtilization.toFixed(1)}%`
-                          : '—'
-                      }
-                    />
-
-                  </div>
-
-                </div>
-
-                <Link
-                  href={`/bodhifarm/farms/${farm.id}`}
-                  className="mt-4 inline-block rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
-                >
-                  Open Farm 360° →
-                </Link>
-              </>
+            {eggs.length === 0 ? (
+              <EmptyState message="No egg production records are available." />
             ) : (
-              <div className="rounded-lg border border-dashed border-slate-300 p-5">
-                <p className="font-semibold text-slate-700">
-                  Farm not assigned
-                </p>
+              <div className="overflow-x-auto">
 
-                <p className="mt-1 text-sm text-slate-500">
-                  This batch is not currently connected to a farm.
-                </p>
+                <table className="min-w-full text-left text-sm">
 
-                <Link
-                  href="/bodhifarm/farms"
-                  className="mt-3 inline-block text-sm font-semibold text-green-700"
-                >
-                  Assign from Farm Management →
-                </Link>
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+
+                    <tr>
+                      <th className="px-4 py-3">
+                        Date
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Total
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Saleable
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Cracked
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Damaged
+                      </th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-200">
+
+                    {eggs.map((record) => (
+
+                      <tr key={record.id}>
+
+                        <td className="px-4 py-3 font-medium">
+                          {formatDate(
+                            record.production_date
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3 font-semibold">
+                          {record.total_eggs || 0}
+                        </td>
+
+                        <td className="px-4 py-3 font-semibold text-green-700">
+                          {record.saleable_eggs || 0}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {record.cracked_eggs || 0}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {record.damaged_eggs || 0}
+                        </td>
+
+                      </tr>
+
+                    ))}
+
+                  </tbody>
+
+                </table>
+
               </div>
             )}
 
@@ -793,467 +952,302 @@ export default function BirdBatch360() {
 
         </section>
 
-        {/* IDENTITY */}
-
-        <section
-          id="identity"
-          className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
-        >
-
-          <SectionTitle
-            title="Batch Identity"
-            description="Core registration information."
-          />
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-            <InfoItem
-              label="Batch Code"
-              value={batch.batch_code || '—'}
-            />
-
-            <InfoItem
-              label="Breed"
-              value={batch.breed || '—'}
-            />
-
-            <InfoItem
-              label="Bird Type"
-              value={batch.bird_type || '—'}
-            />
-
-            <InfoItem
-              label="Source"
-              value={batch.source || '—'}
-            />
-
-            <InfoItem
-              label="Placement Date"
-              value={formatDate(batch.placement_date)}
-            />
-
-            <InfoItem
-              label="Initial Quantity"
-              value={initialBirds}
-            />
-
-            <InfoItem
-              label="Current Quantity"
-              value={liveBirds}
-            />
-
-            <InfoItem
-              label="Status"
-              value={batch.status || 'ACTIVE'}
-            />
-
-          </div>
-
-        </section>
-
-        {/* PRODUCTION */}
-
-        <section
-          id="production"
-          className="mb-6"
-        >
-
-          <SectionTitle
-            title="Egg Production"
-            description="Egg production recorded against this batch."
-          />
-
-          <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-            <MetricCard
-              label="Total Eggs"
-              value={totalEggs}
-              description={`${eggs.length} production records`}
-            />
-
-            <MetricCard
-              label="Saleable Eggs"
-              value={saleableEggs}
-              description={`${saleableRate.toFixed(2)}% saleable`}
-            />
-
-            <MetricCard
-              label="Cracked"
-              value={crackedEggs}
-              description="Cracked eggs"
-            />
-
-            <MetricCard
-              label="Damaged"
-              value={damagedEggs}
-              description="Damaged eggs"
-            />
-
-          </div>
-
-          {eggs.length === 0 ? (
-            <EmptyState message="No egg production records have been recorded for this batch." />
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-
-              <table className="min-w-full text-sm">
-
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">
-                      Date
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Total
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Saleable
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Cracked
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Damaged
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-200">
-
-                  {eggs.map((item) => (
-                    <tr key={item.id}>
-
-                      <td className="px-4 py-3">
-                        {formatDate(item.production_date)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-semibold">
-                        {Number(item.total_eggs || 0)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-semibold text-green-700">
-                        {Number(item.saleable_eggs || 0)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        {Number(item.cracked_eggs || 0)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        {Number(item.damaged_eggs || 0)}
-                      </td>
-
-                    </tr>
-                  ))}
-
-                </tbody>
-
-              </table>
-
-            </div>
-          )}
-
-        </section>
-
         {/* FEED */}
 
-        <section
-          id="feed"
-          className="mb-6"
-        >
+        <section className="mb-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
 
-          <SectionTitle
-            title="Feed Management"
-            description="Feed consumption and cost connected to this batch."
-          />
+          <div className="border-b border-slate-200 p-6">
 
-          <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <h2 className="text-xl font-bold text-slate-900">
+              Feed Management
+            </h2>
 
-            <MetricCard
-              label="Feed Consumed"
-              value={`${feedKg.toFixed(2)} kg`}
-              description={`${feeds.length} feed records`}
-            />
-
-            <MetricCard
-              label="Feed Cost"
-              value={`₹${feedCost.toFixed(2)}`}
-              description="Total recorded cost"
-            />
-
-            <MetricCard
-              label="Average Cost"
-              value={`₹${averageFeedCost.toFixed(2)}`}
-              description="Average per kg"
-            />
-
-            <MetricCard
-              label="Feed / Live Bird"
-              value={
-                liveBirds > 0
-                  ? `${(feedKg / liveBirds).toFixed(3)} kg`
-                  : '—'
-              }
-              description="Recorded feed"
-            />
+            <p className="mt-1 text-sm text-slate-500">
+              Feed consumption and cost records for this batch.
+            </p>
 
           </div>
 
-          {feeds.length === 0 ? (
-            <EmptyState message="No feed records have been recorded for this batch." />
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <div className="p-6">
 
-              <table className="min-w-full text-sm">
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">
-                      Date
-                    </th>
+              <MetricCard
+                label="Feed Consumed"
+                value={`${totalFeedKg.toFixed(2)} kg`}
+                description={`${feeds.length} records`}
+              />
 
-                    <th className="px-4 py-3 text-left">
-                      Feed
-                    </th>
+              <MetricCard
+                label="Feed Cost"
+                value={`₹${totalFeedCost.toFixed(2)}`}
+                description="Recorded total"
+              />
 
-                    <th className="px-4 py-3 text-right">
-                      Quantity
-                    </th>
+              <MetricCard
+                label="Average Cost"
+                value={`₹${averageFeedCost.toFixed(2)}/kg`}
+                description="Average feed cost"
+              />
 
-                    <th className="px-4 py-3 text-right">
-                      Unit Cost
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Total Cost
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-200">
-
-                  {feeds.map((item) => (
-                    <tr key={item.id}>
-
-                      <td className="px-4 py-3">
-                        {formatDate(item.record_date)}
-                      </td>
-
-                      <td className="px-4 py-3 font-medium">
-                        {item.feed_type || 'Feed'}
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        {Number(item.quantity_kg || 0).toFixed(2)} kg
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        ₹{Number(item.unit_cost || 0).toFixed(2)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-semibold">
-                        ₹{Number(item.total_cost || 0).toFixed(2)}
-                      </td>
-
-                    </tr>
-                  ))}
-
-                </tbody>
-
-              </table>
+              <MetricCard
+                label="Feed / Live Bird"
+                value={`${feedPerLiveBird.toFixed(3)} kg`}
+                description="Recorded feed / current live bird"
+              />
 
             </div>
-          )}
+
+            {feeds.length === 0 ? (
+              <EmptyState message="No feed records are available." />
+            ) : (
+              <div className="overflow-x-auto">
+
+                <table className="min-w-full text-left text-sm">
+
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+
+                    <tr>
+
+                      <th className="px-4 py-3">
+                        Date
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Feed
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Quantity
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Unit Cost
+                      </th>
+
+                      <th className="px-4 py-3">
+                        Total Cost
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-200">
+
+                    {feeds.map((record) => (
+
+                      <tr key={record.id}>
+
+                        <td className="px-4 py-3">
+                          {formatDate(
+                            record.record_date
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3 font-medium">
+                          {record.feed_type || '—'}
+                        </td>
+
+                        <td className="px-4 py-3 font-semibold">
+                          {Number(
+                            record.quantity_kg || 0
+                          ).toFixed(2)}{' '}
+                          kg
+                        </td>
+
+                        <td className="px-4 py-3">
+                          ₹
+                          {Number(
+                            record.unit_cost || 0
+                          ).toFixed(2)}
+                        </td>
+
+                        <td className="px-4 py-3 font-semibold">
+                          ₹
+                          {Number(
+                            record.total_cost || 0
+                          ).toFixed(2)}
+                        </td>
+
+                      </tr>
+
+                    ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+            )}
+
+          </div>
 
         </section>
 
         {/* VETERINARY */}
 
-        <section
-          id="veterinary"
-          className="mb-6"
-        >
+        <section className="mb-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
 
-          <SectionTitle
-            title="Veterinary & Health"
-            description="Health events, mortality and veterinary activity."
-          />
+          <div className="border-b border-slate-200 p-6">
 
-          <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <h2 className="text-xl font-bold text-slate-900">
+              Veterinary & Health
+            </h2>
 
-            <MetricCard
-              label="Health Records"
-              value={veterinary.length}
-              description="Recorded events"
-            />
-
-            <MetricCard
-              label="Mortality Events"
-              value={mortalityEvents}
-              description="Mortality records"
-            />
-
-            <MetricCard
-              label="Veterinary Visits"
-              value={veterinaryVisits}
-              description="Recorded visits"
-            />
-
-            <MetricCard
-              label="Mortality"
-              value={mortality}
-              description="Current cumulative mortality"
-            />
+            <p className="mt-1 text-sm text-slate-500">
+              Health, mortality and veterinary records for this batch.
+            </p>
 
           </div>
 
-          {veterinary.length === 0 ? (
-            <EmptyState message="No veterinary or health records have been recorded for this batch." />
-          ) : (
-            <div className="space-y-3">
+          <div className="p-6">
 
-              {veterinary.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4"
-                >
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <MetricCard
+                label="Health Records"
+                value={veterinary.length}
+                description="Records linked to batch"
+              />
 
-                    <div>
+              <MetricCard
+                label="Recorded Mortality"
+                value={veterinaryMortality}
+                description="From veterinary records"
+              />
+
+              <MetricCard
+                label="Batch Mortality"
+                value={mortality}
+                description="Current batch record"
+              />
+
+            </div>
+
+            {veterinary.length === 0 ? (
+              <EmptyState message="No veterinary records are available." />
+            ) : (
+              <div className="space-y-4">
+
+                {veterinary.map((record) => (
+
+                  <div
+                    key={record.id}
+                    className="rounded-xl border border-slate-200 p-5"
+                  >
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
                       <div className="flex flex-wrap items-center gap-2">
 
                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                          {item.record_type || 'HEALTH'}
+                          {record.record_type ||
+                            'HEALTH'}
                         </span>
 
                         {Number(
-                          item.mortality_quantity || 0
+                          record.mortality_quantity ||
+                            0
                         ) > 0 && (
                           <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
                             Mortality:{' '}
                             {Number(
-                              item.mortality_quantity || 0
+                              record.mortality_quantity ||
+                                0
                             )}
                           </span>
                         )}
 
                       </div>
 
-                      <p className="mt-2 text-sm font-semibold text-slate-900">
-                        {formatDate(item.record_date)}
+                      <span className="text-sm text-slate-500">
+                        {formatDate(
+                          record.record_date
+                        )}
+                      </span>
+
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+                      <InfoItem
+                        label="Cause"
+                        value={record.cause || '—'}
+                      />
+
+                      <InfoItem
+                        label="Symptoms"
+                        value={record.symptoms || '—'}
+                      />
+
+                      <InfoItem
+                        label="Diagnosis"
+                        value={record.diagnosis || '—'}
+                      />
+
+                      <InfoItem
+                        label="Treatment"
+                        value={record.treatment || '—'}
+                      />
+
+                    </div>
+
+                    {record.veterinary_name && (
+                      <p className="mt-4 text-xs text-slate-500">
+                        Veterinary: {record.veterinary_name}
                       </p>
-                    </div>
-
-                    <div className="text-sm text-slate-500">
-                      {item.veterinary_name ||
-                        'Veterinary name not recorded'}
-                    </div>
+                    )}
 
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                ))}
 
-                    <InfoItem
-                      label="Cause"
-                      value={item.cause || '—'}
-                    />
+              </div>
+            )}
 
-                    <InfoItem
-                      label="Symptoms"
-                      value={item.symptoms || '—'}
-                    />
-
-                    <InfoItem
-                      label="Diagnosis"
-                      value={item.diagnosis || '—'}
-                    />
-
-                    <InfoItem
-                      label="Treatment"
-                      value={item.treatment || '—'}
-                    />
-
-                  </div>
-
-                  {(item.follow_up_date ||
-                    item.medicine_quantity) && (
-                    <div className="mt-4 border-t border-slate-200 pt-4">
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-
-                        <InfoItem
-                          label="Follow-up"
-                          value={formatDate(
-                            item.follow_up_date
-                          )}
-                        />
-
-                        <InfoItem
-                          label="Medicine Quantity"
-                          value={
-                            item.medicine_quantity || '—'
-                          }
-                        />
-
-                      </div>
-
-                    </div>
-                  )}
-
-                </div>
-              ))}
-
-            </div>
-          )}
+          </div>
 
         </section>
 
         {/* PERFORMANCE */}
 
-        <section
-          id="performance"
-          className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
-        >
+        <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
             <SectionTitle
               title="Batch Performance"
-              description="Key production and flock indicators."
+              description="Consolidated performance indicators."
             />
 
             <Link
               href="/bodhifarm/performance"
               className="rounded-lg bg-slate-900 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-slate-800"
             >
-              Open Performance Dashboard
+              Performance Dashboard
             </Link>
 
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
             <MetricCard
               label="Eggs / Live Bird"
               value={eggsPerLiveBird.toFixed(2)}
-              description="Total eggs ÷ live birds"
+              description="Total eggs / current live birds"
             />
 
             <MetricCard
               label="Saleable Rate"
               value={`${saleableRate.toFixed(2)}%`}
-              description="Saleable eggs ÷ total eggs"
+              description="Saleable / total eggs"
             />
 
             <MetricCard
               label="Mortality Rate"
               value={`${mortalityRate.toFixed(2)}%`}
-              description="Mortality ÷ initial birds"
+              description="Mortality / initial birds"
             />
 
             <MetricCard
@@ -1263,130 +1257,8 @@ export default function BirdBatch360() {
                   ? `${capacityUtilization.toFixed(2)}%`
                   : '—'
               }
-              description="Live birds ÷ shed capacity"
+              description="Live birds / farm shed capacity"
             />
-
-          </div>
-
-          <div className="mt-6 rounded-xl bg-slate-50 p-5">
-
-            <h3 className="font-bold text-slate-900">
-              Operational Summary
-            </h3>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-
-              <InfoItem
-                label="Initial Birds"
-                value={initialBirds}
-              />
-
-              <InfoItem
-                label="Live Birds"
-                value={liveBirds}
-              />
-
-              <InfoItem
-                label="Total Eggs"
-                value={totalEggs}
-              />
-
-              <InfoItem
-                label="Feed"
-                value={`${feedKg.toFixed(2)} kg`}
-              />
-
-              <InfoItem
-                label="Feed Cost"
-                value={`₹${feedCost.toFixed(2)}`}
-              />
-
-              <InfoItem
-                label="Mortality"
-                value={mortality}
-              />
-
-              <InfoItem
-                label="Saleable Eggs"
-                value={saleableEggs}
-              />
-
-              <InfoItem
-                label="Health Records"
-                value={veterinary.length}
-              />
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* QUICK ACTIONS */}
-
-        <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-
-          <h2 className="text-xl font-bold text-slate-900">
-            Quick Actions
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Open the operational modules connected with this batch.
-          </p>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-            <Link
-              href="/bodhifarm/egg-production"
-              className="rounded-xl border border-slate-200 p-4 hover:border-green-400 hover:bg-green-50"
-            >
-              <p className="font-bold text-slate-900">
-                🥚 Egg Production
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Record and manage egg production.
-              </p>
-            </Link>
-
-            <Link
-              href="/bodhifarm/feed"
-              className="rounded-xl border border-slate-200 p-4 hover:border-green-400 hover:bg-green-50"
-            >
-              <p className="font-bold text-slate-900">
-                🌾 Feed Management
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Track feed quantity and cost.
-              </p>
-            </Link>
-
-            <Link
-              href="/bodhifarm/veterinary"
-              className="rounded-xl border border-slate-200 p-4 hover:border-green-400 hover:bg-green-50"
-            >
-              <p className="font-bold text-slate-900">
-                🩺 Veterinary
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Manage health and mortality records.
-              </p>
-            </Link>
-
-            <Link
-              href="/bodhifarm/performance"
-              className="rounded-xl border border-slate-200 p-4 hover:border-green-400 hover:bg-green-50"
-            >
-              <p className="font-bold text-slate-900">
-                📊 Performance
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Analyze batch performance.
-              </p>
-            </Link>
 
           </div>
 
@@ -1406,6 +1278,7 @@ function Summary({
 }) {
   return (
     <div className="p-5">
+
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
       </p>
@@ -1413,6 +1286,7 @@ function Summary({
       <p className="mt-2 text-2xl font-bold text-slate-900">
         {value}
       </p>
+
     </div>
   );
 }
@@ -1428,6 +1302,7 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+
       <p className="text-sm text-slate-500">
         {label}
       </p>
@@ -1439,6 +1314,7 @@ function MetricCard({
       <p className="mt-1 text-xs text-slate-500">
         {description}
       </p>
+
     </div>
   );
 }
@@ -1452,6 +1328,7 @@ function InfoItem({
 }) {
   return (
     <div className="rounded-lg bg-slate-50 p-3">
+
       <p className="text-xs text-slate-500">
         {label}
       </p>
@@ -1459,6 +1336,7 @@ function InfoItem({
       <p className="mt-1 break-words font-semibold text-slate-900">
         {value}
       </p>
+
     </div>
   );
 }
@@ -1472,6 +1350,7 @@ function SectionTitle({
 }) {
   return (
     <div className="mb-5">
+
       <h2 className="text-xl font-bold text-slate-900">
         {title}
       </h2>
@@ -1479,6 +1358,7 @@ function SectionTitle({
       <p className="mt-1 text-sm text-slate-500">
         {description}
       </p>
+
     </div>
   );
 }
@@ -1490,9 +1370,11 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
+
       <p className="text-sm text-slate-500">
         {message}
       </p>
+
     </div>
   );
 }
