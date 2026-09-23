@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { createClient } from '../../../lib/supabase/client';
+import { createClient } from '../../lib/supabase/client';
 
 type Farmer = {
   id: string;
@@ -33,7 +33,7 @@ type Batch = {
 type Egg = {
   id: string;
   farmer_id: string;
-  collection_date: string;
+  production_date: string;
   total_eggs?: number | null;
   saleable_eggs?: number | null;
 };
@@ -107,8 +107,8 @@ export default function BodhiFarmDashboardPage() {
         .order('created_at', { ascending: false }),
       supabase
         .from('egg_production')
-        .select('id, farmer_id, collection_date, total_eggs, saleable_eggs')
-        .order('collection_date', { ascending: false }),
+        .select('id, farmer_id, production_date, total_eggs, saleable_eggs')
+        .order('production_date', { ascending: false }),
       supabase
         .from('veterinary_records')
         .select(
@@ -195,11 +195,11 @@ export default function BodhiFarmDashboardPage() {
   const monthPrefix = today.slice(0, 7);
 
   const eggsToday = eggs
-    .filter((e) => e.collection_date === today)
+    .filter((e) => e.production_date === today)
     .reduce((sum, e) => sum + Number(e.saleable_eggs || 0), 0);
 
   const eggsThisMonth = eggs
-    .filter((e) => e.collection_date.startsWith(monthPrefix))
+    .filter((e) => e.production_date.startsWith(monthPrefix))
     .reduce((sum, e) => sum + Number(e.saleable_eggs || 0), 0);
 
   const mortalityThisMonth = veterinary
@@ -534,7 +534,7 @@ export default function BodhiFarmDashboardPage() {
                             {farmer?.farmer_id || '—'}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {formatDate(egg.collection_date)}
+                            {formatDate(egg.production_date)}
                           </div>
                         </div>
                         <div className="text-right">
