@@ -27,6 +27,7 @@ export default function StaffRegistrationPage() {
 
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
 
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
@@ -193,82 +194,32 @@ export default function StaffRegistrationPage() {
   }
 
   async function sendOtp() {
-    setError('');
-    setMessage('');
-
-    if (!mobile.trim()) {
-      setError('Please enter your mobile number.');
-      return;
-    }
-
+    setError(''); setMessage('');
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
     setSendingOtp(true);
-
     try {
-      const phone = mobile.startsWith('+')
-        ? mobile
-        : `+91${mobile.replace(/\D/g, '')}`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setMessage(
-        'OTP sent successfully. Please check your mobile.'
-      );
-    } catch (err: any) {
-      setError(err?.message || 'Unable to send OTP.');
-    } finally {
-      setSendingOtp(false);
-    }
+      const verifiedEmail = email.trim().toLowerCase();
+      const { error } = await supabase.auth.signInWithOtp({ email: verifiedEmail, options: { shouldCreateUser: true } });
+      if (error) throw new Error(error.message);
+      setMessage('Verification code sent successfully. Please check your email.');
+    } catch (err: any) { setError(err?.message || 'Unable to send verification code.'); }
+    finally { setSendingOtp(false); }
   }
 
   async function verifyOtp() {
-    setError('');
-    setMessage('');
-
-    if (!otp.trim()) {
-      setError('Please enter the OTP.');
-      return;
-    }
-
+    setError(''); setMessage('');
+    if (!email.trim()) { setError('Please enter your email address.'); return; }
+    if (!otp.trim()) { setError('Please enter the verification code.'); return; }
     setVerifyingOtp(true);
-
     try {
-      const phone = mobile.startsWith('+')
-        ? mobile
-        : `+91${mobile.replace(/\D/g, '')}`;
-
-      const { data, error } =
-        await supabase.auth.verifyOtp({
-          phone,
-          token: otp.trim(),
-          type: 'sms',
-        });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (!data.user) {
-        throw new Error(
-          'OTP verified but no authenticated user was returned.'
-        );
-      }
-
-      setUserId(data.user.id);
-      setStep('profile');
-      setMessage(
-        'Mobile number verified successfully.'
-      );
-    } catch (err: any) {
-      setError(err?.message || 'Invalid OTP.');
-    } finally {
-      setVerifyingOtp(false);
-    }
+      const verifiedEmail = email.trim().toLowerCase();
+      const { data, error } = await supabase.auth.verifyOtp({ email: verifiedEmail, token: otp.trim(), type: 'email' });
+      if (error) throw new Error(error.message);
+      if (!data.user) throw new Error('Email verified but no authenticated user was returned.');
+      setUserId(data.user.id); setEmailVerified(true); setStep('profile');
+      setMessage('Email verified successfully. You can now complete your staff application.');
+    } catch (err: any) { setError(err?.message || 'Invalid verification code.'); }
+    finally { setVerifyingOtp(false); }
   }
 
   async function handleStateChange(value: string) {
@@ -375,7 +326,7 @@ export default function StaffRegistrationPage() {
     setMessage('');
 
     if (!userId) {
-      setError('Please verify your mobile number first.');
+      setError('Please verify your email address first.');
       return;
     }
 
@@ -529,7 +480,7 @@ export default function StaffRegistrationPage() {
                 : 'bg-green-100 text-green-800'
             }`}
           >
-            1. OTP Verification
+            1. Email Verification
           </div>
 
           <div
@@ -572,11 +523,11 @@ export default function StaffRegistrationPage() {
           <section className="rounded-2xl bg-white p-6 shadow-sm">
 
             <h2 className="text-xl font-bold text-slate-900">
-              Mobile Verification
+              Email Verification
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Verify your mobile number before starting
+              Verify your email address before starting
               your staff application.
             </p>
 
@@ -605,7 +556,7 @@ export default function StaffRegistrationPage() {
             >
               {sendingOtp
                 ? 'Sending OTP...'
-                : 'Send OTP'}
+                : 'Send Verification Code'}
             </button>
 
             <div className="mt-6 border-t pt-6">
@@ -619,7 +570,7 @@ export default function StaffRegistrationPage() {
                 onChange={(e) =>
                   setOtp(e.target.value)
                 }
-                placeholder="Enter OTP"
+                placeholder="Enter verification code"
                 inputMode="numeric"
                 maxLength={6}
                 className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-green-600"
@@ -633,7 +584,7 @@ export default function StaffRegistrationPage() {
               >
                 {verifyingOtp
                   ? 'Verifying...'
-                  : 'Verify OTP'}
+                  : 'Verify Email'}
               </button>
 
             </div>
@@ -710,9 +661,16 @@ export default function StaffRegistrationPage() {
                   placeholder="Email"
                   type="email"
                   value={email}
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={emailVerified}
+                  className="input"
+                />
+
+                <input
+                  placeholder="Mobile Number *"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  required
                   className="input"
                 />
 
