@@ -46,6 +46,9 @@ export default function StaffRegistrationPage() {
   const [blocks, setBlocks] = useState<Location[]>([]);
   const [panchayats, setPanchayats] = useState<Location[]>([]);
   const [villages, setVillages] = useState<Location[]>([]);
+  const [proposedDistricts, setProposedDistricts] = useState<Location[]>([]);
+  const [proposedBlocks, setProposedBlocks] = useState<Location[]>([]);
+  const [proposedPanchayats, setProposedPanchayats] = useState<Location[]>([]);
 
   const [fullName, setFullName] = useState('');
   const [fatherHusbandName, setFatherHusbandName] = useState('');
@@ -158,30 +161,11 @@ export default function StaffRegistrationPage() {
     setBlocks((data || []) as Location[]);
   }
 
- async function loadPanchayats(parentBlockId: string) {
-  const { data, error } = await supabase.rpc(
-    'get_staff_panchayats',
-    {
-      p_block_id: parentBlockId,
-    }
-  );
-
-  if (error) {
-    setError(error.message);
-    return;
-  }
-
-  setPanchayats((data || []) as Location[]);
-}
-    const { data, error } = await supabase
-      .from('locations')
-      .select(
-        'id, parent_id, location_type, name, code, is_active'
-      )
-      .eq('parent_id', parentBlockId)
-      .eq('location_type', 'PANCHAYAT')
-      .eq('is_active', true)
-      .order('name');
+  async function loadPanchayats(parentBlockId: string) {
+    const { data, error } = await supabase.rpc(
+      'get_staff_panchayats',
+      { p_block_id: parentBlockId }
+    );
 
     if (error) {
       setError(error.message);
@@ -192,29 +176,10 @@ export default function StaffRegistrationPage() {
   }
 
   async function loadVillages(parentPanchayatId: string) {
-  const { data, error } = await supabase.rpc(
-    'get_staff_villages',
-    {
-      p_panchayat_id: parentPanchayatId,
-    }
-  );
-
-  if (error) {
-    setError(error.message);
-    return;
-  }
-
-  setVillages((data || []) as Location[]);
-}
-    const { data, error } = await supabase
-      .from('locations')
-      .select(
-        'id, parent_id, location_type, name, code, is_active'
-      )
-      .eq('parent_id', parentPanchayatId)
-      .eq('location_type', 'VILLAGE')
-      .eq('is_active', true)
-      .order('name');
+    const { data, error } = await supabase.rpc(
+      'get_staff_villages',
+      { p_panchayat_id: parentPanchayatId }
+    );
 
     if (error) {
       setError(error.message);
@@ -222,6 +187,45 @@ export default function StaffRegistrationPage() {
     }
 
     setVillages((data || []) as Location[]);
+  }
+
+  async function loadProposedDistricts(parentStateId: string) {
+    const { data, error } = await supabase.rpc('get_districts', {
+      p_state_id: parentStateId,
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setProposedDistricts((data || []) as Location[]);
+  }
+
+  async function loadProposedBlocks(parentDistrictId: string) {
+    const { data, error } = await supabase.rpc('get_blocks', {
+      p_district_id: parentDistrictId,
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setProposedBlocks((data || []) as Location[]);
+  }
+
+  async function loadProposedPanchayats(parentBlockId: string) {
+    const { data, error } = await supabase.rpc('get_staff_panchayats', {
+      p_block_id: parentBlockId,
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setProposedPanchayats((data || []) as Location[]);
   }
 
   async function sendOtp() {
@@ -333,39 +337,34 @@ export default function StaffRegistrationPage() {
     setProposedDistrictId('');
     setProposedBlockId('');
     setProposedPanchayatId('');
+    setProposedDistricts([]);
+    setProposedBlocks([]);
+    setProposedPanchayats([]);
 
     if (value) {
-      const { data, error } = await supabase.rpc(
-        'get_districts',
-        {
-          p_state_id: value,
-        }
-      );
-
-      if (!error) {
-        setDistricts((data || []) as Location[]);
-      }
+      await loadProposedDistricts(value);
     }
   }
 
-  async function handleProposedDistrictChange(
-    value: string
-  ) {
+  async function handleProposedDistrictChange(value: string) {
     setProposedDistrictId(value);
     setProposedBlockId('');
     setProposedPanchayatId('');
+    setProposedBlocks([]);
+    setProposedPanchayats([]);
 
     if (value) {
-      const { data, error } = await supabase.rpc(
-        'get_blocks',
-        {
-          p_district_id: value,
-        }
-      );
+      await loadProposedBlocks(value);
+    }
+  }
 
-      if (!error) {
-        setBlocks((data || []) as Location[]);
-      }
+  async function handleProposedBlockChange(value: string) {
+    setProposedBlockId(value);
+    setProposedPanchayatId('');
+    setProposedPanchayats([]);
+
+    if (value) {
+      await loadProposedPanchayats(value);
     }
   }
 
@@ -508,9 +507,11 @@ export default function StaffRegistrationPage() {
 
           <div className="flex items-center gap-4">
 
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-green-50 text-3xl font-bold text-green-700">
-              B
-            </div>
+            <img
+              src="/branding/bodhi-rural-logo.png"
+              alt="Bodhi Rural Livelihood & Agri Private Limited"
+              className="h-16 w-16 rounded-xl object-contain"
+            />
 
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
@@ -1069,6 +1070,61 @@ export default function StaffRegistrationPage() {
                       value={role.id}
                     >
                       {role.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={proposedStateId}
+                  onChange={(e) => handleProposedStateChange(e.target.value)}
+                  className="input"
+                >
+                  <option value="">Select Proposed State</option>
+                  {states.map((state) => (
+                    <option key={state.id} value={state.id}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={proposedDistrictId}
+                  onChange={(e) => handleProposedDistrictChange(e.target.value)}
+                  disabled={!proposedStateId}
+                  className="input"
+                >
+                  <option value="">Select Proposed District</option>
+                  {proposedDistricts.map((district) => (
+                    <option key={district.id} value={district.id}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={proposedBlockId}
+                  onChange={(e) => handleProposedBlockChange(e.target.value)}
+                  disabled={!proposedDistrictId}
+                  className="input"
+                >
+                  <option value="">Select Proposed Block</option>
+                  {proposedBlocks.map((block) => (
+                    <option key={block.id} value={block.id}>
+                      {block.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={proposedPanchayatId}
+                  onChange={(e) => setProposedPanchayatId(e.target.value)}
+                  disabled={!proposedBlockId}
+                  className="input"
+                >
+                  <option value="">Select Proposed Panchayat</option>
+                  {proposedPanchayats.map((panchayat) => (
+                    <option key={panchayat.id} value={panchayat.id}>
+                      {panchayat.name}
                     </option>
                   ))}
                 </select>
