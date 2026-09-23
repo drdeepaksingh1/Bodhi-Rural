@@ -31,6 +31,23 @@ type BirdBatch = {
   farmer_id: string;
 };
 
+type EggRecord = {
+  id: string;
+  total_eggs: number | null;
+  saleable_eggs: number | null;
+};
+
+type FeedRecord = {
+  id: string;
+  quantity_kg: number | null;
+  total_cost: number | null;
+};
+
+type VeterinaryRecord = {
+  id: string;
+  mortality_quantity: number | null;
+};
+
 const breeds = [
   'Gallus gallus domesticus',
   'Kadaknath',
@@ -61,7 +78,11 @@ export default function BodhiFarmPage() {
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
+  const [allFarms, setAllFarms] = useState<Farm[]>([]);
   const [batches, setBatches] = useState<BirdBatch[]>([]);
+  const [eggs, setEggs] = useState<EggRecord[]>([]);
+  const [feeds, setFeeds] = useState<FeedRecord[]>([]);
+  const [veterinary, setVeterinary] = useState<VeterinaryRecord[]>([]);
 
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [selectedFarm, setSelectedFarm] = useState('');
@@ -135,6 +156,55 @@ export default function BodhiFarmPage() {
     setBatches(data ?? []);
   }
 
+  async function loadOperationalData() {
+    const [
+      farmsResult,
+      eggsResult,
+      feedsResult,
+      veterinaryResult,
+    ] = await Promise.all([
+      supabase
+        .from('farms')
+        .select('id, farm_name, farm_type, shed_capacity, status'),
+
+      supabase
+        .from('egg_production')
+        .select('id, total_eggs, saleable_eggs'),
+
+      supabase
+        .from('feed_records')
+        .select('id, quantity_kg, total_cost'),
+
+      supabase
+        .from('veterinary_records')
+        .select('id, mortality_quantity'),
+    ]);
+
+    if (farmsResult.error) {
+      setError(`Unable to load farms: ${farmsResult.error.message}`);
+    } else {
+      setAllFarms(farmsResult.data ?? []);
+    }
+
+    if (eggsResult.error) {
+      setError(`Unable to load egg production: ${eggsResult.error.message}`);
+    } else {
+      setEggs(eggsResult.data ?? []);
+    }
+
+    if (feedsResult.error) {
+      setError(`Unable to load feed records: ${feedsResult.error.message}`);
+    } else {
+      setFeeds(feedsResult.data ?? []);
+    }
+
+    if (veterinaryResult.error) {
+      setError(`Unable to load veterinary records: ${veterinaryResult.error.message}`);
+    } else {
+      setVeterinary(veterinaryResult.data ?? []);
+    }
+  }
+
   /*
    * ---------------------------------------------------------
    * LOAD FARMS FOR SELECTED FARMER
@@ -177,6 +247,7 @@ export default function BodhiFarmPage() {
       await Promise.all([
         loadFarmers(),
         loadBatches(),
+        loadOperationalData(),
       ]);
 
       setLoading(false);
@@ -328,6 +399,30 @@ export default function BodhiFarmPage() {
     0
   );
 
+  const totalFarms = allFarms.length;
+
+  const totalEggs = eggs.reduce(
+    (sum, record) => sum + Number(record.total_eggs || 0),
+    0
+  );
+
+  const totalSaleableEggs = eggs.reduce(
+    (sum, record) => sum + Number(record.saleable_eggs || 0),
+    0
+  );
+
+  const totalFeedKg = feeds.reduce(
+    (sum, record) => sum + Number(record.quantity_kg || 0),
+    0
+  );
+
+  const totalFeedCost = feeds.reduce(
+    (sum, record) => sum + Number(record.total_cost || 0),
+    0
+  );
+
+  const totalVeterinaryRecords = veterinary.length;
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50">
@@ -362,11 +457,11 @@ export default function BodhiFarmPage() {
 </div>
 
               <h1 className="mt-2 text-3xl font-bold text-slate-900">
-                Bird Batch Management
+                BodhiFarm Operations Center
               </h1>
 
               <p className="mt-1 text-sm text-slate-500">
-                Manage poultry batches, birds, mortality and farm production.
+                Manage farmers, farms, bird batches, production, feed, veterinary records and flock performance.
               </p>
             </div>
 
@@ -382,6 +477,137 @@ export default function BodhiFarmPage() {
       </header>
 
       <section className="mx-auto max-w-7xl px-6 py-8">
+
+        {/* BODHIFARM OPERATIONS CENTER */}
+
+        <div className="mb-8">
+
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-slate-900">
+              BodhiFarm Operations Center
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Live overview of farmers, farms, birds, eggs, feed and veterinary operations.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Farmers</p>
+              <p className="mt-2 text-3xl font-bold text-emerald-700">
+                {farmers.length.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Active farmers</p>
+            </div>
+
+            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Farms</p>
+              <p className="mt-2 text-3xl font-bold text-blue-700">
+                {totalFarms.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Registered farms</p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Live Birds</p>
+              <p className="mt-2 text-3xl font-bold text-emerald-700">
+                {totalCurrentBirds.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Current flock</p>
+            </div>
+
+            <div className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Mortality</p>
+              <p className="mt-2 text-3xl font-bold text-red-600">
+                {totalMortality.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Total recorded</p>
+            </div>
+
+            <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Total Eggs</p>
+              <p className="mt-2 text-3xl font-bold text-amber-600">
+                {totalEggs.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Production records</p>
+            </div>
+
+            <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Saleable Eggs</p>
+              <p className="mt-2 text-3xl font-bold text-green-700">
+                {totalSaleableEggs.toLocaleString('en-IN')}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Saleable production</p>
+            </div>
+
+            <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Feed Consumed</p>
+              <p className="mt-2 text-3xl font-bold text-orange-600">
+                {totalFeedKg.toFixed(2)} kg
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Recorded feed</p>
+            </div>
+
+            <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Feed Cost</p>
+              <p className="mt-2 text-3xl font-bold text-purple-700">
+                ₹{totalFeedCost.toLocaleString('en-IN', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Recorded feed cost</p>
+            </div>
+
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <a href="/bodhifarm/farmers" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Farmer Management</p>
+              <p className="mt-1 text-sm text-slate-500">Farmer profiles and operational summaries.</p>
+            </a>
+
+            <a href="/bodhifarm/farms" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Farm Management</p>
+              <p className="mt-1 text-sm text-slate-500">Register farms and assign bird batches.</p>
+            </a>
+
+            <a href="/bodhifarm/egg-production" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Egg Production</p>
+              <p className="mt-1 text-sm text-slate-500">Record and monitor egg production.</p>
+            </a>
+
+            <a href="/bodhifarm/feed" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Feed Management</p>
+              <p className="mt-1 text-sm text-slate-500">Feed issue, consumption and cost.</p>
+            </a>
+
+            <a href="/bodhifarm/veterinary" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Veterinary & Mortality</p>
+              <p className="mt-1 text-sm text-slate-500">Health events and mortality management.</p>
+            </a>
+
+            <a href="/bodhifarm/performance" className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50">
+              <p className="font-bold text-slate-900">Performance Dashboard</p>
+              <p className="mt-1 text-sm text-slate-500">Bird, egg and feed performance.</p>
+            </a>
+
+            <a href="/bodhifarm" className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm transition hover:bg-emerald-100">
+              <p className="font-bold text-emerald-800">Bird Batch Management</p>
+              <p className="mt-1 text-sm text-emerald-700">Register and manage poultry batches.</p>
+            </a>
+
+            <a href="/bodhifarm/performance" className="rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm transition hover:bg-slate-100">
+              <p className="font-bold text-slate-800">Flock Performance</p>
+              <p className="mt-1 text-sm text-slate-500">Analyze flock-level production efficiency.</p>
+            </a>
+
+          </div>
+
+        </div>
 
         {/* SUMMARY */}
 
