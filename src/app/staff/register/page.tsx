@@ -37,6 +37,8 @@ export default function StaffRegistrationPage() {
   const [error, setError] = useState('');
 
   const [userId, setUserId] = useState('');
+  const [applicationId, setApplicationId] = useState('');
+  const [applicationNumber, setApplicationNumber] = useState('');
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [states, setStates] = useState<Location[]>([]);
@@ -49,6 +51,7 @@ export default function StaffRegistrationPage() {
   const [fatherHusbandName, setFatherHusbandName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
   const [email, setEmail] = useState('');
   const [alternateMobile, setAlternateMobile] = useState('');
   const [address, setAddress] = useState('');
@@ -390,6 +393,7 @@ export default function StaffRegistrationPage() {
           father_husband_name: fatherHusbandName || null,
           date_of_birth: dateOfBirth || null,
           gender: gender || null,
+          blood_group: bloodGroup || null,
 
           email: email || null,
           alternate_mobile:
@@ -446,6 +450,9 @@ export default function StaffRegistrationPage() {
       if (error) {
         throw new Error(error.message);
       }
+
+      setApplicationId(data.id);
+      setApplicationNumber(data.application_number);
 
       setMessage(
         `Application submitted successfully. Application Number: ${data.application_number}`
@@ -680,6 +687,27 @@ export default function StaffRegistrationPage() {
                   <option value="OTHER">
                     Other
                   </option>
+                </select>
+
+                <select
+                  value={bloodGroup}
+                  onChange={(e) =>
+                    setBloodGroup(e.target.value)
+                  }
+                  className="input"
+                >
+                  <option value="">
+                    Select Blood Group
+                  </option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="UNKNOWN">Unknown</option>
                 </select>
 
                 <input
@@ -1072,15 +1100,45 @@ export default function StaffRegistrationPage() {
             </p>
 
             <div className="mt-6 rounded-xl bg-green-50 p-5">
+
               <p className="text-sm font-semibold text-green-800">
-                Your application number is shown in the
-                confirmation message above.
+                Application Number
               </p>
 
-              <p className="mt-2 text-xs text-green-700">
-                Do not share your OTP or login credentials
-                with anyone.
+              <p className="mt-2 text-2xl font-bold tracking-wide text-green-900">
+                {applicationNumber}
               </p>
+
+              <p className="mt-3 text-sm text-green-800">
+                Keep this application number safely for future
+                communication with Bodhi Rural Livelihood & Agri
+                Private Limited.
+              </p>
+
+              {applicationId && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `/staff/application/${applicationId}/print`,
+                      '_blank'
+                    )
+                  }
+                  className="mt-5 rounded-lg bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
+                >
+                  Print / Save Application PDF
+                </button>
+              )}
+
+              <p className="mt-3 text-xs text-green-700">
+                You can print the application or choose
+                “Save as PDF” in your browser print window.
+              </p>
+
+              <p className="mt-3 text-xs text-green-700">
+                Do not share your OTP or login credentials with anyone.
+              </p>
+
             </div>
 
           </section>
