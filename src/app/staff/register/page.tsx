@@ -335,6 +335,11 @@ export default function StaffRegistrationPage() {
       return;
     }
 
+    if (!/^\d{10}$/.test(mobile)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
     if (!stateId || !districtId || !blockId) {
       setError(
         'Please complete your State, District and Block.'
@@ -534,16 +539,17 @@ export default function StaffRegistrationPage() {
             <div className="mt-6">
 
               <label className="text-sm font-medium text-slate-700">
-                Mobile Number
+                Email Address *
               </label>
 
               <input
-                value={mobile}
-                onChange={(e) =>
-                  setMobile(e.target.value)
-                }
-                placeholder="9876543210"
-                className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-green-600"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                disabled={emailVerified}
+                autoComplete="email"
+                className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-green-600 disabled:bg-slate-100"
               />
 
             </div>
@@ -658,18 +664,20 @@ export default function StaffRegistrationPage() {
                 </select>
 
                 <input
-                  placeholder="Email"
+                  placeholder="Verified Email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={emailVerified}
+                  readOnly
+                  disabled
                   className="input"
                 />
 
                 <input
                   placeholder="Mobile Number *"
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  inputMode="numeric"
+                  maxLength={10}
                   required
                   className="input"
                 />
