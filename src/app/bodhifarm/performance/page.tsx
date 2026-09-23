@@ -198,6 +198,27 @@ export default function PerformancePage() {
     );
   }, [batches, selectedBatch]);
 
+  // Performance scope:
+  // - All Farmers + All Batches = every batch
+  // - One Farmer + All Batches = every batch belonging to that farmer
+  // - One Farmer + One Batch = only the selected batch
+  const performanceBatches = useMemo(() => {
+    if (selectedBatchData) {
+      return [selectedBatchData];
+    }
+
+    if (selectedFarmer) {
+      return farmerBatches;
+    }
+
+    return batches;
+  }, [
+    selectedBatchData,
+    selectedFarmer,
+    farmerBatches,
+    batches,
+  ]);
+
   const filteredFeed = useMemo(() => {
     return feedRecords.filter((record) => {
       const farmerMatch =
@@ -283,14 +304,26 @@ export default function PerformancePage() {
       0
     );
 
-    const initialBirds =
-      selectedBatchData?.initial_quantity || 0;
+    // Aggregate flock metrics for the current scope.
+    // This works for:
+    // All Farmers, one Farmer/all batches, or one Farmer/one Batch.
+    const initialBirds = performanceBatches.reduce(
+      (sum, batch) =>
+        sum + Number(batch.initial_quantity || 0),
+      0
+    );
 
-    const liveBirds =
-      selectedBatchData?.current_quantity || 0;
+    const liveBirds = performanceBatches.reduce(
+      (sum, batch) =>
+        sum + Number(batch.current_quantity || 0),
+      0
+    );
 
-    const mortality =
-      selectedBatchData?.mortality_quantity || 0;
+    const mortality = performanceBatches.reduce(
+      (sum, batch) =>
+        sum + Number(batch.mortality_quantity || 0),
+      0
+    );
 
     const mortalityPercentage =
       initialBirds > 0
@@ -357,6 +390,7 @@ export default function PerformancePage() {
     filteredFeed,
     filteredEggs,
     selectedBatchData,
+    performanceBatches,
     fromDate,
     toDate,
   ]);
@@ -569,9 +603,26 @@ export default function PerformancePage() {
 
         {/* Bird KPIs */}
         <section>
-          <h2 className="mb-4 text-lg font-bold text-gray-900">
-            Flock Performance
-          </h2>
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                Flock Performance
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                {selectedBatchData
+                  ? `Selected batch · ${selectedBatchData.batch_code} — ${selectedBatchData.breed}`
+                  : selectedFarmer
+                    ? `Selected farmer · ${farmers.find((farmer) => farmer.id === selectedFarmer)?.farmer_id || ''} · ${performanceBatches.length} batch${performanceBatches.length === 1 ? '' : 'es'}`
+                    : `All farmers · ${performanceBatches.length} batch${performanceBatches.length === 1 ? '' : 'es'}`}
+              </p>
+            </div>
+          </div>
+
+          {performanceBatches.length === 0 && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              No bird batches are available for the selected scope.
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -581,9 +632,9 @@ export default function PerformancePage() {
               </p>
 
               <p className="mt-2 text-3xl font-bold text-gray-900">
-                {selectedBatchData
+                {performanceBatches.length > 0
                   ? metrics.initialBirds
-                  : '—'}
+                  : '0'}
               </p>
             </div>
 
@@ -593,9 +644,9 @@ export default function PerformancePage() {
               </p>
 
               <p className="mt-2 text-3xl font-bold text-green-700">
-                {selectedBatchData
+                {performanceBatches.length > 0
                   ? metrics.liveBirds
-                  : '—'}
+                  : '0'}
               </p>
             </div>
 
@@ -605,12 +656,12 @@ export default function PerformancePage() {
               </p>
 
               <p className="mt-2 text-3xl font-bold text-red-600">
-                {selectedBatchData
+                {performanceBatches.length > 0
                   ? metrics.mortality
-                  : '—'}
+                  : '0'}
               </p>
 
-              {selectedBatchData && (
+              {performanceBatches.length > 0 && (
                 <p className="mt-1 text-xs text-gray-500">
                   {formatNumber(
                     metrics.mortalityPercentage,
@@ -626,12 +677,12 @@ export default function PerformancePage() {
                 Avg. Daily Production
               </p>
               <p className="mt-2 text-3xl font-bold text-blue-700">
-                {selectedBatchData
+                {performanceBatches.length > 0
                   ? `${formatNumber(
                       metrics.averageDailyProductionPercentage,
                       2
                     )}%`
-                  : '—'}
+                  : '0.00%'}
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 Average eggs ÷ live birds ÷ period days
@@ -698,7 +749,9 @@ export default function PerformancePage() {
                 Daily Egg Limit
               </p>
               <p className="mt-2 text-3xl font-bold text-purple-700">
-                {selectedBatchData ? metrics.dailyEggLimit : '—'}
+                {performanceBatches.length > 0
+                  ? metrics.dailyEggLimit
+                  : '0'}
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 70% of current live birds
