@@ -1,12 +1,23 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "../../../../lib/supabase/client";
+import { useEffect, useMemo, useState } from 'react';
+import { createClient } from '../../../../lib/supabase/client';
 
 type Role = {
   id: string;
   code: string;
   name: string;
+};
+
+type Profile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  role_id: string | null;
+  location_id: string | null;
+  employee_code: string | null;
+  is_active: boolean;
 };
 
 type Location = {
@@ -15,87 +26,64 @@ type Location = {
   location_type: string;
   name: string;
   code: string | null;
-};
-
-type Profile = {
-  id: string;
-  full_name: string | null;
-  phone: string | null;
-  email: string | null;
-  role_id: string | null;
-  location_id: string | null;
-  employee_code: string | null;
-  avatar_url: string | null;
   is_active: boolean;
 };
 
-const supabase = createClient();
-
-const MANAGEMENT_ROLES = [
-  "STATE_MANAGER",
-  "DISTRICT_MANAGER",
-  "BLOCK_MANAGER",
+const GEOGRAPHIC_ROLES = [
+  'STATE_MANAGER',
+  'DISTRICT_MANAGER',
+  'BLOCK_MANAGER',
 ];
 
-export default function UserManagementPage() {
+const CORPORATE_ROLES = [
+  'SUPER_ADMIN',
+  'CEO',
+  'CORPORATE_ADMIN',
+  'FINANCE',
+  'HR',
+  'MIS',
+  'PROCUREMENT',
+  'VETERINARY',
+  'WAREHOUSE',
+  'FARMER',
+  'FARMER_LEADER',
+  'CLUSTER_SUPERVISOR',
+];
+
+export default function UserRoleManagementPage() {
+  const supabase = createClient();
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
 
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [states, setStates] = useState<Location[]>([]);
+  const [districts, setDistricts] = useState<Location[]>([]);
+  const [blocks, setBlocks] = useState<Location[]>([]);
 
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [employeeCode, setEmployeeCode] = useState("");
-  const [roleId, setRoleId] = useState("");
-  const [locationId, setLocationId] = useState("");
-
-  const [selectedStateId, setSelectedStateId] = useState("");
-  const [selectedDistrictId, setSelectedDistrictId] = useState("");
-  const [selectedBlockId, setSelectedBlockId] = useState("");
-
-  const [isActive, setIsActive] = useState(true);
-
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const selectedRole = useMemo(
-    () => roles.find((r) => r.id === roleId),
-    [roles, roleId]
+  const [search, setSearch] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const [selectedRoleId, setSelectedRoleId] = useState('');
+  const [selectedStateId, setSelectedStateId] = useState('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+  const [selectedBlockId, setSelectedBlockId] = useState('');
+  const [isActive, setIsActive] = useState(true);
+
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+
+  const selectedUser = profiles.find(
+    (profile) => profile.id === selectedUserId
   );
 
-  const states = useMemo(
-    () =>
-      locations
-        .filter((l) => l.location_type === "STATE")
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [locations]
-  );
-
-  const districts = useMemo(
-    () =>
-      locations
-        .filter(
-          (l) =>
-            l.location_type === "DISTRICT" &&
-            l.parent_id === selectedStateId
-        )
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [locations, selectedStateId]
-  );
-
-  const blocks = useMemo(
-    () =>
-      locations
-        .filter(
-          (l) =>
-            l.location_type === "BLOCK" &&
-            l.parent_id === selectedDistrictId
-        )
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [locations, selectedDistrictId]
+  const selectedRole = roles.find(
+    (role) => role.id === selectedRoleId
   );
 
   const filteredProfiles = useMemo(() => {
@@ -103,12 +91,12 @@ export default function UserManagementPage() {
 
     if (!q) return profiles;
 
-    return profiles.filter((p) =>
+    return profiles.filter((profile) =>
       [
-        p.full_name,
-        p.email,
-        p.phone,
-        p.employee_code,
+        profile.full_name,
+        profile.email,
+        profile.phone,
+        profile.employee_code,
       ]
         .filter(Boolean)
         .some((value) =>
@@ -117,245 +105,444 @@ export default function UserManagementPage() {
     );
   }, [profiles, search]);
 
-  async function loadData() {
-    setLoading(true);
-    setMessage("");
-
-    const [
-      { data: profileData, error: profileError },
-      { data: roleData, error: roleError },
-      { data: locationData, error: locationError },
-    ] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select(
-          "id,full_name,phone,email,role_id,location_id,employee_code,avatar_url,is_active"
-        )
-        .order("full_name"),
-
-      supabase
-        .from("roles")
-        .select("id,code,name")
-        .order("name"),
-
-      supabase
-        .from("locations")
-        .select(
-          "id,parent_id,location_type,name,code"
-        )
-        .eq("is_active", true)
-        .order("name"),
-    ]);
-
-    if (profileError) {
-      setMessage(`Profiles: ${profileError.message}`);
-    } else if (roleError) {
-      setMessage(`Roles: ${roleError.message}`);
-    } else if (locationError) {
-      setMessage(`Locations: ${locationError.message}`);
-    } else {
-      setProfiles(profileData || []);
-      setRoles(roleData || []);
-      setLocations(locationData || []);
-    }
-
-    setLoading(false);
-  }
+  const managementLocationCount =
+    states.length + districts.length + blocks.length;
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
-  function selectUser(profile: Profile) {
-    setSelectedUser(profile);
+  async function loadInitialData() {
+    setLoading(true);
+    setError('');
 
-    setFullName(profile.full_name || "");
-    setPhone(profile.phone || "");
-    setEmployeeCode(profile.employee_code || "");
-    setRoleId(profile.role_id || "");
-    setLocationId(profile.location_id || "");
-    setIsActive(profile.is_active);
+    try {
+      const [
+        { data: profileData, error: profileError },
+        { data: roleData, error: roleError },
+      ] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select(
+            'id, full_name, email, phone, role_id, location_id, employee_code, is_active'
+          )
+          .order('full_name', { ascending: true }),
 
-    const userLocation = locations.find(
-      (l) => l.id === profile.location_id
-    );
+        supabase
+          .from('roles')
+          .select('id, code, name')
+          .order('name', { ascending: true }),
+      ]);
 
-    if (!userLocation) {
-      setSelectedStateId("");
-      setSelectedDistrictId("");
-      setSelectedBlockId("");
-      return;
+      if (profileError) {
+        throw new Error(profileError.message);
+      }
+
+      if (roleError) {
+        throw new Error(roleError.message);
+      }
+
+      setProfiles(profileData || []);
+      setRoles(roleData || []);
+
+      await loadStates();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load user management data.');
+    } finally {
+      setLoading(false);
     }
+  }
 
-    if (userLocation.location_type === "STATE") {
-      setSelectedStateId(userLocation.id);
-      setSelectedDistrictId("");
-      setSelectedBlockId("");
+  async function loadStates() {
+    setLoadingStates(true);
+
+    try {
+      const { data, error } = await supabase.rpc('get_states');
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setStates((data || []) as Location[]);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load states.');
+    } finally {
+      setLoadingStates(false);
     }
+  }
 
-    if (userLocation.location_type === "DISTRICT") {
-      setSelectedStateId(userLocation.parent_id || "");
-      setSelectedDistrictId(userLocation.id);
-      setSelectedBlockId("");
-    }
+  async function loadDistricts(stateId: string) {
+    setLoadingDistricts(true);
 
-    if (userLocation.location_type === "BLOCK") {
-      const district = locations.find(
-        (l) => l.id === userLocation.parent_id
+    try {
+      const { data, error } = await supabase.rpc(
+        'get_districts',
+        {
+          p_state_id: stateId,
+        }
       );
 
-      setSelectedStateId(district?.parent_id || "");
-      setSelectedDistrictId(district?.id || "");
-      setSelectedBlockId(userLocation.id);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setDistricts((data || []) as Location[]);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load districts.');
+    } finally {
+      setLoadingDistricts(false);
     }
   }
 
-  function handleRoleChange(value: string) {
-    setRoleId(value);
+  async function loadBlocks(districtId: string) {
+    setLoadingBlocks(true);
 
-    setLocationId("");
-    setSelectedStateId("");
-    setSelectedDistrictId("");
-    setSelectedBlockId("");
-  }
+    try {
+      const { data, error } = await supabase.rpc(
+        'get_blocks',
+        {
+          p_district_id: districtId,
+        }
+      );
 
-  function handleStateChange(value: string) {
-    setSelectedStateId(value);
-    setSelectedDistrictId("");
-    setSelectedBlockId("");
+      if (error) {
+        throw new Error(error.message);
+      }
 
-    const role = selectedRole?.code;
-
-    if (role === "STATE_MANAGER") {
-      setLocationId(value);
-    } else {
-      setLocationId("");
+      setBlocks((data || []) as Location[]);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load blocks.');
+    } finally {
+      setLoadingBlocks(false);
     }
   }
 
-  function handleDistrictChange(value: string) {
-    setSelectedDistrictId(value);
-    setSelectedBlockId("");
+  async function findLocationHierarchy(locationId: string) {
+    if (!locationId) return;
 
-    if (selectedRole?.code === "DISTRICT_MANAGER") {
-      setLocationId(value);
-    } else {
-      setLocationId("");
+    try {
+      const { data: location, error } = await supabase
+        .from('locations')
+        .select(
+          'id, parent_id, location_type, name, code, is_active'
+        )
+        .eq('id', locationId)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!location) return;
+
+      const loc = location as Location;
+
+      if (loc.location_type === 'STATE') {
+        setSelectedStateId(loc.id);
+        setSelectedDistrictId('');
+        setSelectedBlockId('');
+        setDistricts([]);
+        setBlocks([]);
+        await loadDistricts(loc.id);
+        return;
+      }
+
+      if (loc.location_type === 'DISTRICT') {
+        setSelectedDistrictId(loc.id);
+        setSelectedBlockId('');
+        setBlocks([]);
+
+        if (loc.parent_id) {
+          setSelectedStateId(loc.parent_id);
+          await loadDistricts(loc.parent_id);
+        }
+
+        await loadBlocks(loc.id);
+        return;
+      }
+
+      if (loc.location_type === 'BLOCK') {
+        setSelectedBlockId(loc.id);
+
+        if (loc.parent_id) {
+          setSelectedDistrictId(loc.parent_id);
+
+          const { data: district, error: districtError } =
+            await supabase
+              .from('locations')
+              .select(
+                'id, parent_id, location_type, name, code, is_active'
+              )
+              .eq('id', loc.parent_id)
+              .single();
+
+          if (districtError) {
+            throw new Error(districtError.message);
+          }
+
+          if (district) {
+            const districtLocation = district as Location;
+
+            if (districtLocation.parent_id) {
+              setSelectedStateId(
+                districtLocation.parent_id
+              );
+
+              await loadDistricts(
+                districtLocation.parent_id
+              );
+            }
+
+            await loadBlocks(loc.parent_id);
+          }
+        }
+
+        return;
+      }
+    } catch (err: any) {
+      setError(
+        err?.message ||
+          'Failed to load geographic assignment.'
+      );
     }
   }
 
-  function handleBlockChange(value: string) {
-    setSelectedBlockId(value);
+  async function selectUser(profile: Profile) {
+    setSelectedUserId(profile.id);
+    setError('');
+    setSuccess('');
 
-    if (selectedRole?.code === "BLOCK_MANAGER") {
-      setLocationId(value);
-    } else {
-      setLocationId("");
+    setSelectedRoleId(profile.role_id || '');
+    setIsActive(profile.is_active);
+
+    setSelectedStateId('');
+    setSelectedDistrictId('');
+    setSelectedBlockId('');
+
+    setDistricts([]);
+    setBlocks([]);
+
+    if (profile.location_id) {
+      await findLocationHierarchy(profile.location_id);
     }
+  }
+
+  async function handleStateChange(stateId: string) {
+    setSelectedStateId(stateId);
+    setSelectedDistrictId('');
+    setSelectedBlockId('');
+
+    setDistricts([]);
+    setBlocks([]);
+
+    setError('');
+    setSuccess('');
+
+    if (stateId) {
+      await loadDistricts(stateId);
+    }
+  }
+
+  async function handleDistrictChange(districtId: string) {
+    setSelectedDistrictId(districtId);
+    setSelectedBlockId('');
+
+    setBlocks([]);
+
+    setError('');
+    setSuccess('');
+
+    if (districtId) {
+      await loadBlocks(districtId);
+    }
+  }
+
+  function handleBlockChange(blockId: string) {
+    setSelectedBlockId(blockId);
+    setError('');
+    setSuccess('');
+  }
+
+  function getLocationForRole() {
+    if (!selectedRole) {
+      return null;
+    }
+
+    if (selectedRole.code === 'STATE_MANAGER') {
+      return selectedStateId || null;
+    }
+
+    if (selectedRole.code === 'DISTRICT_MANAGER') {
+      return selectedDistrictId || null;
+    }
+
+    if (selectedRole.code === 'BLOCK_MANAGER') {
+      return selectedBlockId || null;
+    }
+
+    return null;
+  }
+
+  function geographicAssignmentRequired() {
+    return selectedRole
+      ? GEOGRAPHIC_ROLES.includes(selectedRole.code)
+      : false;
   }
 
   async function saveUser() {
     if (!selectedUser) return;
 
-    if (
-      selectedRole?.code === "STATE_MANAGER" &&
-      !selectedStateId
-    ) {
-      setMessage("Please select a State.");
-      return;
-    }
-
-    if (
-      selectedRole?.code === "DISTRICT_MANAGER" &&
-      !selectedDistrictId
-    ) {
-      setMessage("Please select a District.");
-      return;
-    }
-
-    if (
-      selectedRole?.code === "BLOCK_MANAGER" &&
-      !selectedBlockId
-    ) {
-      setMessage("Please select a Block.");
-      return;
-    }
-
     setSaving(true);
-    setMessage("");
+    setError('');
+    setSuccess('');
 
-    let finalLocationId: string | null = null;
+    try {
+      if (!selectedRoleId) {
+        throw new Error('Please select a role.');
+      }
 
-    if (selectedRole?.code === "STATE_MANAGER") {
-      finalLocationId = selectedStateId;
-    }
+      if (geographicAssignmentRequired()) {
+        if (
+          selectedRole?.code === 'STATE_MANAGER' &&
+          !selectedStateId
+        ) {
+          throw new Error(
+            'Please select a State for the State Manager.'
+          );
+        }
 
-    if (selectedRole?.code === "DISTRICT_MANAGER") {
-      finalLocationId = selectedDistrictId;
-    }
+        if (
+          selectedRole?.code === 'DISTRICT_MANAGER' &&
+          !selectedDistrictId
+        ) {
+          throw new Error(
+            'Please select a District for the District Manager.'
+          );
+        }
 
-    if (selectedRole?.code === "BLOCK_MANAGER") {
-      finalLocationId = selectedBlockId;
-    }
+        if (
+          selectedRole?.code === 'BLOCK_MANAGER' &&
+          !selectedBlockId
+        ) {
+          throw new Error(
+            'Please select a Block for the Block Manager.'
+          );
+        }
+      }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName.trim(),
-        phone: phone.trim() || null,
-        employee_code: employeeCode.trim() || null,
-        role_id: roleId || null,
-        location_id: finalLocationId,
-        is_active: isActive,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", selectedUser.id);
+      const locationId = getLocationForRole();
 
-    if (error) {
-      setMessage(`Error: ${error.message}`);
-    } else {
-      setMessage(
-        "User role and geographic assignment updated successfully."
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          role_id: selectedRoleId,
+          location_id: locationId,
+          is_active: isActive,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedUser.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setProfiles((current) =>
+        current.map((profile) =>
+          profile.id === selectedUser.id
+            ? {
+                ...profile,
+                role_id: selectedRoleId,
+                location_id: locationId,
+                is_active: isActive,
+              }
+            : profile
+        )
       );
 
-      await loadData();
-
-      setSelectedUser({
-        ...selectedUser,
-        full_name: fullName.trim(),
-        phone: phone.trim() || null,
-        employee_code: employeeCode.trim() || null,
-        role_id: roleId || null,
-        location_id: finalLocationId,
-        is_active: isActive,
-      });
+      setSuccess(
+        `User "${selectedUser.full_name || selectedUser.email}" updated successfully.`
+      );
+    } catch (err: any) {
+      setError(
+        err?.message || 'Failed to update user.'
+      );
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
-  function roleName(id: string | null) {
+  function getRoleName(roleId: string | null) {
+    if (!roleId) return 'No role';
+
     return (
-      roles.find((r) => r.id === id)?.name ||
-      "Not Assigned"
+      roles.find((role) => role.id === roleId)?.name ||
+      'Unknown role'
     );
   }
 
-  function locationName(id: string | null) {
+  function getRoleCode(roleId: string | null) {
+    if (!roleId) return '';
+
     return (
-      locations.find((l) => l.id === id)?.name ||
-      "Company-wide"
+      roles.find((role) => role.id === roleId)?.code || ''
+    );
+  }
+
+  function getAssignmentLabel(profile: Profile) {
+    if (!profile.location_id) {
+      return 'Company-wide';
+    }
+
+    const roleCode = getRoleCode(profile.role_id);
+
+    if (roleCode === 'STATE_MANAGER') {
+      return (
+        states.find(
+          (state) => state.id === profile.location_id
+        )?.name || 'Assigned State'
+      );
+    }
+
+    if (roleCode === 'DISTRICT_MANAGER') {
+      return (
+        districts.find(
+          (district) => district.id === profile.location_id
+        )?.name || 'Assigned District'
+      );
+    }
+
+    if (roleCode === 'BLOCK_MANAGER') {
+      return (
+        blocks.find(
+          (block) => block.id === profile.location_id
+        )?.name || 'Assigned Block'
+      );
+    }
+
+    return 'Assigned location';
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 p-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-xl bg-white p-8 shadow-sm">
+            Loading User & Role Management...
+          </div>
+        </div>
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6">
+    <main className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
 
+        {/* HEADER */}
         <div className="mb-6">
           <a
             href="/bodhifarm/dashboard"
-            className="text-sm font-medium text-green-700"
+            className="text-sm font-medium text-green-700 hover:text-green-800"
           >
             ← Back to BodhiFarm Dashboard
           </a>
@@ -369,13 +556,27 @@ export default function UserManagementPage() {
           </p>
         </div>
 
+        {/* MESSAGES */}
+        {error && (
+          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {success}
+          </div>
+        )}
+
+        {/* KPI CARDS */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
 
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">
               Total Users
             </p>
-            <p className="mt-1 text-3xl font-bold">
+            <p className="mt-2 text-3xl font-bold text-slate-900">
               {profiles.length}
             </p>
           </div>
@@ -384,8 +585,12 @@ export default function UserManagementPage() {
             <p className="text-sm text-slate-500">
               Active Users
             </p>
-            <p className="mt-1 text-3xl font-bold text-green-700">
-              {profiles.filter((p) => p.is_active).length}
+            <p className="mt-2 text-3xl font-bold text-green-700">
+              {
+                profiles.filter(
+                  (profile) => profile.is_active
+                ).length
+              }
             </p>
           </div>
 
@@ -393,248 +598,246 @@ export default function UserManagementPage() {
             <p className="text-sm text-slate-500">
               Roles
             </p>
-            <p className="mt-1 text-3xl font-bold">
+            <p className="mt-2 text-3xl font-bold text-slate-900">
               {roles.length}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-sm text-slate-500">
-              Locations
+              Management Locations
             </p>
-            <p className="mt-1 text-3xl font-bold">
-              {locations.length.toLocaleString()}
+            <p className="mt-2 text-3xl font-bold text-slate-900">
+              {managementLocationCount}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              States + Districts + Blocks
             </p>
           </div>
 
         </div>
 
-        {message && (
-          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-            {message}
-          </div>
-        )}
+        {/* MAIN CONTENT */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          {/* USER LIST */}
+          <section className="rounded-xl bg-white shadow-sm lg:col-span-1">
 
-          <section className="rounded-xl bg-white shadow-sm lg:col-span-2">
-
-            <div className="border-b p-5">
-              <h2 className="text-lg font-semibold">
+            <div className="border-b border-slate-200 p-5">
+              <h2 className="font-semibold text-slate-900">
                 Users
               </h2>
 
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Search user..."
-                className="mt-4 w-full rounded-lg border px-3 py-2 text-sm"
+                className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
               />
             </div>
 
             <div className="max-h-[650px] overflow-y-auto">
 
-              {loading ? (
-                <div className="p-6 text-sm text-slate-500">
-                  Loading users...
-                </div>
-              ) : filteredProfiles.length === 0 ? (
-                <div className="p-6 text-sm text-slate-500">
+              {filteredProfiles.length === 0 && (
+                <div className="p-6 text-center text-sm text-slate-500">
                   No users found.
                 </div>
-              ) : (
-                filteredProfiles.map((profile) => (
+              )}
+
+              {filteredProfiles.map((profile) => {
+                const isSelected =
+                  selectedUserId === profile.id;
+
+                return (
                   <button
                     key={profile.id}
-                    onClick={() => selectUser(profile)}
-                    className={`w-full border-b p-4 text-left hover:bg-slate-50 ${
-                      selectedUser?.id === profile.id
-                        ? "bg-green-50"
-                        : ""
+                    type="button"
+                    onClick={() =>
+                      selectUser(profile)
+                    }
+                    className={`w-full border-b border-slate-100 p-5 text-left transition ${
+                      isSelected
+                        ? 'bg-green-50'
+                        : 'hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex justify-between">
+                    <div className="flex items-start justify-between gap-3">
 
                       <div>
-                        <p className="font-semibold">
-                          {profile.full_name || "Unnamed User"}
+                        <p className="font-semibold text-slate-900">
+                          {profile.full_name ||
+                            'Unnamed User'}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {profile.email || "No email"}
+                          {profile.email || 'No email'}
                         </p>
 
                         <p className="mt-2 text-xs font-medium text-green-700">
-                          {roleName(profile.role_id)}
+                          {getRoleName(profile.role_id)}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {locationName(profile.location_id)}
+                          {getAssignmentLabel(profile)}
                         </p>
                       </div>
 
                       <span
-                        className={`h-fit rounded-full px-2 py-1 text-[10px] font-semibold ${
+                        className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
                           profile.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                         }`}
                       >
                         {profile.is_active
-                          ? "ACTIVE"
-                          : "INACTIVE"}
+                          ? 'ACTIVE'
+                          : 'INACTIVE'}
                       </span>
 
                     </div>
                   </button>
-                ))
-              )}
+                );
+              })}
 
             </div>
           </section>
 
-          <section className="rounded-xl bg-white p-6 shadow-sm lg:col-span-3">
+          {/* EDIT PANEL */}
+          <section className="rounded-xl bg-white p-6 shadow-sm lg:col-span-2">
 
             {!selectedUser ? (
               <div className="flex min-h-[500px] items-center justify-center text-center">
                 <div>
                   <div className="text-5xl">👤</div>
-                  <h2 className="mt-4 text-xl font-semibold">
+
+                  <h2 className="mt-4 text-xl font-semibold text-slate-900">
                     Select a User
                   </h2>
+
                   <p className="mt-2 text-sm text-slate-500">
-                    Select a user to manage their role and geographic assignment.
+                    Select a user to manage their role
+                    and geographic assignment.
                   </p>
                 </div>
               </div>
             ) : (
-              <>
-                <div className="mb-6 border-b pb-5">
-                  <h2 className="text-xl font-bold">
-                    Edit User
-                  </h2>
 
-                  <p className="mt-1 text-xs text-slate-500">
-                    User ID: {selectedUser.id}
-                  </p>
+              <div>
+
+                {/* USER HEADER */}
+                <div className="border-b border-slate-200 pb-5">
+
+                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900">
+                        {selectedUser.full_name ||
+                          'Unnamed User'}
+                      </h2>
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        {selectedUser.email}
+                      </p>
+
+                      {selectedUser.phone && (
+                        <p className="mt-1 text-sm text-slate-500">
+                          {selectedUser.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg bg-slate-50 px-4 py-3 text-right">
+                      <p className="text-xs text-slate-500">
+                        User ID
+                      </p>
+
+                      <p className="mt-1 max-w-[260px] break-all text-xs font-mono text-slate-700">
+                        {selectedUser.id}
+                      </p>
+                    </div>
+
+                  </div>
+
                 </div>
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* ROLE */}
+                <div className="mt-6">
 
-                  <div>
-                    <label className="text-sm font-medium">
-                      Full Name
-                    </label>
+                  <label className="block text-sm font-semibold text-slate-800">
+                    Role
+                  </label>
 
-                    <input
-                      value={fullName}
-                      onChange={(e) =>
-                        setFullName(e.target.value)
-                      }
-                      className="mt-1 w-full rounded-lg border px-3 py-2"
-                    />
-                  </div>
+                  <select
+                    value={selectedRoleId}
+                    onChange={(e) => {
+                      setSelectedRoleId(e.target.value);
+                      setSelectedStateId('');
+                      setSelectedDistrictId('');
+                      setSelectedBlockId('');
+                      setDistricts([]);
+                      setBlocks([]);
+                      setError('');
+                      setSuccess('');
+                    }}
+                    className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                  >
+                    <option value="">
+                      Select role
+                    </option>
 
-                  <div>
-                    <label className="text-sm font-medium">
-                      Email
-                    </label>
-
-                    <input
-                      value={selectedUser.email || ""}
-                      disabled
-                      className="mt-1 w-full rounded-lg border bg-slate-100 px-3 py-2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Phone
-                    </label>
-
-                    <input
-                      value={phone}
-                      onChange={(e) =>
-                        setPhone(e.target.value)
-                      }
-                      className="mt-1 w-full rounded-lg border px-3 py-2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Employee Code
-                    </label>
-
-                    <input
-                      value={employeeCode}
-                      onChange={(e) =>
-                        setEmployeeCode(e.target.value)
-                      }
-                      placeholder="Example: BRL-001"
-                      className="mt-1 w-full rounded-lg border px-3 py-2"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium">
-                      Role
-                    </label>
-
-                    <select
-                      value={roleId}
-                      onChange={(e) =>
-                        handleRoleChange(e.target.value)
-                      }
-                      className="mt-1 w-full rounded-lg border bg-white px-3 py-2"
-                    >
-                      <option value="">
-                        Select Role
+                    {roles.map((role) => (
+                      <option
+                        key={role.id}
+                        value={role.id}
+                      >
+                        {role.name} ({role.code})
                       </option>
-
-                      {roles.map((role) => (
-                        <option
-                          key={role.id}
-                          value={role.id}
-                        >
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    ))}
+                  </select>
 
                 </div>
 
+                {/* GEOGRAPHIC ASSIGNMENT */}
                 {selectedRole &&
-                MANAGEMENT_ROLES.includes(
-                  selectedRole.code
-                ) ? (
-                  <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5">
+                  GEOGRAPHIC_ROLES.includes(
+                    selectedRole.code
+                  ) && (
 
-                    <h3 className="font-semibold text-green-900">
-                      Geographic Assignment
-                    </h3>
+                    <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5">
 
-                    <p className="mt-1 text-xs text-green-700">
-                      Select the administrative area this manager controls.
-                    </p>
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-green-900">
+                          Geographic Assignment
+                        </h3>
 
-                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <p className="mt-1 text-xs text-green-700">
+                          Select the geographic area this
+                          manager is responsible for.
+                        </p>
+                      </div>
 
+                      {/* STATE */}
                       <div>
-                        <label className="text-sm font-medium">
+                        <label className="block text-sm font-medium text-slate-800">
                           State
                         </label>
 
                         <select
                           value={selectedStateId}
                           onChange={(e) =>
-                            handleStateChange(e.target.value)
+                            handleStateChange(
+                              e.target.value
+                            )
                           }
-                          className="mt-1 w-full rounded-lg border bg-white px-3 py-2"
+                          disabled={loadingStates}
+                          className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
                         >
                           <option value="">
-                            Select State
+                            {loadingStates
+                              ? 'Loading states...'
+                              : 'Select State'}
                           </option>
 
                           {states.map((state) => (
@@ -648,141 +851,226 @@ export default function UserManagementPage() {
                         </select>
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium">
-                          District
-                        </label>
+                      {/* DISTRICT */}
+                      {(selectedRole.code ===
+                        'DISTRICT_MANAGER' ||
+                        selectedRole.code ===
+                          'BLOCK_MANAGER') && (
+                        <div className="mt-4">
 
-                        <select
-                          value={selectedDistrictId}
-                          onChange={(e) =>
-                            handleDistrictChange(e.target.value)
-                          }
-                          disabled={!selectedStateId}
-                          className="mt-1 w-full rounded-lg border bg-white px-3 py-2 disabled:bg-slate-100"
-                        >
-                          <option value="">
-                            Select District
-                          </option>
+                          <label className="block text-sm font-medium text-slate-800">
+                            District
+                          </label>
 
-                          {districts.map((district) => (
-                            <option
-                              key={district.id}
-                              value={district.id}
-                            >
-                              {district.name}
+                          <select
+                            value={
+                              selectedDistrictId
+                            }
+                            onChange={(e) =>
+                              handleDistrictChange(
+                                e.target.value
+                              )
+                            }
+                            disabled={
+                              !selectedStateId ||
+                              loadingDistricts
+                            }
+                            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 disabled:bg-slate-100"
+                          >
+                            <option value="">
+                              {loadingDistricts
+                                ? 'Loading districts...'
+                                : !selectedStateId
+                                ? 'Select State first'
+                                : 'Select District'}
                             </option>
-                          ))}
-                        </select>
-                      </div>
 
-                      <div>
-                        <label className="text-sm font-medium">
-                          Block
-                        </label>
+                            {districts.map(
+                              (district) => (
+                                <option
+                                  key={district.id}
+                                  value={district.id}
+                                >
+                                  {district.name}
+                                </option>
+                              )
+                            )}
+                          </select>
 
-                        <select
-                          value={selectedBlockId}
-                          onChange={(e) =>
-                            handleBlockChange(e.target.value)
-                          }
-                          disabled={!selectedDistrictId}
-                          className="mt-1 w-full rounded-lg border bg-white px-3 py-2 disabled:bg-slate-100"
-                        >
-                          <option value="">
-                            Select Block
-                          </option>
+                        </div>
+                      )}
 
-                          {blocks.map((block) => (
-                            <option
-                              key={block.id}
-                              value={block.id}
-                            >
-                              {block.name}
+                      {/* BLOCK */}
+                      {selectedRole.code ===
+                        'BLOCK_MANAGER' && (
+                        <div className="mt-4">
+
+                          <label className="block text-sm font-medium text-slate-800">
+                            Block
+                          </label>
+
+                          <select
+                            value={
+                              selectedBlockId
+                            }
+                            onChange={(e) =>
+                              handleBlockChange(
+                                e.target.value
+                              )
+                            }
+                            disabled={
+                              !selectedDistrictId ||
+                              loadingBlocks
+                            }
+                            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 disabled:bg-slate-100"
+                          >
+                            <option value="">
+                              {loadingBlocks
+                                ? 'Loading blocks...'
+                                : !selectedDistrictId
+                                ? 'Select District first'
+                                : 'Select Block'}
                             </option>
-                          ))}
-                        </select>
+
+                            {blocks.map((block) => (
+                              <option
+                                key={block.id}
+                                value={block.id}
+                              >
+                                {block.name}
+                              </option>
+                            ))}
+                          </select>
+
+                        </div>
+                      )}
+
+                      {/* ASSIGNMENT SUMMARY */}
+                      <div className="mt-5 rounded-lg bg-white p-4">
+
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Assignment
+                        </p>
+
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
+                          {selectedStateId
+                            ? states.find(
+                                (state) =>
+                                  state.id ===
+                                  selectedStateId
+                              )?.name
+                            : 'No State selected'}
+
+                          {selectedDistrictId &&
+                            ` → ${
+                              districts.find(
+                                (district) =>
+                                  district.id ===
+                                  selectedDistrictId
+                              )?.name || ''
+                            }`}
+
+                          {selectedBlockId &&
+                            ` → ${
+                              blocks.find(
+                                (block) =>
+                                  block.id ===
+                                  selectedBlockId
+                              )?.name || ''
+                            }`}
+                        </p>
+
                       </div>
 
                     </div>
+                  )}
 
-                    <div className="mt-4 rounded-lg bg-white p-3 text-sm">
-                      <span className="font-semibold">
-                        Assignment:
-                      </span>{" "}
+                {/* CORPORATE / NON-GEOGRAPHIC MESSAGE */}
+                {selectedRole &&
+                  !GEOGRAPHIC_ROLES.includes(
+                    selectedRole.code
+                  ) && (
+                    <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
 
-                      {selectedRole.code === "STATE_MANAGER" &&
-                        (states.find(
-                          (s) => s.id === selectedStateId
-                        )?.name || "Not selected")}
+                      <h3 className="font-semibold text-blue-900">
+                        Company / Functional Role
+                      </h3>
 
-                      {selectedRole.code === "DISTRICT_MANAGER" &&
-                        (districts.find(
-                          (d) => d.id === selectedDistrictId
-                        )?.name || "Not selected")}
+                      <p className="mt-1 text-sm text-blue-700">
+                        This role does not require a
+                        State, District or Block
+                        assignment.
+                      </p>
 
-                      {selectedRole.code === "BLOCK_MANAGER" &&
-                        (blocks.find(
-                          (b) => b.id === selectedBlockId
-                        )?.name || "Not selected")}
                     </div>
+                  )}
 
-                  </div>
-                ) : (
-                  <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
-                    <h3 className="font-semibold text-slate-800">
-                      Geographic Assignment
-                    </h3>
+                {/* ACTIVE STATUS */}
+                <div className="mt-6 rounded-xl border border-slate-200 p-5">
 
-                    <p className="mt-1 text-sm text-slate-500">
-                      This role has company-wide or functional access.
-                      No geographic assignment is required here.
-                    </p>
-                  </div>
-                )}
+                  <label className="flex cursor-pointer items-center gap-3">
 
-                <div className="mt-6 rounded-lg border bg-slate-50 p-4">
-
-                  <label className="flex items-center gap-3">
                     <input
                       type="checkbox"
                       checked={isActive}
                       onChange={(e) =>
-                        setIsActive(e.target.checked)
+                        setIsActive(
+                          e.target.checked
+                        )
                       }
-                      className="h-4 w-4"
+                      className="h-5 w-5 rounded border-slate-300 text-green-700 focus:ring-green-600"
                     />
 
-                    <span>
-                      <span className="block text-sm font-semibold">
-                        Active Account
-                      </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        User Active
+                      </p>
 
-                      <span className="block text-xs text-slate-500">
-                        Inactive users should not be able to use the management system.
-                      </span>
-                    </span>
+                      <p className="text-xs text-slate-500">
+                        Allow this user to access
+                        the Bodhi management system.
+                      </p>
+                    </div>
+
                   </label>
 
                 </div>
 
-                <div className="mt-6 flex justify-end">
+                {/* SAVE */}
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+
                   <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUserId(null);
+                      setError('');
+                      setSuccess('');
+                    }}
+                    className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={saveUser}
                     disabled={saving}
-                    className="rounded-lg bg-green-700 px-6 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+                    className="rounded-lg bg-green-700 px-6 py-3 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving
-                      ? "Saving..."
-                      : "Save User & Role"}
+                      ? 'Saving...'
+                      : 'Save Changes'}
                   </button>
+
                 </div>
-              </>
+
+              </div>
             )}
 
           </section>
 
         </div>
+
       </div>
     </main>
   );
