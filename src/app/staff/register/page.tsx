@@ -158,7 +158,21 @@ export default function StaffRegistrationPage() {
     setBlocks((data || []) as Location[]);
   }
 
-  async function loadPanchayats(parentBlockId: string) {
+ async function loadPanchayats(parentBlockId: string) {
+  const { data, error } = await supabase.rpc(
+    'get_staff_panchayats',
+    {
+      p_block_id: parentBlockId,
+    }
+  );
+
+  if (error) {
+    setError(error.message);
+    return;
+  }
+
+  setPanchayats((data || []) as Location[]);
+}
     const { data, error } = await supabase
       .from('locations')
       .select(
@@ -178,6 +192,20 @@ export default function StaffRegistrationPage() {
   }
 
   async function loadVillages(parentPanchayatId: string) {
+  const { data, error } = await supabase.rpc(
+    'get_staff_villages',
+    {
+      p_panchayat_id: parentPanchayatId,
+    }
+  );
+
+  if (error) {
+    setError(error.message);
+    return;
+  }
+
+  setVillages((data || []) as Location[]);
+}
     const { data, error } = await supabase
       .from('locations')
       .select(
