@@ -834,116 +834,87 @@ export default function VeterinaryPage() {
 
         {/* History */}
         <section className="rounded-xl border bg-white shadow-sm">
-
           <div className="border-b px-6 py-5">
             <h2 className="text-xl font-bold text-gray-900">
               Veterinary & Mortality History
             </h2>
-
             <p className="mt-1 text-sm text-gray-500">
               Latest 100 health records
             </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-
-              <thead className="bg-gray-50">
-                <tr>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Date
-                  </th>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Farmer
-                  </th>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Batch
-                  </th>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Type
-                  </th>
-
-                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Mortality
-                  </th>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Cause
-                  </th>
-
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Veterinary
-                  </th>
-
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-200 bg-white">
-
-                {records.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-5 py-10 text-center text-sm text-gray-500"
-                    >
-                      No veterinary or mortality records found.
-                    </td>
-                  </tr>
-                ) : (
-                  records.map((record) => (
-                    <tr key={record.id}>
-
-                      <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-700">
-                        {record.record_date}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm font-medium text-gray-900">
-                        {getFarmerName(
-                          record.farmer_id
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm text-gray-700">
-                        {getBatchName(
-                          record.batch_id
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm text-gray-700">
-                        {record.record_type.replace(
-                          '_',
-                          ' '
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4 text-right text-sm font-bold text-red-600">
-                        {record.mortality_quantity}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm text-gray-700">
-                        {record.cause || '—'}
-                      </td>
-
-                      <td className="px-5 py-4 text-sm text-gray-700">
-                        {record.veterinary_visit
-                          ? record.veterinary_name ||
-                            'Visit recorded'
-                          : 'No'}
-                      </td>
-
+          {records.length === 0 ? (
+            <div className="px-6 py-10 text-center text-sm text-gray-500">
+              No veterinary or mortality records found.
+            </div>
+          ) : (
+            <>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="min-w-[1150px] w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                      <th className="min-w-[180px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Farmer</th>
+                      <th className="min-w-[190px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Batch</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Type</th>
+                      <th className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Mortality</th>
+                      <th className="min-w-[130px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cause</th>
+                      <th className="min-w-[150px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Veterinary</th>
+                      <th className="min-w-[220px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Diagnosis</th>
+                      <th className="min-w-[220px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Treatment</th>
                     </tr>
-                  ))
-                )}
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {records.map((record) => (
+                      <tr key={record.id} className="align-top hover:bg-gray-50">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_date}</td>
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{getFarmerName(record.farmer_id)}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700">{getBatchName(record.batch_id)}</td>
+                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_type.replaceAll('_', ' ')}</td>
+                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-bold text-red-600">{record.mortality_quantity}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700">{record.cause || '—'}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700">
+                          {record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}
+                        </td>
+                        <td className="max-w-[240px] px-4 py-4 text-sm text-gray-700">
+                          <div className="whitespace-normal break-words">{record.diagnosis || '—'}</div>
+                        </td>
+                        <td className="max-w-[240px] px-4 py-4 text-sm text-gray-700">
+                          <div className="whitespace-normal break-words">{record.treatment || '—'}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-              </tbody>
+              <div className="space-y-4 p-4 md:hidden">
+                {records.map((record) => (
+                  <article key={record.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{record.record_date}</p>
+                        <h3 className="mt-1 text-sm font-bold text-gray-900">{record.record_type.replaceAll('_', ' ')}</h3>
+                      </div>
+                      <div className="rounded-lg bg-red-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase text-red-500">Mortality</p>
+                        <p className="text-lg font-bold text-red-600">{record.mortality_quantity}</p>
+                      </div>
+                    </div>
 
-            </table>
-          </div>
-
+                    <dl className="mt-4 grid grid-cols-1 gap-3 text-sm">
+                      <div><dt className="font-medium text-gray-500">Farmer</dt><dd className="mt-1 text-gray-900">{getFarmerName(record.farmer_id)}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Batch</dt><dd className="mt-1 text-gray-900">{getBatchName(record.batch_id)}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Cause</dt><dd className="mt-1 text-gray-900">{record.cause || '—'}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Veterinary</dt><dd className="mt-1 text-gray-900">{record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Diagnosis</dt><dd className="mt-1 break-words text-gray-900">{record.diagnosis || '—'}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Treatment</dt><dd className="mt-1 break-words text-gray-900">{record.treatment || '—'}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
         </section>
 
       </div>
