@@ -297,20 +297,31 @@ export default function PerformancePage() {
         ? (mortality / initialBirds) * 100
         : 0;
 
-    const productionPercentage =
+    const from = new Date(`${fromDate}T00:00:00`);
+    const to = new Date(`${toDate}T00:00:00`);
+    const periodDays =
+      !Number.isNaN(from.getTime()) &&
+      !Number.isNaN(to.getTime()) &&
+      to >= from
+        ? Math.floor((to.getTime() - from.getTime()) / 86400000) + 1
+        : 1;
+
+    const averageDailyEggs =
+      periodDays > 0 ? totalEggs / periodDays : 0;
+
+    const averageDailyProductionPercentage =
       liveBirds > 0
-        ? (totalEggs / liveBirds) * 100
+        ? (averageDailyEggs / liveBirds) * 100
         : 0;
+
+    const dailyEggLimit =
+      liveBirds > 0 ? Math.floor(liveBirds * 0.70) : 0;
 
     const eggsPerLiveBird =
-      liveBirds > 0
-        ? totalEggs / liveBirds
-        : 0;
+      liveBirds > 0 ? totalEggs / liveBirds : 0;
 
     const feedPerLiveBird =
-      liveBirds > 0
-        ? feedKg / liveBirds
-        : 0;
+      liveBirds > 0 ? feedKg / liveBirds : 0;
 
     const feedCostPerEgg =
       totalEggs > 0
@@ -333,7 +344,10 @@ export default function PerformancePage() {
       saleableEggs,
       crackedEggs,
       damagedEggs,
-      productionPercentage,
+      periodDays,
+      averageDailyEggs,
+      averageDailyProductionPercentage,
+      dailyEggLimit,
       eggsPerLiveBird,
       feedPerLiveBird,
       feedCostPerEgg,
@@ -343,6 +357,8 @@ export default function PerformancePage() {
     filteredFeed,
     filteredEggs,
     selectedBatchData,
+    fromDate,
+    toDate,
   ]);
 
   function handleFarmerChange(
@@ -521,6 +537,36 @@ export default function PerformancePage() {
           </div>
         )}
 
+        {/* Period Summary */}
+        <section className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Reporting Period
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {fromDate} to {toDate}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Period Days
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {metrics.periodDays} days
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Average Daily Eggs
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {formatNumber(metrics.averageDailyEggs, 2)}
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Bird KPIs */}
         <section>
           <h2 className="mb-4 text-lg font-bold text-gray-900">
@@ -577,20 +623,18 @@ export default function PerformancePage() {
 
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <p className="text-sm text-gray-500">
-                Production %
+                Avg. Daily Production
               </p>
-
               <p className="mt-2 text-3xl font-bold text-blue-700">
                 {selectedBatchData
                   ? `${formatNumber(
-                      metrics.productionPercentage,
+                      metrics.averageDailyProductionPercentage,
                       2
                     )}%`
                   : '—'}
               </p>
-
               <p className="mt-1 text-xs text-gray-500">
-                Eggs ÷ current live birds
+                Average eggs ÷ live birds ÷ period days
               </p>
             </div>
 
@@ -603,7 +647,7 @@ export default function PerformancePage() {
             Egg Performance
           </h2>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
 
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <p className="text-sm text-gray-500">
@@ -646,6 +690,18 @@ export default function PerformancePage() {
                   metrics.eggsPerLiveBird,
                   2
                 )}
+              </p>
+            </div>
+            
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <p className="text-sm text-gray-500">
+                Daily Egg Limit
+              </p>
+              <p className="mt-2 text-3xl font-bold text-purple-700">
+                {selectedBatchData ? metrics.dailyEggLimit : '—'}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                70% of current live birds
               </p>
             </div>
 
