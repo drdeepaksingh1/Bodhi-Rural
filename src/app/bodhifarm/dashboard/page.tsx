@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { createClient } from '../../../lib/supabase/client';
+import { createClient } from '../../lib/supabase/client';
 
 type Farmer = {
   id: string;
@@ -14,7 +14,6 @@ type Farmer = {
 type Farm = {
   id: string;
   farmer_id: string;
-  name: string;
   shed_capacity?: number | null;
   status?: string | null;
 };
@@ -98,7 +97,7 @@ export default function BodhiFarmDashboardPage() {
         .order('farmer_id'),
       supabase
         .from('farms')
-        .select('id, farmer_id, name, shed_capacity, status')
+        .select('id, farmer_id, shed_capacity, status')
         .order('created_at', { ascending: false }),
       supabase
         .from('bird_batches')
@@ -634,4 +633,3 @@ export default function BodhiFarmDashboardPage() {
     </main>
   );
 }
-
