@@ -250,7 +250,7 @@ export default function EggProductionPage() {
         total_eggs: total,
         cracked_eggs: cracked,
         damaged_eggs: damaged,
-        saleable_eggs: saleableEggs,
+      
       });
 
     if (insertError) {
