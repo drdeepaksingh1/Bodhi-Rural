@@ -199,7 +199,13 @@ export default function StaffRegistrationPage() {
     setSendingOtp(true);
     try {
       const verifiedEmail = email.trim().toLowerCase();
-      const { error } = await supabase.auth.signInWithOtp({ email: verifiedEmail, options: { shouldCreateUser: true } });
+      const { error } = await supabase.auth.signInWithOtp({
+        email: verifiedEmail,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: 'https://www.brlps.co.in/staff/register',
+        },
+      });
       if (error) throw new Error(error.message);
       setMessage('Verification code sent successfully. Please check your email.');
     } catch (err: any) { setError(err?.message || 'Unable to send verification code.'); }
@@ -212,8 +218,19 @@ export default function StaffRegistrationPage() {
     if (!otp.trim()) { setError('Please enter the verification code.'); return; }
     setVerifyingOtp(true);
     try {
+      const cleanedOtp = otp.trim().replace(/\D/g, '');
+      if (!/^\d{8}$/.test(cleanedOtp)) {
+        setError('Please enter the 8-digit verification code.');
+        setVerifyingOtp(false);
+        return;
+      }
+
       const verifiedEmail = email.trim().toLowerCase();
-      const { data, error } = await supabase.auth.verifyOtp({ email: verifiedEmail, token: otp.trim(), type: 'email' });
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: verifiedEmail,
+        token: cleanedOtp,
+        type: 'email',
+      });
       if (error) throw new Error(error.message);
       if (!data.user) throw new Error('Email verified but no authenticated user was returned.');
       setUserId(data.user.id); setEmailVerified(true); setStep('profile');
@@ -572,13 +589,15 @@ export default function StaffRegistrationPage() {
               </label>
 
               <input
+                type="text"
                 value={otp}
                 onChange={(e) =>
-                  setOtp(e.target.value)
+                  setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))
                 }
-                placeholder="Enter verification code"
+                placeholder="Enter 8-digit verification code"
                 inputMode="numeric"
-                maxLength={6}
+                autoComplete="one-time-code"
+                maxLength={8}
                 className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-green-600"
               />
 
