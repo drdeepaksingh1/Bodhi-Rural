@@ -687,6 +687,12 @@ export default function FarmerManagementPage() {
                         {selectedFarmer.mobile ||
                           'Mobile not available'}
                       </p>
+                      <Link
+  href={`/bodhifarm/farmers/${selectedFarmer.id}`}
+  className="mt-4 inline-block w-full rounded-lg bg-green-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-green-800"
+>
+  Open Farmer 360° Profile →
+</Link>
 
                     </div>
 
