@@ -3,7 +3,13 @@ import Image from 'next/image';
 
 export default function SiteHeader() {
   return (
-    <header className="nav">
+    <header
+      className="nav"
+      style={{
+        background: '#145c2b',
+        color: '#ffffff',
+      }}
+    >
       <div
         className="container"
         style={{
@@ -34,18 +40,69 @@ export default function SiteHeader() {
           />
         </Link>
 
-        <nav className="navlinks">
-          <Link href="/about">About</Link>
-          <Link href="/bodhifarm">BodhiFarm</Link>
-          <Link href="/bodhimart">BodhiMart</Link>
-          <Link href="/farmer-network">Farmers</Link>
-          <Link href="/projects">Projects</Link>
-          <Link href="/contact">Contact</Link>
-          <Link className="btn" href="/login">Login</Link>
+        <nav
+          className="navlinks"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '22px',
+          }}
+        >
+          <Link href="/about" style={navLinkStyle}>
+            About
+          </Link>
+
+          <Link href="/bodhifarm" style={navLinkStyle}>
+            BodhiFarm
+          </Link>
+
+          <Link href="/bodhimart" style={navLinkStyle}>
+            BodhiMart
+          </Link>
+
+          <Link href="/farmer-network" style={navLinkStyle}>
+            Farmers
+          </Link>
+
+          <Link href="/projects" style={navLinkStyle}>
+            Projects
+          </Link>
+
+          <Link href="/contact" style={navLinkStyle}>
+            Contact
+          </Link>
+
+          <Link
+            className="btn"
+            href="/login"
+            style={{
+              background: '#ffffff',
+              color: '#145c2b',
+              fontWeight: 700,
+              padding: '9px 18px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+            }}
+          >
+            Login
+          </Link>
         </nav>
 
-        <span className="mobile">☰</span>
+        <span
+          className="mobile"
+          style={{
+            color: '#ffffff',
+          }}
+        >
+          ☰
+        </span>
       </div>
     </header>
   );
 }
+
+const navLinkStyle = {
+  color: '#ffffff',
+  textDecoration: 'none',
+  fontWeight: 500,
+};
