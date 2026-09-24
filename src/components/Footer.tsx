@@ -7,30 +7,29 @@ export default function Footer() {
       style={{
         background: '#145c2b',
         color: '#ffffff',
-        marginTop: '60px',
+        marginTop: '50px',
       }}
     >
       <div
         className="container"
         style={{
-          paddingTop: '48px',
-          paddingBottom: '24px',
+          paddingTop: '30px',
+          paddingBottom: '16px',
         }}
       >
-        {/* Main Footer */}
         <div
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '50px',
+            gap: '35px',
             justifyContent: 'space-between',
           }}
         >
           {/* Company */}
           <div
             style={{
-              flex: '1 1 360px',
-              minWidth: '280px',
+              flex: '1 1 340px',
+              minWidth: '260px',
             }}
           >
             <Link
@@ -38,9 +37,9 @@ export default function Footer() {
               style={{
                 display: 'inline-block',
                 background: '#ffffff',
-                padding: '8px',
+                padding: '5px',
                 borderRadius: '4px',
-                marginBottom: '18px',
+                marginBottom: '10px',
               }}
             >
               <Image
@@ -49,7 +48,7 @@ export default function Footer() {
                 width={302}
                 height={90}
                 style={{
-                  width: '190px',
+                  width: '155px',
                   height: 'auto',
                   display: 'block',
                 }}
@@ -58,10 +57,10 @@ export default function Footer() {
 
             <p
               style={{
-                fontSize: '17px',
-                lineHeight: '1.7',
-                margin: '0 0 18px',
-                maxWidth: '520px',
+                fontSize: '14px',
+                lineHeight: '1.55',
+                margin: '0 0 10px',
+                maxWidth: '460px',
               }}
             >
               Bodhi Rural Livelihood & Agri Private Limited works toward
@@ -71,7 +70,7 @@ export default function Footer() {
 
             <p
               style={{
-                fontSize: '16px',
+                fontSize: '14px',
                 fontStyle: 'italic',
                 margin: 0,
                 opacity: 0.9,
@@ -84,14 +83,14 @@ export default function Footer() {
           {/* Quick Links */}
           <div
             style={{
-              flex: '0 1 220px',
-              minWidth: '180px',
+              flex: '0 1 180px',
+              minWidth: '160px',
             }}
           >
             <h3
               style={{
-                fontSize: '18px',
-                marginBottom: '20px',
+                fontSize: '16px',
+                margin: '0 0 13px',
                 color: '#ffffff',
               }}
             >
@@ -102,7 +101,7 @@ export default function Footer() {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
+                gap: '7px',
               }}
             >
               <Link href="/about" style={linkStyle}>
@@ -134,14 +133,14 @@ export default function Footer() {
           {/* Get in Touch */}
           <div
             style={{
-              flex: '1 1 280px',
-              minWidth: '260px',
+              flex: '1 1 250px',
+              minWidth: '230px',
             }}
           >
             <h3
               style={{
-                fontSize: '18px',
-                marginBottom: '20px',
+                fontSize: '16px',
+                margin: '0 0 13px',
                 color: '#ffffff',
               }}
             >
@@ -151,8 +150,8 @@ export default function Footer() {
             <p
               style={{
                 fontWeight: 700,
-                margin: '0 0 12px',
-                fontSize: '16px',
+                margin: '0 0 7px',
+                fontSize: '14px',
               }}
             >
               Bodhi Rural Livelihood & Agri Pvt. Ltd.
@@ -160,8 +159,9 @@ export default function Footer() {
 
             <p
               style={{
-                margin: '0 0 4px',
-                lineHeight: '1.6',
+                margin: 0,
+                lineHeight: '1.5',
+                fontSize: '14px',
               }}
             >
               Islampur, Nalanda
@@ -171,8 +171,9 @@ export default function Footer() {
 
             <p
               style={{
-                margin: '14px 0 4px',
-                lineHeight: '1.6',
+                margin: '8px 0 0',
+                lineHeight: '1.5',
+                fontSize: '14px',
               }}
             >
               Phone: +91 76679 79679
@@ -191,12 +192,12 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
+        {/* Bottom */}
         <div
           style={{
             borderTop: '1px solid rgba(255,255,255,0.25)',
-            marginTop: '42px',
-            paddingTop: '22px',
+            marginTop: '25px',
+            paddingTop: '13px',
           }}
         >
           <div
@@ -205,12 +206,12 @@ export default function Footer() {
               flexWrap: 'wrap',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '15px',
+              gap: '10px',
             }}
           >
             <small
               style={{
-                fontSize: '14px',
+                fontSize: '12px',
                 opacity: 0.8,
               }}
             >
@@ -220,7 +221,7 @@ export default function Footer() {
 
             <small
               style={{
-                fontSize: '14px',
+                fontSize: '12px',
                 opacity: 0.8,
               }}
             >
@@ -236,6 +237,6 @@ export default function Footer() {
 const linkStyle = {
   color: '#ffffff',
   textDecoration: 'none',
-  fontSize: '16px',
+  fontSize: '14px',
   opacity: 0.9,
 };
