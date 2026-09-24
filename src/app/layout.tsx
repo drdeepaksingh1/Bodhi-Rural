@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import Footer from '../components/Footer';
 
 export const metadata: Metadata = {
   title: 'Bodhi Rural | Livelihood & Agri',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
