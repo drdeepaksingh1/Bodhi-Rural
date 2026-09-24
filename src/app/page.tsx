@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import SiteHeader from '../components/SiteHeader';
 
 const cards = [
   [
@@ -25,8 +24,6 @@ const cards = [
 export default function Home() {
   return (
     <>
-      <SiteHeader />
-
       <main>
         <section className="hero">
           <div className="container">
