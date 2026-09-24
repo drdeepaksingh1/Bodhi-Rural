@@ -2,13 +2,23 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 export default function SiteHeader() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   function closeMenu() {
     setMenuOpen(false);
+  }
+
+  function isActive(href: string) {
+    if (href === '/') {
+      return pathname === '/';
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
@@ -60,15 +70,35 @@ export default function SiteHeader() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '20px',
+            gap: '12px',
           }}
         >
-          <NavLink href="/about">About</NavLink>
-          <NavLink href="/bodhifarm">BodhiFarm</NavLink>
-          <NavLink href="/bodhimart">BodhiMart</NavLink>
-          <NavLink href="/farmer-network">Farmers</NavLink>
-          <NavLink href="/projects">Projects</NavLink>
-          <NavLink href="/contact">Contact</NavLink>
+          <NavLink href="/about" active={isActive('/about')}>
+            About
+          </NavLink>
+
+          <NavLink href="/bodhifarm" active={isActive('/bodhifarm')}>
+            BodhiFarm
+          </NavLink>
+
+          <NavLink href="/bodhimart" active={isActive('/bodhimart')}>
+            BodhiMart
+          </NavLink>
+
+          <NavLink
+            href="/farmer-network"
+            active={isActive('/farmer-network')}
+          >
+            Farmers
+          </NavLink>
+
+          <NavLink href="/projects" active={isActive('/projects')}>
+            Projects
+          </NavLink>
+
+          <NavLink href="/contact" active={isActive('/contact')}>
+            Contact
+          </NavLink>
 
           <Link
             href="/login"
@@ -80,6 +110,7 @@ export default function SiteHeader() {
               borderRadius: '6px',
               textDecoration: 'none',
               whiteSpace: 'nowrap',
+              marginLeft: '4px',
             }}
           >
             Login
@@ -119,27 +150,51 @@ export default function SiteHeader() {
             padding: '10px 20px 18px',
           }}
         >
-          <MobileLink href="/about" onClick={closeMenu}>
+          <MobileLink
+            href="/about"
+            onClick={closeMenu}
+            active={isActive('/about')}
+          >
             About
           </MobileLink>
 
-          <MobileLink href="/bodhifarm" onClick={closeMenu}>
+          <MobileLink
+            href="/bodhifarm"
+            onClick={closeMenu}
+            active={isActive('/bodhifarm')}
+          >
             BodhiFarm
           </MobileLink>
 
-          <MobileLink href="/bodhimart" onClick={closeMenu}>
+          <MobileLink
+            href="/bodhimart"
+            onClick={closeMenu}
+            active={isActive('/bodhimart')}
+          >
             BodhiMart
           </MobileLink>
 
-          <MobileLink href="/farmer-network" onClick={closeMenu}>
+          <MobileLink
+            href="/farmer-network"
+            onClick={closeMenu}
+            active={isActive('/farmer-network')}
+          >
             Farmers
           </MobileLink>
 
-          <MobileLink href="/projects" onClick={closeMenu}>
+          <MobileLink
+            href="/projects"
+            onClick={closeMenu}
+            active={isActive('/projects')}
+          >
             Projects
           </MobileLink>
 
-          <MobileLink href="/contact" onClick={closeMenu}>
+          <MobileLink
+            href="/contact"
+            onClick={closeMenu}
+            active={isActive('/contact')}
+          >
             Contact
           </MobileLink>
 
@@ -200,9 +255,11 @@ export default function SiteHeader() {
 
 function NavLink({
   href,
+  active,
   children,
 }: {
   href: string;
+  active: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -211,8 +268,14 @@ function NavLink({
       style={{
         color: '#ffffff',
         textDecoration: 'none',
-        fontWeight: 500,
+        fontWeight: active ? 700 : 500,
         whiteSpace: 'nowrap',
+        padding: '8px 10px',
+        borderRadius: '5px',
+        background: active ? 'rgba(255,255,255,0.16)' : 'transparent',
+        borderBottom: active
+          ? '2px solid #ffffff'
+          : '2px solid transparent',
       }}
     >
       {children}
@@ -223,10 +286,12 @@ function NavLink({
 function MobileLink({
   href,
   onClick,
+  active,
   children,
 }: {
   href: string;
   onClick: () => void;
+  active: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -237,9 +302,11 @@ function MobileLink({
         display: 'block',
         color: '#ffffff',
         textDecoration: 'none',
-        padding: '11px 4px',
+        padding: '11px 8px',
         borderBottom: '1px solid rgba(255,255,255,0.15)',
-        fontWeight: 500,
+        fontWeight: active ? 700 : 500,
+        background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+        borderRadius: '4px',
       }}
     >
       {children}
