@@ -30,10 +30,12 @@ const fmt = (v: string | null | undefined) =>
   v ? new Date(v).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 const val = (v: unknown) => v === null || v === undefined || v === '' ? '—' : String(v);
 
-export default function HRStaffApplicationsPage() {
+export default function StaffApplicationsPage() {
   const supabase = createClient();
   const [apps, setApps] = useState<App[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [userRole, setUserRole] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
   const [locs, setLocs] = useState<Record<string, Location>>({});
   const [history, setHistory] = useState<Approval[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -48,15 +50,65 @@ export default function HRStaffApplicationsPage() {
 
   const selected = apps.find(a => a.id === selectedId) || null;
 
+  const roleConfig = useMemo(() => {
+    if (userRole === 'HR') return {
+      title: 'HR Staff Application Review',
+      subtitle: 'HR Review Panel · Bodhi Rural Livelihood & Agri Private Limited',
+      stage: 'HR',
+      statuses: ['SUBMITTED', 'HR_REVIEW'],
+      actionTitle: 'HR Decision',
+      actionDescription: 'Approval forwards the application to CEO review.',
+      successMessage: 'Application approved and forwarded to CEO review.'
+    };
+    if (userRole === 'CEO') return {
+      title: 'CEO Staff Application Review',
+      subtitle: 'CEO Review Panel · Bodhi Rural Livelihood & Agri Private Limited',
+      stage: 'CEO',
+      statuses: ['CEO_REVIEW'],
+      actionTitle: 'CEO Decision',
+      actionDescription: 'Approval forwards the application to Chairman / MD review.',
+      successMessage: 'Application approved and forwarded to Chairman / MD review.'
+    };
+    if (userRole === 'SUPER_ADMIN') return {
+      title: 'Chairman / MD Staff Application Review',
+      subtitle: 'Final Approval Panel · Bodhi Rural Livelihood & Agri Private Limited',
+      stage: 'CHAIRMAN / MD',
+      statuses: ['CHAIRMAN_REVIEW'],
+      actionTitle: 'Final Decision',
+      actionDescription: 'Final approval creates the permanent staff record and Staff ID.',
+      successMessage: 'Application finally approved and Staff ID generated.'
+    };
+    return {
+      title: 'Staff Application Review',
+      subtitle: 'Bodhi Rural Livelihood & Agri Private Limited',
+      stage: '',
+      statuses: [],
+      actionTitle: 'Decision',
+      actionDescription: '',
+      successMessage: 'Application processed.'
+    };
+  }, [userRole]);
+
   const filtered = useMemo(() => apps.filter(a => {
-    const matchesFilter = filter === 'ALL' || a.status === filter || a.current_stage === filter;
     const q = search.trim().toLowerCase();
+    const inMyQueue =
+      roleConfig.statuses.includes(a.status) ||
+      (roleConfig.stage === 'HR' && a.current_stage === 'HR') ||
+      (roleConfig.stage === 'CEO' && a.current_stage === 'CEO') ||
+      (roleConfig.stage === 'CHAIRMAN / MD' && a.current_stage === 'CHAIRMAN / MD');
+
+    const matchesFilter =
+      filter === 'ALL' ? inMyQueue : a.status === filter || a.current_stage === filter;
+
     if (!matchesFilter) return false;
     if (!q) return true;
-    return [a.application_number, a.full_name, a.email, a.mobile, a.proposed_designation,
-      a.proposed_department, a.status, a.current_stage].filter(Boolean)
-      .some(x => String(x).toLowerCase().includes(q));
-  }), [apps, search, filter]);
+
+    return [
+      a.application_number, a.full_name, a.email, a.mobile,
+      a.proposed_designation, a.proposed_department,
+      a.status, a.current_stage
+    ].filter(Boolean).some(x => String(x).toLowerCase().includes(q));
+  }), [apps, search, filter, roleConfig]);
 
   useEffect(() => { load(); }, []);
   useEffect(() => { if (selectedId) loadHistory(selectedId); else setHistory([]); }, [selectedId]);
@@ -64,29 +116,70 @@ export default function HRStaffApplicationsPage() {
   async function load() {
     setLoading(true); setError('');
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error(userError.message);
+      if (!user) throw new Error('Please log in again.');
+
+      const pr = await supabase
+        .from('profiles')
+        .select('full_name, role_id, roles:role_id(id, code, name)')
+        .eq('id', user.id)
+        .single();
+
+      if (pr.error) throw new Error(pr.error.message);
+
+      const profileRole = Array.isArray(pr.data?.roles) ? pr.data.roles[0] : pr.data?.roles;
+      const roleCode = profileRole?.code || '';
+      setUserRole(roleCode);
+      setUserName(pr.data?.full_name || '');
+
+      if (!['HR', 'CEO', 'SUPER_ADMIN'].includes(roleCode)) {
+        throw new Error('You are not authorized to review staff applications.');
+      }
+
       const [ar, rr] = await Promise.all([
         supabase.from('staff_applications').select('*').order('created_at', { ascending: false }),
         supabase.from('roles').select('id, code, name').order('name')
       ]);
+
       if (ar.error) throw new Error(ar.error.message);
       if (rr.error) throw new Error(rr.error.message);
+
       const rows = (ar.data || []) as App[];
-      setApps(rows); setRoles((rr.data || []) as Role[]);
-      if (!selectedId && rows[0]) setSelectedId(rows[0].id);
+      setApps(rows);
+      setRoles((rr.data || []) as Role[]);
+
+      const visibleRows = rows.filter(a =>
+        roleCode === 'HR'
+          ? (a.current_stage === 'HR' || ['SUBMITTED', 'HR_REVIEW'].includes(a.status))
+          : roleCode === 'CEO'
+            ? (a.current_stage === 'CEO' || a.status === 'CEO_REVIEW')
+            : (a.current_stage === 'CHAIRMAN / MD' || a.status === 'CHAIRMAN_REVIEW')
+      );
+
+      if (!selectedId || !visibleRows.some(a => a.id === selectedId)) {
+        setSelectedId(visibleRows[0]?.id || '');
+      }
 
       const ids = Array.from(new Set(rows.flatMap(a => [
-        a.state_id,a.district_id,a.block_id,a.panchayat_id,a.village_id,
-        a.proposed_state_id,a.proposed_district_id,a.proposed_block_id,a.proposed_panchayat_id
+        a.state_id, a.district_id, a.block_id, a.panchayat_id, a.village_id,
+        a.proposed_state_id, a.proposed_district_id, a.proposed_block_id, a.proposed_panchayat_id
       ]).filter(Boolean))) as string[];
+
       if (ids.length) {
         const lr = await supabase.rpc('get_location_names', { p_ids: ids });
         if (lr.error) throw new Error(lr.error.message);
         const map: Record<string, Location> = {};
         for (const x of (lr.data || []) as Location[]) map[x.id] = x;
         setLocs(map);
+      } else {
+        setLocs({});
       }
-    } catch (e: any) { setError(e?.message || 'Unable to load applications.'); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setError(e?.message || 'Unable to load applications.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadHistory(id: string) {
@@ -109,28 +202,42 @@ export default function HRStaffApplicationsPage() {
   const lname = (id: string | null) => id ? locs[id]?.name || '—' : '—';
   const rname = (id: string | null) => id ? roles.find(r => r.id === id)?.name || '—' : '—';
 
-  async function decide(decision: 'APPROVED'|'RETURNED'|'REJECTED') {
+  async function decide(decision: 'APPROVED'|'REJECTED') {
     if (!selected) return;
-    if (decision !== 'APPROVED' && !remarks.trim()) {
-      setError('Please enter remarks before returning or rejecting an application.'); return;
+
+    if (decision === 'REJECTED' && !remarks.trim()) {
+      setError('Please enter remarks before rejecting an application.');
+      return;
     }
+
     setProcessing(true); setError(''); setMessage('');
     try {
       const r = await supabase.rpc('process_staff_application', {
-        p_application_id: selected.id, p_decision: decision, p_remarks: remarks.trim() || null
+        p_application_id: selected.id,
+        p_decision: decision,
+        p_remarks: remarks.trim() || null
       });
       if (r.error) throw new Error(r.error.message);
-      setMessage(decision === 'APPROVED' ? 'Application approved and forwarded to CEO review.'
-        : decision === 'RETURNED' ? 'Application returned for correction.' : 'Application rejected.');
+
+      setMessage(decision === 'APPROVED' ? roleConfig.successMessage : 'Application rejected.');
       setRemarks('');
       await load();
       await loadHistory(selected.id);
-    } catch (e: any) { setError(e?.message || 'Unable to process application.'); }
-    finally { setProcessing(false); }
+    } catch (e: any) {
+      setError(e?.message || 'Unable to process application.');
+    } finally {
+      setProcessing(false);
+    }
   }
 
-  const canAct = !!selected && selected.current_stage === 'HR' &&
-    selected.status !== 'APPROVED' && selected.status !== 'REJECTED';
+  const canAct = !!selected &&
+    selected.status !== 'APPROVED' &&
+    selected.status !== 'REJECTED' &&
+    (
+      (userRole === 'HR' && selected.current_stage === 'HR') ||
+      (userRole === 'CEO' && selected.current_stage === 'CEO') ||
+      (userRole === 'SUPER_ADMIN' && selected.current_stage === 'CHAIRMAN / MD')
+    );
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6">
@@ -140,8 +247,9 @@ export default function HRStaffApplicationsPage() {
             <div className="flex items-center gap-4">
               <img src="/branding/bodhi-rural-logo.png" alt="Bodhi Rural" className="h-16 w-auto object-contain" />
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Staff Application Review</h1>
-                <p className="text-sm text-green-700">HR Review Panel · Bodhi Rural Livelihood & Agri Private Limited</p>
+                <h1 className="text-2xl font-bold text-slate-900">{roleConfig.title}</h1>
+                <p className="text-sm text-green-700">{roleConfig.subtitle}</p>
+                {userName && <p className="mt-1 text-xs text-slate-500">Signed in as {userName} · {userRole}</p>}
               </div>
             </div>
             <button onClick={load} disabled={loading} className="rounded-lg border px-4 py-2 text-sm font-semibold hover:bg-slate-50">
@@ -158,9 +266,12 @@ export default function HRStaffApplicationsPage() {
             <div className="border-b p-4 space-y-2">
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search application..." className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-green-600" />
               <select value={filter} onChange={e=>setFilter(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
-                <option value="ALL">All Applications</option><option value="HR">HR Review</option>
-                <option value="CEO_REVIEW">CEO Review</option><option value="CHAIRMAN_REVIEW">Chairman Review</option>
-                <option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option>
+                <option value="ALL">My Pending Applications</option>
+                {userRole === 'HR' && <option value="HR">HR Review</option>}
+                {userRole === 'CEO' && <option value="CEO_REVIEW">CEO Review</option>}
+                {userRole === 'SUPER_ADMIN' && <option value="CHAIRMAN_REVIEW">Chairman / MD Review</option>}
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
               </select>
             </div>
             <div className="max-h-[calc(100vh-250px)] overflow-y-auto p-3">
@@ -237,16 +348,25 @@ export default function HRStaffApplicationsPage() {
               </div>
 
               {canAct ? <div className="rounded-2xl border border-green-200 bg-green-50 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-green-900">HR Decision</h3>
-                <p className="mt-1 text-sm text-green-800">Approval forwards the application to CEO review.</p>
-                <textarea value={remarks} onChange={e=>setRemarks(e.target.value)} placeholder="HR remarks / observations" className="mt-4 min-h-[110px] w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:border-green-600"/>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <button disabled={processing} onClick={()=>decide('APPROVED')} className="rounded-lg bg-green-700 px-4 py-3 font-semibold text-white disabled:opacity-50">{processing?'Processing...':'Approve & Forward'}</button>
-                  <button disabled={processing} onClick={()=>decide('RETURNED')} className="rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white disabled:opacity-50">Return for Correction</button>
-                  <button disabled={processing} onClick={()=>decide('REJECTED')} className="rounded-lg bg-red-700 px-4 py-3 font-semibold text-white disabled:opacity-50">Reject Application</button>
+                <h3 className="text-lg font-bold text-green-900">{roleConfig.actionTitle}</h3>
+                <p className="mt-1 text-sm text-green-800">{roleConfig.actionDescription}</p>
+                <textarea value={remarks} onChange={e=>setRemarks(e.target.value)}
+                  placeholder={`${roleConfig.actionTitle} remarks / observations`}
+                  className="mt-4 min-h-[110px] w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:border-green-600"/>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button disabled={processing} onClick={()=>decide('APPROVED')}
+                    className="rounded-lg bg-green-700 px-4 py-3 font-semibold text-white disabled:opacity-50">
+                    {processing ? 'Processing...' : userRole === 'SUPER_ADMIN' ? 'Final Approve & Generate Staff ID' : 'Approve & Forward'}
+                  </button>
+                  <button disabled={processing} onClick={()=>decide('REJECTED')}
+                    className="rounded-lg bg-red-700 px-4 py-3 font-semibold text-white disabled:opacity-50">
+                    Reject Application
+                  </button>
                 </div>
               </div> :
-              <div className="rounded-2xl border bg-white p-5 text-sm text-slate-600">This application is currently at <strong>{selected.current_stage}</strong> and is not available for HR action.</div>}
+              <div className="rounded-2xl border bg-white p-5 text-sm text-slate-600">
+                This application is currently at <strong>{selected.current_stage || selected.status}</strong> and is not available for {userRole || 'your'} action.
+              </div>}
             </>}
           </section>
         </div>
@@ -261,4 +381,3 @@ function Box({title,children}:{title:string;children:React.ReactNode}) {
 function Info({l,v}:{l:string;v:unknown}) {
   return <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 last:border-0 sm:flex-row sm:justify-between"><span className="text-xs font-medium text-slate-500">{l}</span><span className="text-sm font-semibold text-slate-800 sm:max-w-[65%] sm:text-right">{val(v)}</span></div>;
 }
-
