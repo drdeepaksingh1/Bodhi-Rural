@@ -55,8 +55,8 @@ export default function Home() {
             <h2>One platform. Multiple rural businesses.</h2>
 
             <p>
-              Start with a 300-farmer pilot and grow the same architecture
-              toward 10,000+ farmers.
+              Start with a 1,000-farmer pilot and build the same architecture
+              toward large-scale rural livelihood operations.
             </p>
 
             <div className="grid">
@@ -86,13 +86,13 @@ export default function Home() {
 
             <div className="stats">
               <div className="stat">
-                <strong>300</strong>
+                <strong>1,000</strong>
                 Target farmers
               </div>
 
               <div className="stat">
-                <strong>90,000</strong>
-                Example bird capacity
+                <strong>300,000</strong>
+                Target bird capacity
               </div>
 
               <div className="stat">
