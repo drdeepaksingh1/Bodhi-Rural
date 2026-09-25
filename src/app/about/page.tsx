@@ -1,7 +1,9 @@
 export default function Page() {
   return (
     <main>
-      {/* Hero */}
+      {/* =========================================================
+          HERO
+      ========================================================= */}
       <section
         style={{
           background:
@@ -35,6 +37,7 @@ export default function Page() {
                 color: '#123b20',
                 margin: '0 0 22px',
                 fontWeight: 800,
+                letterSpacing: '-1px',
               }}
             >
               Building sustainable
@@ -59,7 +62,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Company Profile */}
+      {/* =========================================================
+          COMPANY PROFILE
+      ========================================================= */}
       <section className="section">
         <div className="container">
           <div
@@ -170,7 +175,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Main Objects */}
+      {/* =========================================================
+          BUSINESS OBJECTS
+      ========================================================= */}
       <section
         style={{
           background: '#f7f9f7',
@@ -178,7 +185,12 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <div style={{ maxWidth: '800px', marginBottom: '35px' }}>
+          <div
+            style={{
+              maxWidth: '800px',
+              marginBottom: '35px',
+            }}
+          >
             <div
               style={{
                 color: '#145c2b',
@@ -279,7 +291,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Integrated Approach */}
+      {/* =========================================================
+          INTEGRATED APPROACH
+      ========================================================= */}
       <section className="section">
         <div className="container">
           <div
@@ -329,7 +343,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Rural Development */}
+      {/* =========================================================
+          RURAL DEVELOPMENT
+      ========================================================= */}
       <section
         style={{
           background: '#145c2b',
@@ -338,29 +354,40 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <div style={{ maxWidth: '850px' }}>
+          <div
+            style={{
+              maxWidth: '850px',
+              marginBottom: '38px',
+            }}
+          >
             <div
               style={{
-                color: '#d9eedf',
+                color: '#cfe8d5',
                 fontWeight: 700,
                 fontSize: '13px',
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
-                marginBottom: '10px',
+                marginBottom: '12px',
               }}
             >
               Rural Development
             </div>
 
-            <h2 style={{ color: '#ffffff' }}>
+            <h2
+              style={{
+                color: '#ffffff',
+                marginBottom: '18px',
+              }}
+            >
               Building connected rural ecosystems
             </h2>
 
             <p
               style={{
-                color: 'rgba(255,255,255,0.85)',
+                color: '#f0f7f2',
                 fontSize: '18px',
                 lineHeight: 1.8,
+                margin: 0,
               }}
             >
               The company&apos;s objects specifically provide for rural
@@ -375,27 +402,26 @@ export default function Page() {
             style={{
               display: 'grid',
               gridTemplateColumns:
-                'repeat(auto-fit, minmax(230px, 1fr))',
+                'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '18px',
-              marginTop: '35px',
             }}
           >
-            <DarkCard
+            <DarkDevelopmentCard
               title="Farmer Networks"
               text="Connecting producers and rural producer groups."
             />
 
-            <DarkCard
+            <DarkDevelopmentCard
               title="Livelihood Promotion"
               text="Supporting productive rural livelihood opportunities."
             />
 
-            <DarkCard
+            <DarkDevelopmentCard
               title="Capacity Building"
               text="Training, skill development and knowledge systems."
             />
 
-            <DarkCard
+            <DarkDevelopmentCard
               title="Rural Enterprises"
               text="Promoting agriculture-linked entrepreneurship."
             />
@@ -403,7 +429,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Technology */}
+      {/* =========================================================
+          TECHNOLOGY
+      ========================================================= */}
       <section className="section">
         <div className="container">
           <div
@@ -445,7 +473,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Governance */}
+      {/* =========================================================
+          GOVERNANCE
+      ========================================================= */}
       <section
         style={{
           background: '#f7f9f7',
@@ -461,52 +491,27 @@ export default function Page() {
               gap: '30px',
             }}
           >
-            <div className="card">
-              <h3>Corporate Governance</h3>
+            <GovernanceCard
+              title="Corporate Governance"
+              text="The company's Articles of Association establish provisions relating to share capital, members, general meetings, voting rights, the Board of Directors and proceedings of the Board."
+            />
 
-              <p
-                className="muted"
-                style={{ lineHeight: 1.8 }}
-              >
-                The company&apos;s Articles of Association establish
-                provisions relating to share capital, members, general
-                meetings, voting rights, the Board of Directors and
-                proceedings of the Board.
-              </p>
-            </div>
+            <GovernanceCard
+              title="Management Structure"
+              text="The Articles provide for the appointment of management positions including Chief Executive Officer, Manager, Company Secretary and Chief Financial Officer, subject to the applicable provisions of law."
+            />
 
-            <div className="card">
-              <h3>Management Structure</h3>
-
-              <p
-                className="muted"
-                style={{ lineHeight: 1.8 }}
-              >
-                The Articles provide for the appointment of management
-                positions including Chief Executive Officer, Manager,
-                Company Secretary and Chief Financial Officer, subject to
-                the applicable provisions of law.
-              </p>
-            </div>
-
-            <div className="card">
-              <h3>Responsible Growth</h3>
-
-              <p
-                className="muted"
-                style={{ lineHeight: 1.8 }}
-              >
-                The company&apos;s registered framework also provides for
-                agreements, collaborations, infrastructure, research,
-                quality facilities, finance, insurance and other lawful
-                activities necessary to further its business objects.
-              </p>
-            </div>
+            <GovernanceCard
+              title="Responsible Growth"
+              text="The company's registered framework also provides for agreements, collaborations, infrastructure, research, quality facilities, finance, insurance and other lawful activities necessary to further its business objects."
+            />
           </div>
         </div>
       </section>
 
-      {/* Closing */}
+      {/* =========================================================
+          CLOSING
+      ========================================================= */}
       <section
         style={{
           padding: '65px 20px',
@@ -514,7 +519,9 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <h2>Empowering Rural India for a Sustainable Future</h2>
+          <h2>
+            Empowering Rural India for a Sustainable Future
+          </h2>
 
           <p
             className="muted"
@@ -534,6 +541,10 @@ export default function Page() {
     </main>
   );
 }
+
+/* =========================================================
+   COMPANY INFORMATION
+========================================================= */
 
 function InfoRow({
   label,
@@ -575,6 +586,10 @@ function InfoRow({
   );
 }
 
+/* =========================================================
+   BUSINESS OBJECT CARD
+========================================================= */
+
 function ObjectCard({
   icon,
   title,
@@ -610,6 +625,10 @@ function ObjectCard({
   );
 }
 
+/* =========================================================
+   INTEGRATED APPROACH CARD
+========================================================= */
+
 function FeatureCard({
   icon,
   title,
@@ -637,7 +656,9 @@ function FeatureCard({
         {icon}
       </div>
 
-      <h3 style={{ marginBottom: '8px' }}>{title}</h3>
+      <h3 style={{ marginBottom: '8px' }}>
+        {title}
+      </h3>
 
       <p
         className="muted"
@@ -652,7 +673,11 @@ function FeatureCard({
   );
 }
 
-function DarkCard({
+/* =========================================================
+   RURAL DEVELOPMENT CARD
+========================================================= */
+
+function DarkDevelopmentCard({
   title,
   text,
 }: {
@@ -662,16 +687,16 @@ function DarkCard({
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.08)',
-        border: '1px solid rgba(255,255,255,0.18)',
+        background: '#ffffff',
         borderRadius: '10px',
-        padding: '23px',
+        padding: '25px',
       }}
     >
       <h3
         style={{
-          color: '#ffffff',
+          color: '#145c2b',
           marginTop: 0,
+          marginBottom: '8px',
         }}
       >
         {title}
@@ -679,8 +704,36 @@ function DarkCard({
 
       <p
         style={{
-          color: 'rgba(255,255,255,0.82)',
+          color: '#526157',
           lineHeight: 1.7,
+          marginBottom: 0,
+        }}
+      >
+        {text}
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================
+   GOVERNANCE CARD
+========================================================= */
+
+function GovernanceCard({
+  title,
+  text,
+}: {
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="card">
+      <h3>{title}</h3>
+
+      <p
+        className="muted"
+        style={{
+          lineHeight: 1.8,
           marginBottom: 0,
         }}
       >
