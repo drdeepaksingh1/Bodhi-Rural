@@ -2,57 +2,85 @@ export default function Page() {
   return (
     <main>
       {/* =========================================================
-          HERO
+          HERO IMAGE
       ========================================================= */}
       <section
         style={{
-          background:
-            'linear-gradient(135deg, #f2f9f4 0%, #ffffff 55%, #eaf5ed 100%)',
-          padding: '50px 20px 45px',
-          borderBottom: '1px solid #e2ebe4',
+          position: 'relative',
+          width: '100%',
+          minHeight: '520px',
+          backgroundImage:
+            "url('/branding/bodhi-rural-village-hero.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          display: 'flex',
+          alignItems: 'flex-end',
         }}
       >
-        <div className="container">
-          <div style={{ maxWidth: '850px' }}>
-            <div
-              style={{
-                color: '#145c2b',
-                fontWeight: 700,
-                fontSize: '13px',
-                letterSpacing: '1px',
-                marginBottom: '10px',
-              }}
-            >
-              BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
+        {/* Green overlay for depth */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(180deg, rgba(20,92,43,0.05) 30%, rgba(10,55,25,0.38) 100%)',
+          }}
+        />
+
+        {/* Bottom information strip */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            width: '100%',
+            background: 'rgba(20,92,43,0.90)',
+            color: '#ffffff',
+            padding: '18px 20px',
+          }}
+        >
+          <div
+            className="container"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  marginBottom: '4px',
+                }}
+              >
+                BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
+              </div>
+
+              <div
+                style={{
+                  fontSize: '15px',
+                  color: '#e4f2e7',
+                }}
+              >
+                Agriculture • Livestock • Poultry • Fisheries • Rural
+                Enterprises
+              </div>
             </div>
 
-            <h1
+            <div
               style={{
-                fontSize: 'clamp(36px, 5vw, 58px)',
-                lineHeight: 1.08,
-                color: '#123b20',
-                margin: '0 0 16px',
-                fontWeight: 800,
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#ffffff',
               }}
             >
-              Building sustainable
-              <br />
-              rural livelihoods
-            </h1>
-
-            <p
-              style={{
-                fontSize: '18px',
-                lineHeight: 1.65,
-                color: '#536158',
-                maxWidth: '760px',
-                margin: 0,
-              }}
-            >
-              Bodhi Rural is an agriculture and rural livelihood enterprise
-              working across agriculture, livestock, food, agricultural
-              inputs, rural enterprises and technology-enabled solutions.
-            </p>
+              Empowering Rural India for a Sustainable Future
+            </div>
           </div>
         </div>
       </section>
@@ -343,7 +371,7 @@ export default function Page() {
       </section>
 
       {/* =========================================================
-          RURAL DEVELOPMENT — FINAL SECTION
+          RURAL DEVELOPMENT — FINAL PAGE SECTION
       ========================================================= */}
       <section
         style={{
