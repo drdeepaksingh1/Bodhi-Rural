@@ -7,7 +7,7 @@ export default function SellerRegistrationPage() {
   const supabase = createClient();
 
   const [form, setForm] = useState({
-    full_name: '',
+    owner_name: '',
     shop_name: '',
     mobile: '',
     email: '',
@@ -15,6 +15,7 @@ export default function SellerRegistrationPage() {
     pan_number: '',
     gstin: '',
     upi_id: '',
+    business_type: '',
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -42,12 +43,12 @@ export default function SellerRegistrationPage() {
 
     try {
       if (
-        !form.full_name.trim() ||
+        !form.owner_name.trim() ||
         !form.shop_name.trim() ||
         !form.mobile.trim()
       ) {
         throw new Error(
-          'Please fill Shopkeeper Name, Shop Name and Mobile Number.'
+          'Please fill Owner Name, Shop Name and Mobile Number.'
         );
       }
 
@@ -60,7 +61,7 @@ export default function SellerRegistrationPage() {
         .from('marketplace_seller_applications')
         .insert({
           user_id: userId,
-          full_name: form.full_name.trim(),
+          owner_name: form.owner_name.trim(),
           shop_name: form.shop_name.trim(),
           mobile: form.mobile.trim(),
           email: form.email.trim() || null,
@@ -71,8 +72,9 @@ export default function SellerRegistrationPage() {
             form.gstin.trim() || null,
           upi_id:
             form.upi_id.trim() || null,
+          business_type:
+            form.business_type.trim() || null,
           status: 'SUBMITTED',
-          kyc_status: 'PENDING',
         })
         .select('id, application_number')
         .single();
@@ -90,7 +92,7 @@ export default function SellerRegistrationPage() {
       );
 
       setForm({
-        full_name: '',
+        owner_name: '',
         shop_name: '',
         mobile: '',
         email: '',
@@ -98,6 +100,7 @@ export default function SellerRegistrationPage() {
         pan_number: '',
         gstin: '',
         upi_id: '',
+        business_type: '',
       });
     } catch (err: any) {
       setError(
@@ -123,6 +126,7 @@ export default function SellerRegistrationPage() {
           margin: '0 auto',
         }}
       >
+        {/* HEADER */}
         <div
           style={{
             background: '#145c2b',
@@ -163,6 +167,7 @@ export default function SellerRegistrationPage() {
           </p>
         </div>
 
+        {/* SUCCESS */}
         {success && (
           <div
             style={{
@@ -178,6 +183,7 @@ export default function SellerRegistrationPage() {
           </div>
         )}
 
+        {/* ERROR */}
         {error && (
           <div
             style={{
@@ -202,6 +208,7 @@ export default function SellerRegistrationPage() {
               '0 4px 18px rgba(0,0,0,0.06)',
           }}
         >
+          {/* OWNER INFORMATION */}
           <h2
             style={{
               marginTop: 0,
@@ -214,9 +221,9 @@ export default function SellerRegistrationPage() {
           <div style={gridStyle}>
             <Field
               label="Shopkeeper / Owner Name *"
-              value={form.full_name}
+              value={form.owner_name}
               onChange={(value) =>
-                updateField('full_name', value)
+                updateField('owner_name', value)
               }
               required
             />
@@ -250,6 +257,7 @@ export default function SellerRegistrationPage() {
             />
           </div>
 
+          {/* BUSINESS */}
           <h2
             style={{
               color: '#145c2b',
@@ -261,10 +269,25 @@ export default function SellerRegistrationPage() {
 
           <div style={gridStyle}>
             <Field
+              label="Business Type"
+              value={form.business_type}
+              onChange={(value) =>
+                updateField(
+                  'business_type',
+                  value
+                )
+              }
+              placeholder="Retail / Wholesale / Manufacturer / Farmer Producer"
+            />
+
+            <Field
               label="PAN Number"
               value={form.pan_number}
               onChange={(value) =>
-                updateField('pan_number', value)
+                updateField(
+                  'pan_number',
+                  value
+                )
               }
             />
 
@@ -285,6 +308,7 @@ export default function SellerRegistrationPage() {
             />
           </div>
 
+          {/* ADDRESS */}
           <div style={{ marginTop: 18 }}>
             <label style={labelStyle}>
               Business / Shop Address
@@ -311,6 +335,7 @@ export default function SellerRegistrationPage() {
             />
           </div>
 
+          {/* WORKFLOW NOTICE */}
           <div
             style={{
               marginTop: 24,
@@ -328,6 +353,7 @@ export default function SellerRegistrationPage() {
             completed before seller activation.
           </div>
 
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={submitting}
@@ -362,12 +388,14 @@ function Field({
   onChange,
   type = 'text',
   required = false,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -379,6 +407,7 @@ function Field({
         type={type}
         value={value}
         required={required}
+        placeholder={placeholder}
         onChange={(event) =>
           onChange(event.target.value)
         }
