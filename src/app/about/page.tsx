@@ -8,12 +8,8 @@ export default function Page() {
         style={{
           width: '100%',
           background: '#f7faf7',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
           height: '240px',
           overflow: 'hidden',
-          position: 'relative',
         }}
       >
         <img
@@ -22,7 +18,7 @@ export default function Page() {
           style={{
             width: '100%',
             height: '240px',
-            objectFit: 'contain',
+            objectFit: 'fill',
             objectPosition: 'center',
             display: 'block',
           }}
@@ -32,11 +28,7 @@ export default function Page() {
       {/* =========================================================
           COMPANY PROFILE
       ========================================================= */}
-      <section
-        style={{
-          padding: '45px 20px',
-        }}
-      >
+      <section style={{ padding: '45px 20px' }}>
         <div className="container">
           <div
             style={{
@@ -71,11 +63,11 @@ export default function Page() {
                   marginBottom: '12px',
                 }}
               >
-                The company&apos;s Memorandum of Association provides a broad
-                business framework covering agriculture, horticulture,
-                floriculture, agroforestry, food processing, livestock,
-                poultry, fisheries, agricultural inputs, feed, agri-technology
-                and rural livelihood promotion.
+                The company operates across a broad range of agriculture and
+                rural development activities, including agriculture,
+                horticulture, floriculture, agroforestry, food processing,
+                livestock, poultry, fisheries, agricultural inputs, feed,
+                agri-technology and rural livelihood promotion.
               </p>
 
               <p
@@ -155,7 +147,7 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <SectionLabel text="BUSINESS OBJECTS" />
+          <SectionLabel text="BUSINESS ACTIVITIES" />
 
           <h2>Our areas of activity</h2>
 
@@ -166,8 +158,10 @@ export default function Page() {
               marginBottom: '24px',
             }}
           >
-            The company&apos;s registered objects provide the foundation for
-            a diversified rural and agricultural business ecosystem.
+            The company operates across agriculture, allied sectors and
+            rural livelihood activities, creating opportunities for
+            production, value addition, enterprise development and market
+            linkages.
           </p>
 
           <div
@@ -256,11 +250,7 @@ export default function Page() {
       {/* =========================================================
           OUR APPROACH
       ========================================================= */}
-      <section
-        style={{
-          padding: '45px 20px',
-        }}
-      >
+      <section style={{ padding: '45px 20px' }}>
         <div className="container">
           <SectionLabel text="OUR APPROACH" />
 
@@ -315,7 +305,7 @@ export default function Page() {
       </section>
 
       {/* =========================================================
-          RURAL DEVELOPMENT — FINAL ABOUT SECTION
+          RURAL DEVELOPMENT
       ========================================================= */}
       <section
         style={{
@@ -352,10 +342,9 @@ export default function Page() {
                 margin: 0,
               }}
             >
-              The company&apos;s objects specifically provide for rural
-              livelihood promotion, support to producer organizations,
-              training and capacity building, government and CSR-related
-              development projects, research and innovation, and the
+              The company focuses on rural livelihood promotion, support to
+              producer organizations, training and capacity building,
+              development initiatives, research and innovation, and the
               promotion of rural enterprises.
             </p>
           </div>
@@ -394,9 +383,9 @@ export default function Page() {
   );
 }
 
-/* ============================================================
+/* =========================================================
    SECTION LABEL
-============================================================ */
+========================================================= */
 
 function SectionLabel({
   text,
@@ -421,9 +410,9 @@ function SectionLabel({
   );
 }
 
-/* ============================================================
-   COMPANY INFORMATION
-============================================================ */
+/* =========================================================
+   COMPANY INFO ROW
+========================================================= */
 
 function InfoRow({
   label,
@@ -470,9 +459,9 @@ function InfoRow({
   );
 }
 
-/* ============================================================
-   BUSINESS OBJECT CARD
-============================================================ */
+/* =========================================================
+   BUSINESS ACTIVITY CARD
+========================================================= */
 
 function ObjectCard({
   icon,
@@ -526,9 +515,9 @@ function ObjectCard({
   );
 }
 
-/* ============================================================
+/* =========================================================
    APPROACH CARD
-============================================================ */
+========================================================= */
 
 function FeatureCard({
   icon,
@@ -580,9 +569,9 @@ function FeatureCard({
   );
 }
 
-/* ============================================================
+/* =========================================================
    RURAL DEVELOPMENT CARD
-============================================================ */
+========================================================= */
 
 function DevelopmentCard({
   title,
