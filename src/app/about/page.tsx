@@ -1,12 +1,14 @@
 export default function Page() {
   return (
     <main>
-      {/* HERO */}
+      {/* =========================================================
+          HERO
+      ========================================================= */}
       <section
         style={{
           background:
             'linear-gradient(135deg, #f2f9f4 0%, #ffffff 55%, #eaf5ed 100%)',
-          padding: '55px 20px 50px',
+          padding: '50px 20px 45px',
           borderBottom: '1px solid #e2ebe4',
         }}
       >
@@ -18,7 +20,7 @@ export default function Page() {
                 fontWeight: 700,
                 fontSize: '13px',
                 letterSpacing: '1px',
-                marginBottom: '12px',
+                marginBottom: '10px',
               }}
             >
               BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
@@ -29,7 +31,7 @@ export default function Page() {
                 fontSize: 'clamp(36px, 5vw, 58px)',
                 lineHeight: 1.08,
                 color: '#123b20',
-                margin: '0 0 18px',
+                margin: '0 0 16px',
                 fontWeight: 800,
               }}
             >
@@ -41,7 +43,7 @@ export default function Page() {
             <p
               style={{
                 fontSize: '18px',
-                lineHeight: 1.7,
+                lineHeight: 1.65,
                 color: '#536158',
                 maxWidth: '760px',
                 margin: 0,
@@ -55,10 +57,12 @@ export default function Page() {
         </div>
       </section>
 
-      {/* COMPANY PROFILE */}
+      {/* =========================================================
+          COMPANY PROFILE
+      ========================================================= */}
       <section
         style={{
-          padding: '55px 20px',
+          padding: '45px 20px',
         }}
       >
         <div className="container">
@@ -67,7 +71,7 @@ export default function Page() {
               display: 'grid',
               gridTemplateColumns:
                 'minmax(0, 1.4fr) minmax(290px, 0.6fr)',
-              gap: '35px',
+              gap: '30px',
               alignItems: 'start',
             }}
           >
@@ -79,8 +83,8 @@ export default function Page() {
               <p
                 className="muted"
                 style={{
-                  lineHeight: 1.75,
-                  marginBottom: '14px',
+                  lineHeight: 1.7,
+                  marginBottom: '12px',
                 }}
               >
                 BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED is established
@@ -91,8 +95,8 @@ export default function Page() {
               <p
                 className="muted"
                 style={{
-                  lineHeight: 1.75,
-                  marginBottom: '14px',
+                  lineHeight: 1.7,
+                  marginBottom: '12px',
                 }}
               >
                 The company&apos;s Memorandum of Association provides a broad
@@ -105,8 +109,8 @@ export default function Page() {
               <p
                 className="muted"
                 style={{
-                  lineHeight: 1.75,
-                  marginBottom: '14px',
+                  lineHeight: 1.7,
+                  marginBottom: 0,
                 }}
               >
                 The company is also structured to support Farmer Producer
@@ -121,14 +125,14 @@ export default function Page() {
                 background: '#f7faf7',
                 border: '1px solid #dfe9e1',
                 borderRadius: '12px',
-                padding: '24px',
+                padding: '22px',
               }}
             >
               <h3
                 style={{
                   color: '#145c2b',
                   marginTop: 0,
-                  marginBottom: '18px',
+                  marginBottom: '16px',
                 }}
               >
                 Company Profile
@@ -169,11 +173,13 @@ export default function Page() {
         </div>
       </section>
 
-      {/* BUSINESS OBJECTS */}
+      {/* =========================================================
+          BUSINESS OBJECTS
+      ========================================================= */}
       <section
         style={{
           background: '#f7f9f7',
-          padding: '55px 20px',
+          padding: '45px 20px',
         }}
       >
         <div className="container">
@@ -185,7 +191,7 @@ export default function Page() {
             className="muted"
             style={{
               maxWidth: '760px',
-              marginBottom: '28px',
+              marginBottom: '24px',
             }}
           >
             The company&apos;s registered objects provide the foundation for
@@ -197,7 +203,7 @@ export default function Page() {
               display: 'grid',
               gridTemplateColumns:
                 'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '16px',
+              gap: '14px',
             }}
           >
             <ObjectCard
@@ -275,10 +281,12 @@ export default function Page() {
         </div>
       </section>
 
-      {/* INTEGRATED APPROACH */}
+      {/* =========================================================
+          OUR APPROACH
+      ========================================================= */}
       <section
         style={{
-          padding: '55px 20px',
+          padding: '45px 20px',
         }}
       >
         <div className="container">
@@ -290,9 +298,9 @@ export default function Page() {
             style={{
               display: 'grid',
               gridTemplateColumns:
-                'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '16px',
-              marginTop: '25px',
+                'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '14px',
+              marginTop: '22px',
             }}
           >
             <FeatureCard
@@ -334,18 +342,20 @@ export default function Page() {
         </div>
       </section>
 
-      {/* RURAL DEVELOPMENT */}
+      {/* =========================================================
+          RURAL DEVELOPMENT — FINAL SECTION
+      ========================================================= */}
       <section
         style={{
           background: '#145c2b',
-          padding: '55px 20px',
+          padding: '50px 20px 55px',
         }}
       >
         <div className="container">
           <div
             style={{
               maxWidth: '800px',
-              marginBottom: '28px',
+              marginBottom: '25px',
             }}
           >
             <SectionLabel
@@ -356,7 +366,7 @@ export default function Page() {
             <h2
               style={{
                 color: '#ffffff',
-                marginBottom: '16px',
+                marginBottom: '14px',
               }}
             >
               Building connected rural ecosystems
@@ -366,7 +376,7 @@ export default function Page() {
               style={{
                 color: '#f0f7f2',
                 fontSize: '17px',
-                lineHeight: 1.75,
+                lineHeight: 1.7,
                 margin: 0,
               }}
             >
@@ -408,92 +418,6 @@ export default function Page() {
           </div>
         </div>
       </section>
-
-      {/* TECHNOLOGY AND GOVERNANCE */}
-      <section
-        style={{
-          padding: '55px 20px',
-          background: '#ffffff',
-        }}
-      >
-        <div className="container">
-          <div
-            style={{
-              maxWidth: '800px',
-              marginBottom: '30px',
-            }}
-          >
-            <SectionLabel text="TECHNOLOGY & MANAGEMENT" />
-
-            <h2>Technology-enabled rural operations</h2>
-
-            <p
-              className="muted"
-              style={{
-                fontSize: '17px',
-                lineHeight: 1.75,
-                margin: 0,
-              }}
-            >
-              The registered objects expressly include digital platforms,
-              mobile applications, farm management systems, IoT solutions
-              and agritech services. This provides the foundation for
-              technology-enabled farmer management, operational monitoring,
-              reporting and digital commerce.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px',
-            }}
-          >
-            <GovernanceCard
-              title="Corporate Governance"
-              text="The company's Articles of Association establish provisions relating to share capital, members, general meetings, voting rights, the Board of Directors and proceedings of the Board."
-            />
-
-            <GovernanceCard
-              title="Management Structure"
-              text="The Articles provide for the appointment of management positions including Chief Executive Officer, Manager, Company Secretary and Chief Financial Officer, subject to the applicable provisions of law."
-            />
-
-            <GovernanceCard
-              title="Responsible Growth"
-              text="The company's registered framework also provides for agreements, collaborations, infrastructure, research, quality facilities, finance, insurance and other lawful activities necessary to further its business objects."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* CLOSING */}
-      <section
-        style={{
-          background: '#f7f9f7',
-          padding: '45px 20px',
-          textAlign: 'center',
-        }}
-      >
-        <div className="container">
-          <h2 style={{ marginBottom: '10px' }}>
-            Empowering Rural India for a Sustainable Future
-          </h2>
-
-          <p
-            className="muted"
-            style={{
-              margin: 0,
-            }}
-          >
-            BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
-            <br />
-            Islampur, Nalanda, Bihar – 801303
-          </p>
-        </div>
-      </section>
     </main>
   );
 }
@@ -517,7 +441,7 @@ function SectionLabel({
         fontSize: '12px',
         letterSpacing: '1px',
         textTransform: 'uppercase',
-        marginBottom: '8px',
+        marginBottom: '7px',
       }}
     >
       {text}
@@ -541,8 +465,8 @@ function InfoRow({
   return (
     <div
       style={{
-        paddingBottom: last ? 0 : '12px',
-        marginBottom: last ? 0 : '12px',
+        paddingBottom: last ? 0 : '10px',
+        marginBottom: last ? 0 : '10px',
         borderBottom: last
           ? 'none'
           : '1px solid #dfe8e1',
@@ -564,7 +488,7 @@ function InfoRow({
       <div
         style={{
           color: '#1d3324',
-          lineHeight: 1.45,
+          lineHeight: 1.4,
           fontSize: '14px',
         }}
       >
@@ -593,15 +517,15 @@ function ObjectCard({
         background: '#ffffff',
         border: '1px solid #e1e9e3',
         borderRadius: '10px',
-        padding: '21px',
+        padding: '18px',
         boxShadow:
-          '0 3px 12px rgba(20, 92, 43, 0.05)',
+          '0 2px 8px rgba(20, 92, 43, 0.05)',
       }}
     >
       <div
         style={{
-          fontSize: '28px',
-          marginBottom: '8px',
+          fontSize: '26px',
+          marginBottom: '6px',
         }}
       >
         {icon}
@@ -609,8 +533,8 @@ function ObjectCard({
 
       <h3
         style={{
-          margin: '0 0 8px',
-          fontSize: '18px',
+          margin: '0 0 7px',
+          fontSize: '17px',
         }}
       >
         {title}
@@ -619,7 +543,7 @@ function ObjectCard({
       <p
         className="muted"
         style={{
-          lineHeight: 1.6,
+          lineHeight: 1.55,
           margin: 0,
           fontSize: '14px',
         }}
@@ -648,14 +572,14 @@ function FeatureCard({
       style={{
         border: '1px solid #e1e9e3',
         borderRadius: '10px',
-        padding: '22px',
+        padding: '18px',
         background: '#ffffff',
       }}
     >
       <div
         style={{
-          fontSize: '28px',
-          marginBottom: '8px',
+          fontSize: '26px',
+          marginBottom: '6px',
         }}
       >
         {icon}
@@ -663,8 +587,8 @@ function FeatureCard({
 
       <h3
         style={{
-          margin: '0 0 7px',
-          fontSize: '18px',
+          margin: '0 0 6px',
+          fontSize: '17px',
         }}
       >
         {title}
@@ -673,7 +597,7 @@ function FeatureCard({
       <p
         className="muted"
         style={{
-          lineHeight: 1.6,
+          lineHeight: 1.55,
           margin: 0,
           fontSize: '14px',
         }}
@@ -700,14 +624,14 @@ function DevelopmentCard({
       style={{
         background: '#ffffff',
         borderRadius: '10px',
-        padding: '21px',
+        padding: '20px',
       }}
     >
       <h3
         style={{
           color: '#145c2b',
-          margin: '0 0 7px',
-          fontSize: '18px',
+          margin: '0 0 6px',
+          fontSize: '17px',
         }}
       >
         {title}
@@ -716,51 +640,7 @@ function DevelopmentCard({
       <p
         style={{
           color: '#526157',
-          lineHeight: 1.6,
-          margin: 0,
-          fontSize: '14px',
-        }}
-      >
-        {text}
-      </p>
-    </div>
-  );
-}
-
-/* ============================================================
-   GOVERNANCE CARD
-============================================================ */
-
-function GovernanceCard({
-  title,
-  text,
-}: {
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      style={{
-        border: '1px solid #e1e9e3',
-        borderRadius: '10px',
-        padding: '22px',
-        background: '#f7f9f7',
-      }}
-    >
-      <h3
-        style={{
-          color: '#145c2b',
-          margin: '0 0 9px',
-          fontSize: '18px',
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        className="muted"
-        style={{
-          lineHeight: 1.65,
+          lineHeight: 1.55,
           margin: 0,
           fontSize: '14px',
         }}
