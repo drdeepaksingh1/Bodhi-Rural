@@ -2,24 +2,37 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export default function SiteHeader() {
-  const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
+ const pathname = usePathname();
+const searchParams = useSearchParams();
+const [menuOpen, setMenuOpen] = useState(false);
+
+const redirectPath = searchParams.get('redirect');
 
   function closeMenu() {
     setMenuOpen(false);
   }
 
   function isActive(href: string) {
-    if (href === '/') {
-      return pathname === '/';
-    }
-
-    return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href || pathname.startsWith(`${href}/`)) {
+    return true;
   }
+
+  if (pathname === '/login' && redirectPath) {
+    if (redirectPath === href || redirectPath.startsWith(`${href}/`)) {
+      return true;
+    }
+  }
+
+  if (href === '/') {
+    return pathname === '/';
+  }
+
+  return false;
+}
 
   return (
     <header
