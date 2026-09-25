@@ -60,9 +60,68 @@ export default function SellerApplicationsPage() {
   }, []);
 
   async function updateApplication(
-    application: SellerApplication,
-    action: 'APPROVE' | 'REJECT'
-  ) {
+  application: SellerApplication,
+  action: 'APPROVE' | 'REJECT'
+) {
+  if (action === 'REJECT' && !remarks.trim()) {
+    setError('Please enter rejection remarks.');
+    return;
+  }
+
+  setProcessing(application.id);
+  setError('');
+  setMessage('');
+
+  try {
+    if (action === 'APPROVE') {
+      const { data, error } = await supabase.rpc(
+        'approve_marketplace_seller',
+        {
+          p_application_id: application.id,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      const result = Array.isArray(data) ? data[0] : data;
+
+      setMessage(
+        `Seller approved successfully. Seller ID: ${
+          result?.seller_code || 'Generated'
+        }`
+      );
+    } else {
+      const { error } = await supabase
+        .from('marketplace_seller_applications')
+        .update({
+          status: 'REJECTED',
+          rejection_reason: remarks.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', application.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setMessage('Seller application rejected successfully.');
+    }
+
+    setSelected(null);
+    setRemarks('');
+
+    await loadApplications();
+  } catch (err: any) {
+    setError(
+      err?.message ||
+        'Unable to process seller application.'
+    );
+  } finally {
+    setProcessing(null);
+  }
+}{
     if (action === 'REJECT' && !remarks.trim()) {
       setError('Please enter rejection remarks.');
       return;
