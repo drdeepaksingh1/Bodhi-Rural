@@ -2,37 +2,50 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function SiteHeader() {
- const pathname = usePathname();
-const searchParams = useSearchParams();
-const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
-const redirectPath = searchParams.get('redirect');
+  useEffect(() => {
+    if (pathname === '/login') {
+      const params = new URLSearchParams(window.location.search);
+      setRedirectPath(params.get('redirect'));
+    } else {
+      setRedirectPath(null);
+    }
+  }, [pathname]);
 
   function closeMenu() {
     setMenuOpen(false);
   }
 
   function isActive(href: string) {
-  if (pathname === href || pathname.startsWith(`${href}/`)) {
-    return true;
-  }
-
-  if (pathname === '/login' && redirectPath) {
-    if (redirectPath === href || redirectPath.startsWith(`${href}/`)) {
+    // Normal page URL
+    if (pathname === href || pathname.startsWith(`${href}/`)) {
       return true;
     }
-  }
 
-  if (href === '/') {
-    return pathname === '/';
-  }
+    // Login page reached through a protected page
+    if (pathname === '/login' && redirectPath) {
+      if (
+        redirectPath === href ||
+        redirectPath.startsWith(`${href}/`)
+      ) {
+        return true;
+      }
+    }
 
-  return false;
-}
+    // Home
+    if (href === '/') {
+      return pathname === '/';
+    }
+
+    return false;
+  }
 
   return (
     <header
@@ -86,15 +99,24 @@ const redirectPath = searchParams.get('redirect');
             gap: '12px',
           }}
         >
-          <NavLink href="/about" active={isActive('/about')}>
+          <NavLink
+            href="/about"
+            active={isActive('/about')}
+          >
             About
           </NavLink>
 
-          <NavLink href="/bodhifarm" active={isActive('/bodhifarm')}>
+          <NavLink
+            href="/bodhifarm"
+            active={isActive('/bodhifarm')}
+          >
             BodhiFarm
           </NavLink>
 
-          <NavLink href="/bodhimart" active={isActive('/bodhimart')}>
+          <NavLink
+            href="/bodhimart"
+            active={isActive('/bodhimart')}
+          >
             BodhiMart
           </NavLink>
 
@@ -105,11 +127,17 @@ const redirectPath = searchParams.get('redirect');
             Farmers
           </NavLink>
 
-          <NavLink href="/projects" active={isActive('/projects')}>
+          <NavLink
+            href="/projects"
+            active={isActive('/projects')}
+          >
             Projects
           </NavLink>
 
-          <NavLink href="/contact" active={isActive('/contact')}>
+          <NavLink
+            href="/contact"
+            active={isActive('/contact')}
+          >
             Contact
           </NavLink>
 
@@ -135,7 +163,9 @@ const redirectPath = searchParams.get('redirect');
           type="button"
           className="mobileMenuButton"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={
+            menuOpen ? 'Close menu' : 'Open menu'
+          }
           aria-expanded={menuOpen}
           style={{
             display: 'none',
@@ -159,7 +189,8 @@ const redirectPath = searchParams.get('redirect');
           className="mobileMenu"
           style={{
             background: '#145c2b',
-            borderTop: '1px solid rgba(255,255,255,0.2)',
+            borderTop:
+              '1px solid rgba(255,255,255,0.2)',
             padding: '10px 20px 18px',
           }}
         >
@@ -285,7 +316,9 @@ function NavLink({
         whiteSpace: 'nowrap',
         padding: '8px 10px',
         borderRadius: '5px',
-        background: active ? 'rgba(255,255,255,0.16)' : 'transparent',
+        background: active
+          ? 'rgba(255,255,255,0.16)'
+          : 'transparent',
         borderBottom: active
           ? '2px solid #ffffff'
           : '2px solid transparent',
@@ -316,9 +349,12 @@ function MobileLink({
         color: '#ffffff',
         textDecoration: 'none',
         padding: '11px 8px',
-        borderBottom: '1px solid rgba(255,255,255,0.15)',
+        borderBottom:
+          '1px solid rgba(255,255,255,0.15)',
         fontWeight: active ? 700 : 500,
-        background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+        background: active
+          ? 'rgba(255,255,255,0.12)'
+          : 'transparent',
         borderRadius: '4px',
       }}
     >
