@@ -1,9 +1,7 @@
 export default function Page() {
   return (
     <main>
-      {/* =========================================================
-          HERO
-      ========================================================= */}
+      {/* HERO */}
       <section
         style={{
           background:
@@ -57,9 +55,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          COMPANY PROFILE
-      ========================================================= */}
+      {/* COMPANY PROFILE */}
       <section
         style={{
           padding: '55px 20px',
@@ -80,13 +76,25 @@ export default function Page() {
 
               <h2>Our rural livelihood and agriculture platform</h2>
 
-              <p className="muted compactText">
+              <p
+                className="muted"
+                style={{
+                  lineHeight: 1.75,
+                  marginBottom: '14px',
+                }}
+              >
                 BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED is established
                 as a company limited by shares with its registered office in
                 Bihar.
               </p>
 
-              <p className="muted compactText">
+              <p
+                className="muted"
+                style={{
+                  lineHeight: 1.75,
+                  marginBottom: '14px',
+                }}
+              >
                 The company&apos;s Memorandum of Association provides a broad
                 business framework covering agriculture, horticulture,
                 floriculture, agroforestry, food processing, livestock,
@@ -94,7 +102,13 @@ export default function Page() {
                 and rural livelihood promotion.
               </p>
 
-              <p className="muted compactText">
+              <p
+                className="muted"
+                style={{
+                  lineHeight: 1.75,
+                  marginBottom: '14px',
+                }}
+              >
                 The company is also structured to support Farmer Producer
                 Organizations, Self Help Groups, cooperatives and rural
                 producer groups, together with training, capacity building,
@@ -155,9 +169,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          BUSINESS OBJECTS
-      ========================================================= */}
+      {/* BUSINESS OBJECTS */}
       <section
         style={{
           background: '#f7f9f7',
@@ -263,9 +275,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          INTEGRATED APPROACH
-      ========================================================= */}
+      {/* INTEGRATED APPROACH */}
       <section
         style={{
           padding: '55px 20px',
@@ -324,9 +334,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          RURAL DEVELOPMENT
-      ========================================================= */}
+      {/* RURAL DEVELOPMENT */}
       <section
         style={{
           background: '#145c2b',
@@ -334,13 +342,23 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <div style={{ maxWidth: '800px' }}>
+          <div
+            style={{
+              maxWidth: '800px',
+              marginBottom: '28px',
+            }}
+          >
             <SectionLabel
               text="RURAL DEVELOPMENT"
               light
             />
 
-            <h2 style={{ color: '#ffffff' }}>
+            <h2
+              style={{
+                color: '#ffffff',
+                marginBottom: '16px',
+              }}
+            >
               Building connected rural ecosystems
             </h2>
 
@@ -349,7 +367,7 @@ export default function Page() {
                 color: '#f0f7f2',
                 fontSize: '17px',
                 lineHeight: 1.75,
-                marginBottom: '28px',
+                margin: 0,
               }}
             >
               The company&apos;s objects specifically provide for rural
@@ -391,9 +409,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          TECHNOLOGY + GOVERNANCE
-      ========================================================= */}
+      {/* TECHNOLOGY AND GOVERNANCE */}
       <section
         style={{
           padding: '55px 20px',
@@ -453,9 +469,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* =========================================================
-          CLOSING
-      ========================================================= */}
+      {/* CLOSING */}
       <section
         style={{
           background: '#f7f9f7',
@@ -464,11 +478,7 @@ export default function Page() {
         }}
       >
         <div className="container">
-          <h2
-            style={{
-              marginBottom: '10px',
-            }}
-          >
+          <h2 style={{ marginBottom: '10px' }}>
             Empowering Rural India for a Sustainable Future
           </h2>
 
@@ -484,30 +494,13 @@ export default function Page() {
           </p>
         </div>
       </section>
-
-      {/* =========================================================
-          PAGE-LEVEL RESPONSIVE CSS
-      ========================================================= */}
-      <style jsx>{`
-        .compactText {
-          line-height: 1.75;
-          margin-bottom: 14px;
-        }
-
-        @media (max-width: 700px) {
-          section {
-            padding-left: 15px !important;
-            padding-right: 15px !important;
-          }
-        }
-      `}</style>
     </main>
   );
 }
 
-/* =============================================================
+/* ============================================================
    SECTION LABEL
-============================================================= */
+============================================================ */
 
 function SectionLabel({
   text,
@@ -532,9 +525,9 @@ function SectionLabel({
   );
 }
 
-/* =============================================================
+/* ============================================================
    COMPANY INFORMATION
-============================================================= */
+============================================================ */
 
 function InfoRow({
   label,
@@ -581,9 +574,9 @@ function InfoRow({
   );
 }
 
-/* =============================================================
+/* ============================================================
    BUSINESS OBJECT CARD
-============================================================= */
+============================================================ */
 
 function ObjectCard({
   icon,
@@ -601,7 +594,8 @@ function ObjectCard({
         border: '1px solid #e1e9e3',
         borderRadius: '10px',
         padding: '21px',
-        boxShadow: '0 3px 12px rgba(20, 92, 43, 0.05)',
+        boxShadow:
+          '0 3px 12px rgba(20, 92, 43, 0.05)',
       }}
     >
       <div
@@ -636,9 +630,9 @@ function ObjectCard({
   );
 }
 
-/* =============================================================
+/* ============================================================
    APPROACH CARD
-============================================================= */
+============================================================ */
 
 function FeatureCard({
   icon,
@@ -690,9 +684,9 @@ function FeatureCard({
   );
 }
 
-/* =============================================================
+/* ============================================================
    RURAL DEVELOPMENT CARD
-============================================================= */
+============================================================ */
 
 function DevelopmentCard({
   title,
@@ -733,9 +727,9 @@ function DevelopmentCard({
   );
 }
 
-/* =============================================================
+/* ============================================================
    GOVERNANCE CARD
-============================================================= */
+============================================================ */
 
 function GovernanceCard({
   title,
