@@ -5,85 +5,68 @@ export default function Page() {
       <section
         style={{
           background:
-            'linear-gradient(135deg, #f4faf5 0%, #ffffff 55%, #eef7f0 100%)',
+            'linear-gradient(135deg, #f2f9f4 0%, #ffffff 55%, #eaf5ed 100%)',
           padding: '75px 20px 65px',
-          borderBottom: '1px solid #e5eee7',
+          borderBottom: '1px solid #e2ebe4',
         }}
       >
-        <div
-          className="container"
-          style={{
-            maxWidth: '1180px',
-            margin: '0 auto',
-          }}
-        >
-          <div
-            style={{
-              maxWidth: '850px',
-            }}
-          >
+        <div className="container">
+          <div style={{ maxWidth: '900px' }}>
             <div
               style={{
                 display: 'inline-block',
-                background: '#e4f2e7',
+                background: '#e2f1e6',
                 color: '#145c2b',
-                padding: '8px 15px',
+                padding: '8px 16px',
                 borderRadius: '30px',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 700,
-                marginBottom: '20px',
+                letterSpacing: '1px',
+                marginBottom: '18px',
               }}
             >
-              ABOUT BODHI RURAL
+              BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
             </div>
 
             <h1
               style={{
                 fontSize: 'clamp(38px, 6vw, 64px)',
-                lineHeight: 1.1,
+                lineHeight: 1.08,
                 color: '#123b20',
                 margin: '0 0 22px',
                 fontWeight: 800,
-                letterSpacing: '-1px',
               }}
             >
-              Empowering Rural India
+              Building sustainable
               <br />
-              for a Sustainable Future
+              rural livelihoods
             </h1>
 
             <p
               style={{
                 fontSize: '20px',
-                lineHeight: 1.7,
-                color: '#526157',
-                maxWidth: '780px',
+                lineHeight: 1.75,
+                color: '#536158',
+                maxWidth: '800px',
                 margin: 0,
               }}
             >
-              BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED is focused on
-              building sustainable rural livelihood opportunities through
-              agriculture, livestock, farmer networks, market linkages and
-              technology-enabled management systems.
+              Bodhi Rural is an agriculture and rural livelihood enterprise
+              working across agriculture, livestock, food, agricultural
+              inputs, rural enterprises and technology-enabled solutions.
             </p>
           </div>
         </div>
       </section>
 
       {/* Company Profile */}
-      <section
-        className="section"
-        style={{
-          paddingTop: '70px',
-          paddingBottom: '70px',
-        }}
-      >
+      <section className="section">
         <div className="container">
           <div
             style={{
               display: 'grid',
               gridTemplateColumns:
-                'repeat(auto-fit, minmax(300px, 1fr))',
+                'minmax(0, 1.35fr) minmax(300px, 0.65fr)',
               gap: '45px',
               alignItems: 'start',
             }}
@@ -93,43 +76,52 @@ export default function Page() {
                 style={{
                   color: '#145c2b',
                   fontWeight: 700,
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
+                  fontSize: '13px',
                   letterSpacing: '1px',
+                  textTransform: 'uppercase',
                   marginBottom: '10px',
                 }}
               >
-                Who We Are
+                About the Company
               </div>
 
-              <h2 style={{ marginBottom: '18px' }}>
-                A rural livelihood and agriculture enterprise
-              </h2>
+              <h2>Our rural livelihood and agriculture platform</h2>
 
-              <p className="muted" style={{ lineHeight: 1.8 }}>
-                Bodhi Rural is developing an integrated ecosystem designed
-                to connect rural producers with productive assets, inputs,
-                services, technology and markets.
+              <p
+                className="muted"
+                style={{ lineHeight: 1.85 }}
+              >
+                BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED is established
+                as a company limited by shares with its registered office in
+                Bihar.
               </p>
 
-              <p className="muted" style={{ lineHeight: 1.8 }}>
-                Our approach brings together farmer operations, poultry and
-                livestock activities, agricultural inputs, digital commerce
-                and management information systems within a connected
-                platform.
+              <p
+                className="muted"
+                style={{ lineHeight: 1.85 }}
+              >
+                The company&apos;s Memorandum of Association provides a broad
+                business framework covering agriculture, horticulture,
+                floriculture, agroforestry, food processing, livestock,
+                poultry, fisheries, agricultural inputs, feed, agri-technology
+                and rural livelihood promotion.
               </p>
 
-              <p className="muted" style={{ lineHeight: 1.8 }}>
-                The objective is to create structured and scalable systems
-                that can support rural producers while enabling transparent
-                and professional business operations.
+              <p
+                className="muted"
+                style={{ lineHeight: 1.85 }}
+              >
+                The company is also structured to support Farmer Producer
+                Organizations, Self Help Groups, cooperatives and rural
+                producer groups, together with training, capacity building,
+                research, innovation and rural enterprise development.
               </p>
             </div>
 
             <div
               style={{
-                background: '#f7f9f7',
-                border: '1px solid #e3ebe5',
+                background: '#f7faf7',
+                border: '1px solid #dfe9e1',
                 borderRadius: '12px',
                 padding: '28px',
               }}
@@ -141,194 +133,203 @@ export default function Page() {
                   marginBottom: '22px',
                 }}
               >
-                Company Information
+                Company Profile
               </h3>
 
-              <div style={{ display: 'grid', gap: '17px' }}>
-                <InfoRow
-                  label="Company"
-                  value="BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED"
-                />
+              <InfoRow
+                label="Company Name"
+                value="BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED"
+              />
 
-                <InfoRow
-                  label="CIN"
-                  value="U46209BR2026PTC083153"
-                />
+              <InfoRow
+                label="Registered State"
+                value="Bihar"
+              />
 
-                <InfoRow
-                  label="Registered Office"
-                  value="Islampur, Nalanda, Bihar – 801303"
-                />
+              <InfoRow
+                label="Registered Office"
+                value="Islampur, Nalanda, Bihar – 801303"
+              />
 
-                <InfoRow
-                  label="Registration"
-                  value="Registered under Ministry of Corporate Affairs, Government of India"
-                />
+              <InfoRow
+                label="Corporate Form"
+                value="Company Limited by Shares"
+              />
 
-                <InfoRow
-                  label="Website"
-                  value="www.brlps.co.in"
-                />
+              <InfoRow
+                label="Website"
+                value="www.brlps.co.in"
+              />
 
-                <InfoRow
-                  label="Email"
-                  value="ceo@brlps.co.in"
-                />
-              </div>
+              <InfoRow
+                label="Email"
+                value="ceo@brlps.co.in"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Vision & Mission */}
+      {/* Main Objects */}
       <section
         style={{
           background: '#f7f9f7',
           padding: '70px 20px',
         }}
       >
-        <div
-          className="container"
-          style={{
-            maxWidth: '1180px',
-            margin: '0 auto',
-          }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '25px',
-            }}
-          >
-            <div
-              className="card"
-              style={{
-                padding: '32px',
-                borderTop: '4px solid #145c2b',
-              }}
-            >
-              <div style={{ fontSize: '36px', marginBottom: '12px' }}>
-                🌱
-              </div>
-
-              <h2>Our Vision</h2>
-
-              <p
-                className="muted"
-                style={{ lineHeight: 1.8 }}
-              >
-                To contribute to a stronger and more sustainable rural
-                economy where farmers and rural communities have access to
-                productive opportunities, technology, markets and better
-                livelihood systems.
-              </p>
-            </div>
-
-            <div
-              className="card"
-              style={{
-                padding: '32px',
-                borderTop: '4px solid #145c2b',
-              }}
-            >
-              <div style={{ fontSize: '36px', marginBottom: '12px' }}>
-                🤝
-              </div>
-
-              <h2>Our Mission</h2>
-
-              <p
-                className="muted"
-                style={{ lineHeight: 1.8 }}
-              >
-                To develop practical, scalable and technology-enabled rural
-                business systems that connect producers with quality inputs,
-                services, production support and markets.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Core Values */}
-      <section
-        className="section"
-        style={{
-          paddingTop: '70px',
-          paddingBottom: '70px',
-        }}
-      >
         <div className="container">
-          <div
-            style={{
-              maxWidth: '700px',
-              marginBottom: '35px',
-            }}
-          >
+          <div style={{ maxWidth: '800px', marginBottom: '35px' }}>
             <div
               style={{
                 color: '#145c2b',
                 fontWeight: 700,
-                fontSize: '14px',
-                textTransform: 'uppercase',
+                fontSize: '13px',
                 letterSpacing: '1px',
+                textTransform: 'uppercase',
                 marginBottom: '10px',
               }}
             >
-              Our Values
+              Business Objects
             </div>
 
-            <h2>Principles that guide our work</h2>
+            <h2>Our areas of activity</h2>
 
-            <p className="muted">
-              We aim to build long-term rural businesses through responsible
-              operations, strong relationships and transparent systems.
+            <p
+              className="muted"
+              style={{ lineHeight: 1.8 }}
+            >
+              The company&apos;s registered objects provide the foundation
+              for a diversified rural and agricultural business ecosystem.
             </p>
           </div>
 
           <div className="grid">
-            <ValueCard
+            <ObjectCard
               icon="🌾"
-              title="Farmer First"
-              text="Designing systems around the practical needs and economic opportunities of rural producers."
+              title="Agriculture & Horticulture"
+              text="Agriculture, horticulture, floriculture, agroforestry and cultivation of cereals, pulses, oilseeds, fruits, vegetables, spices and other crops."
             />
 
-            <ValueCard
+            <ObjectCard
               icon="♻️"
-              title="Sustainability"
-              text="Promoting responsible agricultural and livelihood models designed for long-term value creation."
+              title="Sustainable Agriculture"
+              text="Organic farming, natural farming, regenerative agriculture and sustainable agricultural practices."
             />
 
-            <ValueCard
-              icon="💡"
-              title="Innovation"
-              text="Using technology and improved processes to make rural business operations more efficient and scalable."
+            <ObjectCard
+              icon="🐄"
+              title="Livestock & Dairy"
+              text="Dairy farming, milk production and livestock activities including goat, sheep and other livestock enterprises."
             />
 
-            <ValueCard
+            <ObjectCard
+              icon="🐔"
+              title="Poultry & Hatchery"
+              text="Poultry farming, hatchery operations, livestock breeding and related rural production systems."
+            />
+
+            <ObjectCard
+              icon="🐟"
+              title="Fisheries & Aquaculture"
+              text="Fisheries, aquaculture, fish farming, shrimp farming and other aquatic farming activities."
+            />
+
+            <ObjectCard
+              icon="🌽"
+              title="Feed & Fodder"
+              text="Cattle feed, poultry feed, fish feed, mineral mixtures, feed supplements, fodder and silage production."
+            />
+
+            <ObjectCard
+              icon="🥬"
+              title="Food Processing"
+              text="Processing, dehydration, cold storage, milling, oil extraction, packaging and value addition of agricultural products."
+            />
+
+            <ObjectCard
+              icon="📱"
+              title="Agri-Technology"
+              text="Digital platforms, mobile applications, farm management systems, IoT solutions and agritech services."
+            />
+
+            <ObjectCard
+              icon="🌱"
+              title="Agricultural Inputs"
+              text="Seeds, bio-fertilizers, organic manure, farm machinery, tools and other agricultural inputs."
+            />
+
+            <ObjectCard
               icon="🤝"
-              title="Partnership"
-              text="Working with farmers, producer groups, institutions and market partners to build connected ecosystems."
+              title="FPOs, SHGs & Cooperatives"
+              text="Organization and support for Farmer Producer Organizations, Self Help Groups, cooperatives and rural producer groups."
             />
 
-            <ValueCard
-              icon="📊"
-              title="Transparency"
-              text="Developing structured information and management systems to support accountable operations."
+            <ObjectCard
+              icon="🎓"
+              title="Training & Capacity Building"
+              text="Skill development, training, capacity building and rural livelihood promotion programmes."
             />
 
-            <ValueCard
-              icon="📈"
-              title="Inclusive Growth"
-              text="Creating opportunities for rural communities through productive agriculture and livelihood activities."
+            <ObjectCard
+              icon="🚀"
+              title="Rural Enterprises"
+              text="Agrientrepreneurship, rural enterprises and livelihood-based micro enterprises."
             />
           </div>
         </div>
       </section>
 
-      {/* Business Areas */}
+      {/* Integrated Approach */}
+      <section className="section">
+        <div className="container">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '25px',
+            }}
+          >
+            <FeatureCard
+              icon="🌾"
+              title="Production"
+              text="Supporting agricultural, livestock, poultry, fisheries and other rural production activities."
+            />
+
+            <FeatureCard
+              icon="🏭"
+              title="Processing"
+              text="Creating opportunities for aggregation, processing, packaging, preservation and value addition."
+            />
+
+            <FeatureCard
+              icon="📦"
+              title="Supply & Distribution"
+              text="Building systems for agricultural inputs, products, trading, distribution and marketing."
+            />
+
+            <FeatureCard
+              icon="🛒"
+              title="Digital Commerce"
+              text="Using digital platforms and e-commerce systems to connect rural products and services with markets."
+            />
+
+            <FeatureCard
+              icon="🔬"
+              title="Research & Innovation"
+              text="Supporting research, demonstrations and innovation in agriculture, livestock, feed, food and agri-technology."
+            />
+
+            <FeatureCard
+              icon="🌍"
+              title="Market Linkages"
+              text="Developing trading, distribution, marketing and export-import opportunities for eligible products."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Rural Development */}
       <section
         style={{
           background: '#145c2b',
@@ -336,45 +337,37 @@ export default function Page() {
           padding: '70px 20px',
         }}
       >
-        <div
-          className="container"
-          style={{
-            maxWidth: '1180px',
-            margin: '0 auto',
-          }}
-        >
-          <div
-            style={{
-              maxWidth: '700px',
-              marginBottom: '35px',
-            }}
-          >
+        <div className="container">
+          <div style={{ maxWidth: '850px' }}>
             <div
               style={{
                 color: '#d9eedf',
                 fontWeight: 700,
-                fontSize: '14px',
-                textTransform: 'uppercase',
+                fontSize: '13px',
                 letterSpacing: '1px',
+                textTransform: 'uppercase',
                 marginBottom: '10px',
               }}
             >
-              Our Ecosystem
+              Rural Development
             </div>
 
             <h2 style={{ color: '#ffffff' }}>
-              Connecting multiple rural business areas
+              Building connected rural ecosystems
             </h2>
 
             <p
               style={{
-                color: 'rgba(255,255,255,0.82)',
-                lineHeight: 1.7,
+                color: 'rgba(255,255,255,0.85)',
+                fontSize: '18px',
+                lineHeight: 1.8,
               }}
             >
-              Bodhi Rural is developing an integrated model across
-              agriculture, livestock, farmer networks, commerce and
-              technology.
+              The company&apos;s objects specifically provide for rural
+              livelihood promotion, support to producer organizations,
+              training and capacity building, government and CSR-related
+              development projects, research and innovation, and the
+              promotion of rural enterprises.
             </p>
           </div>
 
@@ -382,127 +375,132 @@ export default function Page() {
             style={{
               display: 'grid',
               gridTemplateColumns:
-                'repeat(auto-fit, minmax(220px, 1fr))',
+                'repeat(auto-fit, minmax(230px, 1fr))',
               gap: '18px',
+              marginTop: '35px',
             }}
           >
-            <BusinessCard
-              title="BodhiFarm"
-              text="Farmer, poultry, livestock, egg, feed and veterinary operations."
+            <DarkCard
+              title="Farmer Networks"
+              text="Connecting producers and rural producer groups."
             />
 
-            <BusinessCard
-              title="BodhiMart"
-              text="Digital commerce for agricultural inputs, farm products and rural businesses."
+            <DarkCard
+              title="Livelihood Promotion"
+              text="Supporting productive rural livelihood opportunities."
             />
 
-            <BusinessCard
-              title="Farmer Network"
-              text="Connecting rural producers with inputs, services, knowledge and markets."
+            <DarkCard
+              title="Capacity Building"
+              text="Training, skill development and knowledge systems."
             />
 
-            <BusinessCard
-              title="Technology"
-              text="Digital systems for farmer management, operations, reporting and business intelligence."
+            <DarkCard
+              title="Rural Enterprises"
+              text="Promoting agriculture-linked entrepreneurship."
             />
           </div>
         </div>
       </section>
 
-      {/* Scale */}
-      <section
-        className="section"
-        style={{
-          paddingTop: '65px',
-          paddingBottom: '65px',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            maxWidth: '900px',
-            margin: '0 auto',
-          }}
-        >
+      {/* Technology */}
+      <section className="section">
+        <div className="container">
           <div
             style={{
-              color: '#145c2b',
-              fontWeight: 700,
-              fontSize: '14px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Growth Platform
-          </div>
-
-          <h2>Designed to grow with rural communities</h2>
-
-          <p
-            className="muted"
-            style={{
-              fontSize: '18px',
-              lineHeight: 1.8,
-              maxWidth: '750px',
-              margin: '15px auto 30px',
-            }}
-          >
-            Our digital architecture is being developed to support an
-            expanding network of farmers and rural enterprises, beginning
-            with a target of 1,000 farmers and 300,000 birds and designed
-            for future scale.
-          </p>
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '15px',
-              flexWrap: 'wrap',
+              maxWidth: '820px',
+              margin: '0 auto',
+              textAlign: 'center',
             }}
           >
             <div
               style={{
-                minWidth: '190px',
-                padding: '22px',
-                background: '#f7f9f7',
-                borderRadius: '10px',
+                color: '#145c2b',
+                fontWeight: 700,
+                fontSize: '13px',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
               }}
             >
-              <strong
-                style={{
-                  display: 'block',
-                  fontSize: '32px',
-                  color: '#145c2b',
-                }}
-              >
-                1,000+
-              </strong>
-              <span className="muted">Target Farmers</span>
+              Technology & Management
             </div>
 
-            <div
+            <h2>Technology-enabled rural operations</h2>
+
+            <p
+              className="muted"
               style={{
-                minWidth: '190px',
-                padding: '22px',
-                background: '#f7f9f7',
-                borderRadius: '10px',
+                fontSize: '18px',
+                lineHeight: 1.8,
               }}
             >
-              <strong
-                style={{
-                  display: 'block',
-                  fontSize: '32px',
-                  color: '#145c2b',
-                }}
+              The registered objects expressly include digital platforms,
+              mobile applications, farm management systems, IoT solutions
+              and agritech services. This provides the foundation for
+              technology-enabled farmer management, operational monitoring,
+              reporting and digital commerce.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Governance */}
+      <section
+        style={{
+          background: '#f7f9f7',
+          padding: '65px 20px',
+        }}
+      >
+        <div className="container">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '30px',
+            }}
+          >
+            <div className="card">
+              <h3>Corporate Governance</h3>
+
+              <p
+                className="muted"
+                style={{ lineHeight: 1.8 }}
               >
-                300,000
-              </strong>
-              <span className="muted">
-                Target Bird Capacity
-              </span>
+                The company&apos;s Articles of Association establish
+                provisions relating to share capital, members, general
+                meetings, voting rights, the Board of Directors and
+                proceedings of the Board.
+              </p>
+            </div>
+
+            <div className="card">
+              <h3>Management Structure</h3>
+
+              <p
+                className="muted"
+                style={{ lineHeight: 1.8 }}
+              >
+                The Articles provide for the appointment of management
+                positions including Chief Executive Officer, Manager,
+                Company Secretary and Chief Financial Officer, subject to
+                the applicable provisions of law.
+              </p>
+            </div>
+
+            <div className="card">
+              <h3>Responsible Growth</h3>
+
+              <p
+                className="muted"
+                style={{ lineHeight: 1.8 }}
+              >
+                The company&apos;s registered framework also provides for
+                agreements, collaborations, infrastructure, research,
+                quality facilities, finance, insurance and other lawful
+                activities necessary to further its business objects.
+              </p>
             </div>
           </div>
         </div>
@@ -511,25 +509,20 @@ export default function Page() {
       {/* Closing */}
       <section
         style={{
-          background: '#f7f9f7',
-          padding: '55px 20px',
+          padding: '65px 20px',
           textAlign: 'center',
         }}
       >
-        <div
-          className="container"
-          style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-          }}
-        >
+        <div className="container">
           <h2>Empowering Rural India for a Sustainable Future</h2>
 
           <p
             className="muted"
             style={{
               fontSize: '17px',
-              lineHeight: 1.7,
+              lineHeight: 1.8,
+              maxWidth: '750px',
+              margin: '15px auto 0',
             }}
           >
             BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED
@@ -552,16 +545,18 @@ function InfoRow({
   return (
     <div
       style={{
+        paddingBottom: '14px',
+        marginBottom: '14px',
         borderBottom: '1px solid #dfe8e1',
-        paddingBottom: '13px',
       }}
     >
       <div
         style={{
-          fontSize: '12px',
-          color: '#6b786e',
+          color: '#6c786f',
+          fontSize: '11px',
           fontWeight: 700,
           textTransform: 'uppercase',
+          letterSpacing: '0.5px',
           marginBottom: '4px',
         }}
       >
@@ -580,7 +575,7 @@ function InfoRow({
   );
 }
 
-function ValueCard({
+function ObjectCard({
   icon,
   title,
   text,
@@ -593,7 +588,7 @@ function ValueCard({
     <div className="card">
       <div
         style={{
-          fontSize: '34px',
+          fontSize: '32px',
           marginBottom: '10px',
         }}
       >
@@ -604,7 +599,10 @@ function ValueCard({
 
       <p
         className="muted"
-        style={{ lineHeight: 1.7 }}
+        style={{
+          lineHeight: 1.7,
+          marginBottom: 0,
+        }}
       >
         {text}
       </p>
@@ -612,7 +610,49 @@ function ValueCard({
   );
 }
 
-function BusinessCard({
+function FeatureCard({
+  icon,
+  title,
+  text,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div
+      style={{
+        border: '1px solid #e1e9e3',
+        borderRadius: '10px',
+        padding: '26px',
+        background: '#ffffff',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '30px',
+          marginBottom: '10px',
+        }}
+      >
+        {icon}
+      </div>
+
+      <h3 style={{ marginBottom: '8px' }}>{title}</h3>
+
+      <p
+        className="muted"
+        style={{
+          lineHeight: 1.7,
+          marginBottom: 0,
+        }}
+      >
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function DarkCard({
   title,
   text,
 }: {
@@ -622,10 +662,10 @@ function BusinessCard({
   return (
     <div
       style={{
-        padding: '24px',
+        background: 'rgba(255,255,255,0.08)',
         border: '1px solid rgba(255,255,255,0.18)',
         borderRadius: '10px',
-        background: 'rgba(255,255,255,0.07)',
+        padding: '23px',
       }}
     >
       <h3
