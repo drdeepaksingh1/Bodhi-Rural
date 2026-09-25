@@ -33,14 +33,10 @@ type SellerApplication = {
 export default function SellerApplicationsPage() {
   const supabase = createClient();
 
-  const [applications, setApplications] = useState<
-    SellerApplication[]
-  >([]);
-
+  const [applications, setApplications] = useState<SellerApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
-  const [selected, setSelected] =
-    useState<SellerApplication | null>(null);
+  const [selected, setSelected] = useState<SellerApplication | null>(null);
 
   const [remarks, setRemarks] = useState('');
   const [message, setMessage] = useState('');
@@ -59,9 +55,7 @@ export default function SellerApplicationsPage() {
       setError(error.message);
       setApplications([]);
     } else {
-      setApplications(
-        (data || []) as SellerApplication[]
-      );
+      setApplications((data || []) as SellerApplication[]);
     }
 
     setLoading(false);
@@ -79,9 +73,7 @@ export default function SellerApplicationsPage() {
       action === 'REJECT' &&
       !remarks.trim()
     ) {
-      setError(
-        'Please enter rejection remarks.'
-      );
+      setError('Please enter rejection remarks.');
       return;
     }
 
@@ -91,14 +83,12 @@ export default function SellerApplicationsPage() {
 
     try {
       if (action === 'APPROVE') {
-        const { data, error } =
-          await supabase.rpc(
-            'approve_marketplace_seller',
-            {
-              p_application_id:
-                application.id,
-            }
-          );
+        const { data, error } = await supabase.rpc(
+          'approve_marketplace_seller',
+          {
+            p_application_id: application.id,
+          }
+        );
 
         if (error) {
           throw error;
@@ -110,23 +100,17 @@ export default function SellerApplicationsPage() {
 
         setMessage(
           `Seller approved successfully. Seller ID: ${
-            result?.seller_code ||
-            'Generated'
+            result?.seller_code || 'Generated'
           }`
         );
       } else {
-        const { error } = await supabase
-          .from(
-            'marketplace_seller_applications'
-          )
-          .update({
-            status: 'REJECTED',
-            rejection_reason:
-              remarks.trim(),
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq('id', application.id);
+        const { error } = await supabase.rpc(
+          'reject_marketplace_seller',
+          {
+            p_application_id: application.id,
+            p_rejection_reason: remarks.trim(),
+          }
+        );
 
         if (error) {
           throw error;
@@ -151,23 +135,20 @@ export default function SellerApplicationsPage() {
     }
   }
 
-  const submitted =
-    applications.filter(
-      (application) =>
-        application.status === 'SUBMITTED'
-    ).length;
+  const submitted = applications.filter(
+    (application) =>
+      application.status === 'SUBMITTED'
+  ).length;
 
-  const approved =
-    applications.filter(
-      (application) =>
-        application.status === 'APPROVED'
-    ).length;
+  const approved = applications.filter(
+    (application) =>
+      application.status === 'APPROVED'
+  ).length;
 
-  const rejected =
-    applications.filter(
-      (application) =>
-        application.status === 'REJECTED'
-    ).length;
+  const rejected = applications.filter(
+    (application) =>
+      application.status === 'REJECTED'
+  ).length;
 
   return (
     <main
@@ -183,6 +164,7 @@ export default function SellerApplicationsPage() {
           margin: '0 auto',
         }}
       >
+
         {/* HEADER */}
 
         <section
@@ -215,14 +197,13 @@ export default function SellerApplicationsPage() {
 
           <p
             style={{
-              margin:
-                '9px 0 0',
+              margin: '9px 0 0',
               opacity: 0.9,
               lineHeight: 1.6,
             }}
           >
-            Review and manage shopkeeper
-            onboarding applications.
+            Review and manage shopkeeper onboarding
+            applications.
           </p>
         </section>
 
@@ -305,8 +286,7 @@ export default function SellerApplicationsPage() {
           <div
             style={{
               display: 'flex',
-              justifyContent:
-                'space-between',
+              justifyContent: 'space-between',
               alignItems: 'center',
               gap: 15,
               flexWrap: 'wrap',
@@ -325,8 +305,7 @@ export default function SellerApplicationsPage() {
 
               <p
                 style={{
-                  margin:
-                    '6px 0 0',
+                  margin: '6px 0 0',
                   color: '#666',
                 }}
               >
@@ -337,9 +316,7 @@ export default function SellerApplicationsPage() {
 
             <button
               onClick={loadApplications}
-              style={buttonStyle(
-                '#145c2b'
-              )}
+              style={buttonStyle('#145c2b')}
             >
               Refresh
             </button>
@@ -394,16 +371,14 @@ export default function SellerApplicationsPage() {
               <table
                 style={{
                   width: '100%',
-                  borderCollapse:
-                    'collapse',
+                  borderCollapse: 'collapse',
                   minWidth: 1000,
                 }}
               >
                 <thead>
                   <tr
                     style={{
-                      background:
-                        '#f1f5f1',
+                      background: '#f1f5f1',
                     }}
                   >
                     <th style={thStyle}>
@@ -444,62 +419,36 @@ export default function SellerApplicationsPage() {
                   {applications.map(
                     (application) => (
                       <tr
-                        key={
-                          application.id
-                        }
+                        key={application.id}
                       >
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           <strong>
                             {application.application_number ||
                               '-'}
                           </strong>
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           {application.owner_name ||
                             '-'}
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           {application.shop_name ||
                             '-'}
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           {application.mobile ||
                             '-'}
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           {application.business_type ||
                             '-'}
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           <StatusBadge
                             value={
                               application.status
@@ -507,27 +456,22 @@ export default function SellerApplicationsPage() {
                           />
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           {formatDate(
                             application.created_at
                           )}
                         </td>
 
-                        <td
-                          style={
-                            tdStyle
-                          }
-                        >
+                        <td style={tdStyle}>
                           <button
-                            onClick={() =>
+                            onClick={() => {
                               setSelected(
                                 application
-                              )
-                            }
+                              );
+                              setRemarks('');
+                              setError('');
+                              setMessage('');
+                            }}
                             style={buttonStyle(
                               '#145c2b'
                             )}
@@ -552,13 +496,10 @@ export default function SellerApplicationsPage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background:
-              'rgba(0,0,0,0.55)',
+            background: 'rgba(0,0,0,0.55)',
             display: 'flex',
-            justifyContent:
-              'center',
-            alignItems:
-              'center',
+            justifyContent: 'center',
+            alignItems: 'center',
             padding: 20,
             zIndex: 1000,
           }}
@@ -567,24 +508,21 @@ export default function SellerApplicationsPage() {
             style={{
               width: '100%',
               maxWidth: 900,
-              maxHeight:
-                '90vh',
-              overflowY:
-                'auto',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               background: '#fff',
               borderRadius: 18,
               padding: 28,
             }}
           >
+
             {/* MODAL HEADER */}
 
             <div
               style={{
                 display: 'flex',
-                justifyContent:
-                  'space-between',
-                alignItems:
-                  'center',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 gap: 15,
                 marginBottom: 24,
               }}
@@ -618,9 +556,7 @@ export default function SellerApplicationsPage() {
                   setRemarks('');
                   setError('');
                 }}
-                style={buttonStyle(
-                  '#666'
-                )}
+                style={buttonStyle('#666')}
               >
                 Close
               </button>
@@ -638,65 +574,47 @@ export default function SellerApplicationsPage() {
             >
               <InfoCard
                 label="Owner Name"
-                value={
-                  selected.owner_name
-                }
+                value={selected.owner_name}
               />
 
               <InfoCard
                 label="Shop Name"
-                value={
-                  selected.shop_name
-                }
+                value={selected.shop_name}
               />
 
               <InfoCard
                 label="Mobile"
-                value={
-                  selected.mobile
-                }
+                value={selected.mobile}
               />
 
               <InfoCard
                 label="Email"
-                value={
-                  selected.email
-                }
+                value={selected.email}
               />
 
               <InfoCard
                 label="Business Type"
-                value={
-                  selected.business_type
-                }
+                value={selected.business_type}
               />
 
               <InfoCard
                 label="PAN"
-                value={
-                  selected.pan_number
-                }
+                value={selected.pan_number}
               />
 
               <InfoCard
                 label="GSTIN"
-                value={
-                  selected.gstin
-                }
+                value={selected.gstin}
               />
 
               <InfoCard
                 label="UPI ID"
-                value={
-                  selected.upi_id
-                }
+                value={selected.upi_id}
               />
 
               <InfoCard
                 label="Status"
-                value={
-                  selected.status
-                }
+                value={selected.status}
               />
 
               <InfoCard
@@ -712,8 +630,7 @@ export default function SellerApplicationsPage() {
             <div
               style={{
                 marginTop: 18,
-                background:
-                  '#f7f9f7',
+                background: '#f7f9f7',
                 borderRadius: 12,
                 padding: 16,
               }}
@@ -738,15 +655,13 @@ export default function SellerApplicationsPage() {
               </div>
             </div>
 
-            {/* LOCATION IDS */}
+            {/* LOCATION */}
 
             <div
               style={{
                 marginTop: 18,
-                background:
-                  '#fafafa',
-                border:
-                  '1px solid #eee',
+                background: '#fafafa',
+                border: '1px solid #eee',
                 borderRadius: 12,
                 padding: 16,
               }}
@@ -771,37 +686,27 @@ export default function SellerApplicationsPage() {
               >
                 <LocationItem
                   label="State ID"
-                  value={
-                    selected.state_id
-                  }
+                  value={selected.state_id}
                 />
 
                 <LocationItem
                   label="District ID"
-                  value={
-                    selected.district_id
-                  }
+                  value={selected.district_id}
                 />
 
                 <LocationItem
                   label="Block ID"
-                  value={
-                    selected.block_id
-                  }
+                  value={selected.block_id}
                 />
 
                 <LocationItem
                   label="Panchayat ID"
-                  value={
-                    selected.panchayat_id
-                  }
+                  value={selected.panchayat_id}
                 />
 
                 <LocationItem
                   label="Village ID"
-                  value={
-                    selected.village_id
-                  }
+                  value={selected.village_id}
                 />
               </div>
             </div>
@@ -824,33 +729,26 @@ export default function SellerApplicationsPage() {
                 </div>
 
                 <img
-                  src={
-                    selected.shop_photo_url
-                  }
+                  src={selected.shop_photo_url}
                   alt="Shop"
                   style={{
-                    maxWidth:
-                      '100%',
-                    maxHeight:
-                      300,
-                    borderRadius:
-                      12,
-                    objectFit:
-                      'contain',
+                    maxWidth: '100%',
+                    maxHeight: 300,
+                    borderRadius: 12,
+                    objectFit: 'contain',
                   }}
                 />
               </div>
             )}
 
-            {/* REJECTION REASON */}
+            {/* EXISTING REJECTION */}
 
             {selected.rejection_reason && (
               <div
                 style={{
                   marginTop: 18,
                   padding: 15,
-                  background:
-                    '#fff3f3',
+                  background: '#fff3f3',
                   color: '#a00',
                   borderRadius: 10,
                 }}
@@ -864,29 +762,24 @@ export default function SellerApplicationsPage() {
                     marginTop: 6,
                   }}
                 >
-                  {
-                    selected.rejection_reason
-                  }
+                  {selected.rejection_reason}
                 </div>
               </div>
             )}
 
-            {/* APPROVAL ACTIONS */}
+            {/* APPROVAL / REJECTION */}
 
-            {selected.status ===
-              'SUBMITTED' && (
+            {selected.status === 'SUBMITTED' && (
               <div
                 style={{
                   marginTop: 25,
-                  borderTop:
-                    '1px solid #eee',
+                  borderTop: '1px solid #eee',
                   paddingTop: 22,
                 }}
               >
                 <label
                   style={{
-                    display:
-                      'block',
+                    display: 'block',
                     fontWeight: 700,
                     marginBottom: 7,
                   }}
@@ -905,32 +798,27 @@ export default function SellerApplicationsPage() {
                   placeholder="Enter remarks. Required when rejecting."
                   style={{
                     width: '100%',
-                    boxSizing:
-                      'border-box',
+                    boxSizing: 'border-box',
                     padding: 12,
-                    borderRadius:
-                      9,
-                    border:
-                      '1px solid #ccc',
-                    resize:
-                      'vertical',
+                    borderRadius: 9,
+                    border: '1px solid #ccc',
+                    resize: 'vertical',
                   }}
                 />
 
                 <div
                   style={{
-                    display:
-                      'flex',
+                    display: 'flex',
                     gap: 10,
-                    flexWrap:
-                      'wrap',
+                    flexWrap: 'wrap',
                     marginTop: 16,
                   }}
                 >
+                  {/* APPROVE */}
+
                   <button
                     disabled={
-                      processing ===
-                      selected.id
+                      processing === selected.id
                     }
                     onClick={() =>
                       updateApplication(
@@ -938,20 +826,24 @@ export default function SellerApplicationsPage() {
                         'APPROVE'
                       )
                     }
-                    style={buttonStyle(
-                      '#145c2b'
-                    )}
+                    style={{
+                      ...buttonStyle('#145c2b'),
+                      opacity:
+                        processing === selected.id
+                          ? 0.6
+                          : 1,
+                    }}
                   >
-                    {processing ===
-                    selected.id
+                    {processing === selected.id
                       ? 'Processing...'
                       : 'Approve Seller'}
                   </button>
 
+                  {/* REJECT */}
+
                   <button
                     disabled={
-                      processing ===
-                      selected.id
+                      processing === selected.id
                     }
                     onClick={() =>
                       updateApplication(
@@ -959,15 +851,58 @@ export default function SellerApplicationsPage() {
                         'REJECT'
                       )
                     }
-                    style={buttonStyle(
-                      '#b3261e'
-                    )}
+                    style={{
+                      ...buttonStyle('#b3261e'),
+                      opacity:
+                        processing === selected.id
+                          ? 0.6
+                          : 1,
+                    }}
                   >
-                    Reject
+                    {processing === selected.id
+                      ? 'Processing...'
+                      : 'Reject'}
                   </button>
                 </div>
               </div>
             )}
+
+            {/* APPROVED MESSAGE */}
+
+            {selected.status === 'APPROVED' && (
+              <div
+                style={{
+                  marginTop: 25,
+                  padding: 18,
+                  background: '#e8f5e9',
+                  color: '#145c2b',
+                  borderRadius: 12,
+                  fontWeight: 700,
+                }}
+              >
+                ✓ Seller has been approved
+                successfully.
+              </div>
+            )}
+
+            {/* REJECTED MESSAGE */}
+
+            {selected.status === 'REJECTED' && (
+              <div
+                style={{
+                  marginTop: 25,
+                  padding: 18,
+                  background: '#ffebee',
+                  color: '#b71c1c',
+                  borderRadius: 12,
+                  fontWeight: 700,
+                }}
+              >
+                Seller application has been
+                rejected.
+              </div>
+            )}
+
           </div>
         </div>
       )}
@@ -1033,8 +968,7 @@ function InfoCard({
   return (
     <div
       style={{
-        border:
-          '1px solid #e5e9e5',
+        border: '1px solid #e5e9e5',
         borderRadius: 10,
         padding: 14,
       }}
@@ -1052,8 +986,7 @@ function InfoCard({
       <div
         style={{
           fontWeight: 600,
-          wordBreak:
-            'break-word',
+          wordBreak: 'break-word',
         }}
       >
         {value || '-'}
@@ -1086,8 +1019,7 @@ function LocationItem({
       <span
         style={{
           fontWeight: 600,
-          wordBreak:
-            'break-all',
+          wordBreak: 'break-all',
         }}
       >
         {value || '-'}
@@ -1105,54 +1037,32 @@ function StatusBadge({
 }: {
   value: string;
 }) {
-  const status =
-    value.toUpperCase();
+  const status = value.toUpperCase();
 
-  let background =
-    '#eeeeee';
+  let background = '#eeeeee';
+  let color = '#555555';
 
-  let color =
-    '#555555';
-
-  if (
-    status === 'SUBMITTED'
-  ) {
-    background =
-      '#fff8e1';
-
-    color =
-      '#8a6500';
+  if (status === 'SUBMITTED') {
+    background = '#fff8e1';
+    color = '#8a6500';
   }
 
-  if (
-    status === 'APPROVED'
-  ) {
-    background =
-      '#e8f5e9';
-
-    color =
-      '#145c2b';
+  if (status === 'APPROVED') {
+    background = '#e8f5e9';
+    color = '#145c2b';
   }
 
-  if (
-    status === 'REJECTED'
-  ) {
-    background =
-      '#ffebee';
-
-    color =
-      '#b71c1c';
+  if (status === 'REJECTED') {
+    background = '#ffebee';
+    color = '#b71c1c';
   }
 
   return (
     <span
       style={{
-        display:
-          'inline-block',
-        padding:
-          '5px 10px',
-        borderRadius:
-          999,
+        display: 'inline-block',
+        padding: '5px 10px',
+        borderRadius: 999,
         background,
         color,
         fontSize: 11,
@@ -1165,15 +1075,11 @@ function StatusBadge({
 }
 
 /* =========================
-   DATE FORMAT
+   DATE
 ========================= */
 
-function formatDate(
-  value: string
-) {
-  return new Date(
-    value
-  ).toLocaleDateString(
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString(
     'en-IN',
     {
       day: '2-digit',
@@ -1183,12 +1089,8 @@ function formatDate(
   );
 }
 
-function formatDateTime(
-  value: string
-) {
-  return new Date(
-    value
-  ).toLocaleString(
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString(
     'en-IN',
     {
       day: '2-digit',
@@ -1212,38 +1114,28 @@ function buttonStyle(
     color: '#fff',
     border: 'none',
     borderRadius: 8,
-    padding:
-      '9px 14px',
-    cursor:
-      'pointer',
+    padding: '9px 14px',
+    cursor: 'pointer',
     fontWeight: 600,
   };
 }
 
 /* =========================
-   TABLE STYLES
+   TABLE
 ========================= */
 
-const thStyle:
-  React.CSSProperties = {
-    padding:
-      '12px 10px',
-    fontSize: 12,
-    color: '#555',
-    borderBottom:
-      '1px solid #ddd',
-    textAlign: 'left',
-    whiteSpace:
-      'nowrap',
-  };
+const thStyle: React.CSSProperties = {
+  padding: '12px 10px',
+  fontSize: 12,
+  color: '#555',
+  borderBottom: '1px solid #ddd',
+  textAlign: 'left',
+  whiteSpace: 'nowrap',
+};
 
-const tdStyle:
-  React.CSSProperties = {
-    padding:
-      '14px 10px',
-    borderBottom:
-      '1px solid #eee',
-    fontSize: 13,
-    verticalAlign:
-      'top',
-  };
+const tdStyle: React.CSSProperties = {
+  padding: '14px 10px',
+  borderBottom: '1px solid #eee',
+  fontSize: 13,
+  verticalAlign: 'top',
+};
