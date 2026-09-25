@@ -28,10 +28,16 @@ type SellerApplication = {
 export default function SellerApplicationsPage() {
   const supabase = createClient();
 
-  const [applications, setApplications] = useState<SellerApplication[]>([]);
+  const [applications, setApplications] = useState<
+    SellerApplication[]
+  >([]);
+
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
-  const [selected, setSelected] = useState<SellerApplication | null>(null);
+
+  const [selected, setSelected] =
+    useState<SellerApplication | null>(null);
+
   const [remarks, setRemarks] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -49,7 +55,9 @@ export default function SellerApplicationsPage() {
       setError(error.message);
       setApplications([]);
     } else {
-      setApplications((data || []) as SellerApplication[]);
+      setApplications(
+        (data || []) as SellerApplication[]
+      );
     }
 
     setLoading(false);
@@ -60,68 +68,9 @@ export default function SellerApplicationsPage() {
   }, []);
 
   async function updateApplication(
-  application: SellerApplication,
-  action: 'APPROVE' | 'REJECT'
-) {
-  if (action === 'REJECT' && !remarks.trim()) {
-    setError('Please enter rejection remarks.');
-    return;
-  }
-
-  setProcessing(application.id);
-  setError('');
-  setMessage('');
-
-  try {
-    if (action === 'APPROVE') {
-      const { data, error } = await supabase.rpc(
-        'approve_marketplace_seller',
-        {
-          p_application_id: application.id,
-        }
-      );
-
-      if (error) {
-        throw error;
-      }
-
-      const result = Array.isArray(data) ? data[0] : data;
-
-      setMessage(
-        `Seller approved successfully. Seller ID: ${
-          result?.seller_code || 'Generated'
-        }`
-      );
-    } else {
-      const { error } = await supabase
-        .from('marketplace_seller_applications')
-        .update({
-          status: 'REJECTED',
-          rejection_reason: remarks.trim(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', application.id);
-
-      if (error) {
-        throw error;
-      }
-
-      setMessage('Seller application rejected successfully.');
-    }
-
-    setSelected(null);
-    setRemarks('');
-
-    await loadApplications();
-  } catch (err: any) {
-    setError(
-      err?.message ||
-        'Unable to process seller application.'
-    );
-  } finally {
-    setProcessing(null);
-  }
-}{
+    application: SellerApplication,
+    action: 'APPROVE' | 'REJECT'
+  ) {
     if (action === 'REJECT' && !remarks.trim()) {
       setError('Please enter rejection remarks.');
       return;
@@ -131,44 +80,59 @@ export default function SellerApplicationsPage() {
     setError('');
     setMessage('');
 
-    /*
-      Phase 2.2:
-      We update the application status here.
-      Seller creation / Seller ID generation will be connected
-      in the next step after this workflow is tested.
-    */
+    try {
+      if (action === 'APPROVE') {
+        const { data, error } = await supabase.rpc(
+          'approve_marketplace_seller',
+          {
+            p_application_id: application.id,
+          }
+        );
 
-    const newStatus =
-      action === 'APPROVE'
-        ? 'APPROVED'
-        : 'REJECTED';
+        if (error) {
+          throw error;
+        }
 
-    const { error } = await supabase
-      .from('marketplace_seller_applications')
-      .update({
-        status: newStatus,
-        rejection_reason:
-          action === 'REJECT'
-            ? remarks.trim()
-            : null,
-      })
-      .eq('id', application.id);
+        const result = Array.isArray(data)
+          ? data[0]
+          : data;
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage(
-        action === 'APPROVE'
-          ? 'Seller application approved successfully.'
-          : 'Seller application rejected.'
-      );
+        setMessage(
+          `Seller approved successfully. Seller ID: ${
+            result?.seller_code || 'Generated'
+          }`
+        );
+      } else {
+        const { error } = await supabase
+          .from('marketplace_seller_applications')
+          .update({
+            status: 'REJECTED',
+            rejection_reason: remarks.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', application.id);
+
+        if (error) {
+          throw error;
+        }
+
+        setMessage(
+          'Seller application rejected successfully.'
+        );
+      }
 
       setSelected(null);
       setRemarks('');
-      await loadApplications();
-    }
 
-    setProcessing(null);
+      await loadApplications();
+    } catch (err: any) {
+      setError(
+        err?.message ||
+          'Unable to process seller application.'
+      );
+    } finally {
+      setProcessing(null);
+    }
   }
 
   const submitted = applications.filter(
@@ -197,6 +161,7 @@ export default function SellerApplicationsPage() {
           margin: '0 auto',
         }}
       >
+        {/* HEADER */}
         <div
           style={{
             background: '#145c2b',
@@ -231,10 +196,12 @@ export default function SellerApplicationsPage() {
               opacity: 0.9,
             }}
           >
-            Review and manage shopkeeper onboarding applications.
+            Review and manage shopkeeper onboarding
+            applications.
           </p>
         </div>
 
+        {/* SUCCESS MESSAGE */}
         {message && (
           <div
             style={{
@@ -249,6 +216,7 @@ export default function SellerApplicationsPage() {
           </div>
         )}
 
+        {/* ERROR MESSAGE */}
         {error && (
           <div
             style={{
@@ -263,6 +231,7 @@ export default function SellerApplicationsPage() {
           </div>
         )}
 
+        {/* STATISTICS */}
         <div
           style={{
             display: 'grid',
@@ -293,12 +262,14 @@ export default function SellerApplicationsPage() {
           />
         </div>
 
+        {/* APPLICATIONS */}
         <section
           style={{
             background: '#fff',
             borderRadius: 16,
             padding: 20,
-            boxShadow: '0 4px 18px rgba(0,0,0,0.06)',
+            boxShadow:
+              '0 4px 18px rgba(0,0,0,0.06)',
           }}
         >
           <div
@@ -322,7 +293,8 @@ export default function SellerApplicationsPage() {
                   color: '#666',
                 }}
               >
-                Review shopkeeper applications before seller activation.
+                Review shopkeeper applications before
+                seller activation.
               </p>
             </div>
 
@@ -368,80 +340,117 @@ export default function SellerApplicationsPage() {
                       textAlign: 'left',
                     }}
                   >
-                    <th style={thStyle}>Application</th>
-                    <th style={thStyle}>Shopkeeper</th>
-                    <th style={thStyle}>Shop</th>
-                    <th style={thStyle}>Mobile</th>
-                    <th style={thStyle}>KYC</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Date</th>
-                    <th style={thStyle}>Action</th>
+                    <th style={thStyle}>
+                      Application
+                    </th>
+
+                    <th style={thStyle}>
+                      Shopkeeper
+                    </th>
+
+                    <th style={thStyle}>
+                      Shop
+                    </th>
+
+                    <th style={thStyle}>
+                      Mobile
+                    </th>
+
+                    <th style={thStyle}>
+                      KYC
+                    </th>
+
+                    <th style={thStyle}>
+                      Status
+                    </th>
+
+                    <th style={thStyle}>
+                      Date
+                    </th>
+
+                    <th style={thStyle}>
+                      Action
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {applications.map((application) => (
-                    <tr key={application.id}>
-                      <td style={tdStyle}>
-                        {application.application_number || '-'}
-                      </td>
+                  {applications.map(
+                    (application) => (
+                      <tr key={application.id}>
+                        <td style={tdStyle}>
+                          {application.application_number ||
+                            '-'}
+                        </td>
 
-                      <td style={tdStyle}>
-                        <strong>
-                          {application.full_name || '-'}
-                        </strong>
+                        <td style={tdStyle}>
+                          <strong>
+                            {application.full_name ||
+                              '-'}
+                          </strong>
 
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: '#777',
-                            marginTop: 3,
-                          }}
-                        >
-                          {application.email || '-'}
-                        </div>
-                      </td>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: '#777',
+                              marginTop: 3,
+                            }}
+                          >
+                            {application.email || '-'}
+                          </div>
+                        </td>
 
-                      <td style={tdStyle}>
-                        {application.shop_name || '-'}
-                      </td>
+                        <td style={tdStyle}>
+                          {application.shop_name ||
+                            '-'}
+                        </td>
 
-                      <td style={tdStyle}>
-                        {application.mobile || '-'}
-                      </td>
+                        <td style={tdStyle}>
+                          {application.mobile || '-'}
+                        </td>
 
-                      <td style={tdStyle}>
-                        <StatusBadge
-                          value={
-                            application.kyc_status || 'PENDING'
-                          }
-                        />
-                      </td>
+                        <td style={tdStyle}>
+                          <StatusBadge
+                            value={
+                              application.kyc_status ||
+                              'PENDING'
+                            }
+                          />
+                        </td>
 
-                      <td style={tdStyle}>
-                        <StatusBadge
-                          value={application.status}
-                        />
-                      </td>
+                        <td style={tdStyle}>
+                          <StatusBadge
+                            value={
+                              application.status
+                            }
+                          />
+                        </td>
 
-                      <td style={tdStyle}>
-                        {new Date(
-                          application.created_at
-                        ).toLocaleDateString('en-IN')}
-                      </td>
+                        <td style={tdStyle}>
+                          {new Date(
+                            application.created_at
+                          ).toLocaleDateString(
+                            'en-IN'
+                          )}
+                        </td>
 
-                      <td style={tdStyle}>
-                        <button
-                          onClick={() =>
-                            setSelected(application)
-                          }
-                          style={buttonStyle('#145c2b')}
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td style={tdStyle}>
+                          <button
+                            onClick={() =>
+                              setSelected(
+                                application
+                              )
+                            }
+                            style={buttonStyle(
+                              '#145c2b'
+                            )}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             </div>
@@ -449,12 +458,14 @@ export default function SellerApplicationsPage() {
         </section>
       </div>
 
+      {/* APPLICATION MODAL */}
       {selected && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background:
+              'rgba(0,0,0,0.5)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -473,17 +484,23 @@ export default function SellerApplicationsPage() {
               padding: 28,
             }}
           >
+            {/* MODAL HEADER */}
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent:
+                  'space-between',
                 alignItems: 'center',
                 gap: 15,
                 marginBottom: 22,
               }}
             >
               <div>
-                <h2 style={{ margin: 0 }}>
+                <h2
+                  style={{
+                    margin: 0,
+                  }}
+                >
                   Seller Application
                 </h2>
 
@@ -493,7 +510,8 @@ export default function SellerApplicationsPage() {
                     marginTop: 5,
                   }}
                 >
-                  {selected.application_number || '-'}
+                  {selected.application_number ||
+                    '-'}
                 </div>
               </div>
 
@@ -509,6 +527,7 @@ export default function SellerApplicationsPage() {
               </button>
             </div>
 
+            {/* INFORMATION */}
             <div
               style={{
                 display: 'grid',
@@ -554,10 +573,14 @@ export default function SellerApplicationsPage() {
 
               <Info
                 label="KYC Status"
-                value={selected.kyc_status}
+                value={
+                  selected.kyc_status ||
+                  'PENDING'
+                }
               />
             </div>
 
+            {/* ADDRESS */}
             <div
               style={{
                 marginTop: 18,
@@ -574,10 +597,12 @@ export default function SellerApplicationsPage() {
                   color: '#555',
                 }}
               >
-                {selected.address || 'Not provided'}
+                {selected.address ||
+                  'Not provided'}
               </div>
             </div>
 
+            {/* REJECTION REASON */}
             {selected.rejection_reason && (
               <div
                 style={{
@@ -588,19 +613,28 @@ export default function SellerApplicationsPage() {
                   borderRadius: 10,
                 }}
               >
-                <strong>Rejection Reason</strong>
+                <strong>
+                  Rejection Reason
+                </strong>
 
-                <div style={{ marginTop: 5 }}>
+                <div
+                  style={{
+                    marginTop: 5,
+                  }}
+                >
                   {selected.rejection_reason}
                 </div>
               </div>
             )}
 
-            {selected.status === 'SUBMITTED' && (
+            {/* APPROVAL / REJECTION */}
+            {selected.status ===
+              'SUBMITTED' && (
               <div
                 style={{
                   marginTop: 24,
-                  borderTop: '1px solid #eee',
+                  borderTop:
+                    '1px solid #eee',
                   paddingTop: 20,
                 }}
               >
@@ -617,7 +651,9 @@ export default function SellerApplicationsPage() {
                 <textarea
                   value={remarks}
                   onChange={(e) =>
-                    setRemarks(e.target.value)
+                    setRemarks(
+                      e.target.value
+                    )
                   }
                   placeholder="Enter remarks. Required for rejection."
                   rows={4}
@@ -625,7 +661,8 @@ export default function SellerApplicationsPage() {
                     width: '100%',
                     padding: 12,
                     borderRadius: 9,
-                    border: '1px solid #ccc',
+                    border:
+                      '1px solid #ccc',
                     resize: 'vertical',
                   }}
                 />
@@ -639,29 +676,40 @@ export default function SellerApplicationsPage() {
                   }}
                 >
                   <button
-                    disabled={processing === selected.id}
+                    disabled={
+                      processing ===
+                      selected.id
+                    }
                     onClick={() =>
                       updateApplication(
                         selected,
                         'APPROVE'
                       )
                     }
-                    style={buttonStyle('#145c2b')}
+                    style={buttonStyle(
+                      '#145c2b'
+                    )}
                   >
-                    {processing === selected.id
+                    {processing ===
+                    selected.id
                       ? 'Processing...'
                       : 'Approve Seller'}
                   </button>
 
                   <button
-                    disabled={processing === selected.id}
+                    disabled={
+                      processing ===
+                      selected.id
+                    }
                     onClick={() =>
                       updateApplication(
                         selected,
                         'REJECT'
                       )
                     }
-                    style={buttonStyle('#b3261e')}
+                    style={buttonStyle(
+                      '#b3261e'
+                    )}
                   >
                     Reject
                   </button>
@@ -674,6 +722,10 @@ export default function SellerApplicationsPage() {
     </main>
   );
 }
+
+/* =========================
+   STAT CARD
+========================= */
 
 function Stat({
   title,
@@ -688,7 +740,8 @@ function Stat({
         background: '#fff',
         borderRadius: 14,
         padding: 20,
-        boxShadow: '0 3px 14px rgba(0,0,0,0.05)',
+        boxShadow:
+          '0 3px 14px rgba(0,0,0,0.05)',
       }}
     >
       <div
@@ -713,6 +766,10 @@ function Stat({
   );
 }
 
+/* =========================
+   INFORMATION CARD
+========================= */
+
 function Info({
   label,
   value,
@@ -723,7 +780,8 @@ function Info({
   return (
     <div
       style={{
-        border: '1px solid #e5e9e5',
+        border:
+          '1px solid #e5e9e5',
         borderRadius: 10,
         padding: 14,
       }}
@@ -738,19 +796,28 @@ function Info({
         {label}
       </div>
 
-      <div style={{ fontWeight: 600 }}>
+      <div
+        style={{
+          fontWeight: 600,
+        }}
+      >
         {value || '-'}
       </div>
     </div>
   );
 }
 
+/* =========================
+   STATUS BADGE
+========================= */
+
 function StatusBadge({
   value,
 }: {
   value: string;
 }) {
-  const normalized = value.toUpperCase();
+  const normalized =
+    value.toUpperCase();
 
   let background = '#eee';
   let color = '#555';
@@ -760,7 +827,10 @@ function StatusBadge({
     color = '#145c2b';
   }
 
-  if (normalized === 'SUBMITTED' || normalized === 'PENDING') {
+  if (
+    normalized === 'SUBMITTED' ||
+    normalized === 'PENDING'
+  ) {
     background = '#fff8e1';
     color = '#8a6500';
   }
@@ -787,20 +857,32 @@ function StatusBadge({
   );
 }
 
+/* =========================
+   TABLE STYLES
+========================= */
+
 const thStyle: React.CSSProperties = {
   padding: '12px 10px',
   fontSize: 12,
   color: '#555',
-  borderBottom: '1px solid #ddd',
+  borderBottom:
+    '1px solid #ddd',
 };
 
 const tdStyle: React.CSSProperties = {
   padding: '14px 10px',
-  borderBottom: '1px solid #eee',
+  borderBottom:
+    '1px solid #eee',
   fontSize: 13,
 };
 
-function buttonStyle(background: string): React.CSSProperties {
+/* =========================
+   BUTTON
+========================= */
+
+function buttonStyle(
+  background: string
+): React.CSSProperties {
   return {
     background,
     color: '#fff',
