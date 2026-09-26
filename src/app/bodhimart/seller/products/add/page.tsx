@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { createClient } from '../../../../../../lib/supabase/client';
+import { createClient } from '../../../../../lib/supabase/client';
 
 type Category = {
   id: string;
