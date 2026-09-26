@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '../../../../lib/supabase/client';
+import { createClient } from '../../../../../lib/supabase/client';
 
 type Seller = {
   id: string;
@@ -18,10 +18,19 @@ type Seller = {
 type Product = {
   id: string;
   product_id: string;
-  product_name: string;
+  name: string;
   selling_price: number | null;
-  stock_quantity: number | null;
   status: string;
+};
+
+type InventoryItem = {
+  id: string;
+  product_id: string;
+  quantity: number | null;
+  available_quantity: number | null;
+  stock_quantity: number | null;
+  current_stock: number | null;
+  status: string | null;
 };
 
 type SellerOrder = {
@@ -45,6 +54,7 @@ const supabase = createClient();
 export default function SellerDashboardPage() {
   const [seller, setSeller] = useState<Seller | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +78,6 @@ export default function SellerDashboardPage() {
 
       if (!user) {
         setError('Please login to access the seller dashboard.');
-        setLoading(false);
         return;
       }
 
@@ -86,58 +95,94 @@ export default function SellerDashboardPage() {
         setError(
           'No seller account is linked to this login. Please contact BodhiMart administration.'
         );
-        setLoading(false);
-        return;
-      }
-
-      if (sellerData.status !== 'ACTIVE') {
-        setError(
-          `Your seller account is currently ${sellerData.status}. Please contact BodhiMart administration.`
-        );
-        setSeller(sellerData);
-        setLoading(false);
         return;
       }
 
       setSeller(sellerData);
 
-      const [
-        productsResult,
-        ordersResult,
-        notificationsResult,
-      ] = await Promise.all([
-        supabase
-          .from('marketplace_products')
-          .select(
-            'id, product_id, product_name, selling_price, stock_quantity, status'
-          )
-          .eq('seller_id', sellerData.id)
-          .order('created_at', { ascending: false }),
+      if (sellerData.status !== 'ACTIVE') {
+        setError(
+          `Your seller account is currently ${sellerData.status}. Please contact BodhiMart administration.`
+        );
+        return;
+      }
 
-        supabase
-          .from('marketplace_seller_orders')
-          .select(
-            'id, seller_order_number, status, total_amount, created_at'
-          )
-          .eq('seller_id', sellerData.id)
-          .order('created_at', { ascending: false })
-          .limit(100),
+      /*
+       * Products
+       *
+       * IMPORTANT:
+       * marketplace_products uses "name", not "product_name".
+       * Stock is NOT read from this table.
+       */
+      const { data: productData, error: productError } = await supabase
+        .from('marketplace_products')
+        .select('id, product_id, name, selling_price, status')
+        .eq('seller_id', sellerData.id)
+        .order('created_at', { ascending: false });
 
-        supabase
+      if (productError) throw productError;
+
+      setProducts(productData || []);
+
+      /*
+       * Inventory
+       *
+       * We deliberately don't assume a particular stock column here.
+       * The dashboard will show the inventory module separately until
+       * the exact marketplace_inventory schema is confirmed.
+       */
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('marketplace_inventory')
+        .select('*')
+        .eq('seller_id', sellerData.id)
+        .limit(100);
+
+      if (inventoryError) {
+        console.warn('Inventory could not be loaded:', inventoryError.message);
+        setInventory([]);
+      } else {
+        setInventory(inventoryData || []);
+      }
+
+      /*
+       * Seller orders
+       */
+      const { data: orderData, error: orderError } = await supabase
+        .from('marketplace_seller_orders')
+        .select(
+          'id, seller_order_number, status, total_amount, created_at'
+        )
+        .eq('seller_id', sellerData.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (orderError) {
+        console.warn('Seller orders could not be loaded:', orderError.message);
+        setOrders([]);
+      } else {
+        setOrders(orderData || []);
+      }
+
+      /*
+       * Notifications
+       */
+      const { data: notificationData, error: notificationError } =
+        await supabase
           .from('marketplace_notifications')
           .select('id, title, message, is_read, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(10),
-      ]);
+          .limit(10);
 
-      if (productsResult.error) throw productsResult.error;
-      if (ordersResult.error) throw ordersResult.error;
-      if (notificationsResult.error) throw notificationsResult.error;
-
-      setProducts(productsResult.data || []);
-      setOrders(ordersResult.data || []);
-      setNotifications(notificationsResult.data || []);
+      if (notificationError) {
+        console.warn(
+          'Notifications could not be loaded:',
+          notificationError.message
+        );
+        setNotifications([]);
+      } else {
+        setNotifications(notificationData || []);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err?.message || 'Unable to load seller dashboard.');
@@ -145,6 +190,23 @@ export default function SellerDashboardPage() {
       setLoading(false);
     }
   }
+
+  const inventoryMap = useMemo(() => {
+    const map: Record<string, number> = {};
+
+    for (const item of inventory) {
+      const possibleQuantity =
+        item.available_quantity ??
+        item.quantity ??
+        item.stock_quantity ??
+        item.current_stock ??
+        0;
+
+      map[item.product_id] = Number(possibleQuantity || 0);
+    }
+
+    return map;
+  }, [inventory]);
 
   const summary = useMemo(() => {
     const newOrders = orders.filter(
@@ -173,20 +235,25 @@ export default function SellerDashboardPage() {
 
     const totalSales = orders
       .filter((order) => order.status === 'DELIVERED')
-      .reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+      .reduce(
+        (sum, order) => sum + Number(order.total_amount || 0),
+        0
+      );
 
     const unreadNotifications = notifications.filter(
       (notification) => !notification.is_read
     ).length;
 
-    const lowStockProducts = products.filter(
-      (product) =>
-        Number(product.stock_quantity || 0) > 0 &&
-        Number(product.stock_quantity || 0) <= 10
+    const stockValues = products.map(
+      (product) => inventoryMap[product.id] ?? inventoryMap[product.product_id] ?? 0
+    );
+
+    const lowStockProducts = stockValues.filter(
+      (quantity) => quantity > 0 && quantity <= 10
     ).length;
 
-    const outOfStockProducts = products.filter(
-      (product) => Number(product.stock_quantity || 0) <= 0
+    const outOfStockProducts = stockValues.filter(
+      (quantity) => quantity <= 0
     ).length;
 
     return {
@@ -199,20 +266,24 @@ export default function SellerDashboardPage() {
       lowStockProducts,
       outOfStockProducts,
     };
-  }, [orders, products, notifications]);
+  }, [orders, products, notifications, inventoryMap]);
 
   if (loading) {
     return (
       <main className="seller-page">
         <div className="seller-container">
-          <div className="loading-card">Loading Seller Dashboard...</div>
+          <div className="loading-card">
+            <div className="loading-spinner">⟳</div>
+            <h2>Loading Seller Dashboard</h2>
+            <p>Please wait...</p>
+          </div>
         </div>
 
         <style jsx>{`
           .seller-page {
             min-height: 70vh;
             background: #f5f8f5;
-            padding: 40px 20px;
+            padding: 50px 20px;
           }
 
           .seller-container {
@@ -222,11 +293,25 @@ export default function SellerDashboardPage() {
 
           .loading-card {
             background: white;
-            border-radius: 16px;
-            padding: 60px 20px;
+            border-radius: 18px;
+            padding: 65px 20px;
             text-align: center;
-            color: #555;
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+          }
+
+          .loading-spinner {
+            font-size: 35px;
+            color: #145c2b;
+            margin-bottom: 12px;
+          }
+
+          .loading-card h2 {
+            color: #173d24;
+            margin: 0;
+          }
+
+          .loading-card p {
+            color: #777;
           }
         `}</style>
       </main>
@@ -239,12 +324,19 @@ export default function SellerDashboardPage() {
         <div className="seller-container">
           <div className="error-card">
             <div className="error-icon">!</div>
+
             <h2>Seller Dashboard</h2>
+
             <p>{error}</p>
 
             <div className="error-actions">
-              <button onClick={loadDashboard}>Retry</button>
-              <Link href="/bodhimart">Back to BodhiMart</Link>
+              <button type="button" onClick={loadDashboard}>
+                Retry
+              </button>
+
+              <Link href="/bodhimart">
+                Back to BodhiMart
+              </Link>
             </div>
           </div>
         </div>
@@ -262,7 +354,7 @@ export default function SellerDashboardPage() {
           }
 
           .error-card {
-            max-width: 600px;
+            max-width: 620px;
             margin: 40px auto;
             background: white;
             border-radius: 18px;
@@ -286,8 +378,8 @@ export default function SellerDashboardPage() {
           }
 
           .error-card h2 {
-            margin: 0 0 10px;
             color: #145c2b;
+            margin: 0 0 10px;
           }
 
           .error-card p {
@@ -332,29 +424,39 @@ export default function SellerDashboardPage() {
   return (
     <main className="seller-page">
       <div className="seller-container">
-        {/* Dashboard Header */}
+
+        {/* HEADER */}
         <section className="dashboard-header">
           <div>
             <div className="eyebrow">BODHIMART SELLER CENTER</div>
+
             <h1>Seller Dashboard</h1>
+
             <p>
-              Manage your shop, products, inventory and customer orders from
-              one place.
+              Manage your shop, products, inventory and customer orders
+              from one place.
             </p>
           </div>
 
           <div className="header-actions">
-            <Link href="/bodhimart" className="secondary-btn">
+            <Link
+              href="/bodhimart"
+              className="secondary-btn"
+            >
               View BodhiMart
             </Link>
 
-            <button onClick={loadDashboard} className="refresh-btn">
+            <button
+              type="button"
+              onClick={loadDashboard}
+              className="refresh-btn"
+            >
               ↻ Refresh
             </button>
           </div>
         </section>
 
-        {/* Seller Identity */}
+        {/* SELLER PROFILE */}
         <section className="seller-profile-card">
           <div className="shop-avatar">
             {seller.shop_name?.charAt(0)?.toUpperCase() || 'B'}
@@ -363,10 +465,15 @@ export default function SellerDashboardPage() {
           <div className="seller-info">
             <div className="shop-title-row">
               <h2>{seller.shop_name}</h2>
-              <span className="active-badge">ACTIVE</span>
+
+              <span className="active-badge">
+                {seller.status}
+              </span>
             </div>
 
-            <p>Owner: {seller.owner_name}</p>
+            <p>
+              Owner: <strong>{seller.owner_name}</strong>
+            </p>
 
             <div className="seller-meta">
               <span>
@@ -388,45 +495,65 @@ export default function SellerDashboardPage() {
           </div>
         </section>
 
-        {/* Quick Actions */}
+        {/* QUICK ACTIONS */}
         <section className="quick-actions">
-          <Link href="/bodhimart/seller/products" className="quick-card">
+
+          <Link
+            href="/bodhimart/seller/products"
+            className="quick-card"
+          >
             <span className="quick-icon">📦</span>
+
             <span>
               <strong>My Products</strong>
               <small>Manage products</small>
             </span>
           </Link>
 
-          <Link href="/bodhimart/seller/products/add" className="quick-card">
+          <Link
+            href="/bodhimart/seller/products/add"
+            className="quick-card"
+          >
             <span className="quick-icon">➕</span>
+
             <span>
               <strong>Add Product</strong>
               <small>Add a new product</small>
             </span>
           </Link>
 
-          <Link href="/bodhimart/seller/inventory" className="quick-card">
+          <Link
+            href="/bodhimart/seller/inventory"
+            className="quick-card"
+          >
             <span className="quick-icon">📊</span>
+
             <span>
               <strong>Inventory</strong>
               <small>Manage stock</small>
             </span>
           </Link>
 
-          <Link href="/bodhimart/seller/orders" className="quick-card">
+          <Link
+            href="/bodhimart/seller/orders"
+            className="quick-card"
+          >
             <span className="quick-icon">🛍️</span>
+
             <span>
               <strong>Orders</strong>
               <small>Manage customer orders</small>
             </span>
           </Link>
+
         </section>
 
-        {/* Summary */}
+        {/* SUMMARY */}
         <section className="stats-grid">
+
           <div className="stat-card">
             <span className="stat-icon">📦</span>
+
             <div>
               <strong>{products.length}</strong>
               <span>Total Products</span>
@@ -435,6 +562,7 @@ export default function SellerDashboardPage() {
 
           <div className="stat-card">
             <span className="stat-icon">🆕</span>
+
             <div>
               <strong>{summary.newOrders}</strong>
               <span>New Orders</span>
@@ -443,6 +571,7 @@ export default function SellerDashboardPage() {
 
           <div className="stat-card">
             <span className="stat-icon">⚙️</span>
+
             <div>
               <strong>{summary.processingOrders}</strong>
               <span>Processing</span>
@@ -451,6 +580,7 @@ export default function SellerDashboardPage() {
 
           <div className="stat-card">
             <span className="stat-icon">🚚</span>
+
             <div>
               <strong>{summary.readyOrders}</strong>
               <span>Ready for Dispatch</span>
@@ -459,6 +589,7 @@ export default function SellerDashboardPage() {
 
           <div className="stat-card">
             <span className="stat-icon">✅</span>
+
             <div>
               <strong>{summary.deliveredOrders}</strong>
               <span>Delivered</span>
@@ -467,6 +598,7 @@ export default function SellerDashboardPage() {
 
           <div className="stat-card">
             <span className="stat-icon">💰</span>
+
             <div>
               <strong>
                 ₹
@@ -474,28 +606,36 @@ export default function SellerDashboardPage() {
                   maximumFractionDigits: 2,
                 })}
               </strong>
+
               <span>Delivered Sales</span>
             </div>
           </div>
+
         </section>
 
-        {/* Main Grid */}
+        {/* MAIN CONTENT */}
         <section className="content-grid">
-          {/* Orders */}
+
+          {/* ORDERS */}
           <div className="panel">
+
             <div className="panel-header">
               <div>
                 <h2>Recent Orders</h2>
                 <p>Your latest seller orders</p>
               </div>
 
-              <Link href="/bodhimart/seller/orders">View All</Link>
+              <Link href="/bodhimart/seller/orders">
+                View All
+              </Link>
             </div>
 
             {orders.length === 0 ? (
               <div className="empty-state">
                 <div>🛍️</div>
+
                 <h3>No orders yet</h3>
+
                 <p>
                   New customer orders will appear here when customers
                   purchase your products.
@@ -503,51 +643,63 @@ export default function SellerDashboardPage() {
               </div>
             ) : (
               <div className="orders-list">
+
                 {orders.slice(0, 6).map((order) => (
                   <div className="order-row" key={order.id}>
+
                     <div>
                       <strong>
-                        {order.seller_order_number || order.id.slice(0, 8)}
+                        {order.seller_order_number ||
+                          order.id.slice(0, 8)}
                       </strong>
+
                       <small>
-                        {new Date(order.created_at).toLocaleDateString(
-                          'en-IN'
-                        )}
+                        {new Date(
+                          order.created_at
+                        ).toLocaleDateString('en-IN')}
                       </small>
                     </div>
 
-                    <span
-                      className={`status ${
-                        order.status.toLowerCase().replaceAll('_', '-')
-                      }`}
-                    >
+                    <span className="status">
                       {order.status.replaceAll('_', ' ')}
                     </span>
 
                     <strong>
                       ₹
-                      {Number(order.total_amount || 0).toLocaleString(
-                        'en-IN'
-                      )}
+                      {Number(
+                        order.total_amount || 0
+                      ).toLocaleString('en-IN')}
                     </strong>
+
                   </div>
                 ))}
+
               </div>
             )}
+
           </div>
 
-          {/* Inventory */}
+          {/* INVENTORY */}
           <div className="panel">
+
             <div className="panel-header">
               <div>
-                <h2>Inventory Alerts</h2>
-                <p>Products requiring attention</p>
+                <h2>Inventory</h2>
+                <p>Stock information for your products</p>
               </div>
 
-              <Link href="/bodhimart/seller/inventory">Inventory</Link>
+              <Link href="/bodhimart/seller/inventory">
+                Manage
+              </Link>
             </div>
 
             <div className="inventory-summary">
+
+              <div className="inventory-box">
+                <strong>{inventory.length}</strong>
+                <span>Inventory Records</span>
+              </div>
+
               <div className="inventory-box warning">
                 <strong>{summary.lowStockProducts}</strong>
                 <span>Low Stock</span>
@@ -557,51 +709,89 @@ export default function SellerDashboardPage() {
                 <strong>{summary.outOfStockProducts}</strong>
                 <span>Out of Stock</span>
               </div>
+
             </div>
 
             {products.length === 0 ? (
               <div className="empty-small">
                 <p>No products added yet.</p>
+
                 <Link href="/bodhimart/seller/products/add">
                   Add your first product →
                 </Link>
               </div>
             ) : (
               <div className="product-list">
-                {products.slice(0, 5).map((product) => (
-                  <div className="product-row" key={product.id}>
-                    <div>
-                      <strong>{product.product_name}</strong>
-                      <small>{product.product_id}</small>
-                    </div>
 
-                    <span
-                      className={
-                        Number(product.stock_quantity || 0) <= 0
-                          ? 'stock-danger'
-                          : Number(product.stock_quantity || 0) <= 10
-                          ? 'stock-warning'
-                          : 'stock-good'
-                      }
+                {products.slice(0, 6).map((product) => {
+
+                  const stock =
+                    inventoryMap[product.id] ??
+                    inventoryMap[product.product_id] ??
+                    0;
+
+                  return (
+                    <div
+                      className="product-row"
+                      key={product.id}
                     >
-                      {Number(product.stock_quantity || 0)} stock
-                    </span>
-                  </div>
-                ))}
+
+                      <div>
+                        <strong>{product.name}</strong>
+
+                        <small>
+                          {product.product_id}
+                        </small>
+                      </div>
+
+                      <div className="product-right">
+
+                        <span
+                          className={
+                            stock <= 0
+                              ? 'stock-danger'
+                              : stock <= 10
+                              ? 'stock-warning'
+                              : 'stock-good'
+                          }
+                        >
+                          {stock} stock
+                        </span>
+
+                        <small>
+                          ₹
+                          {Number(
+                            product.selling_price || 0
+                          ).toLocaleString('en-IN')}
+                        </small>
+
+                      </div>
+
+                    </div>
+                  );
+                })}
+
               </div>
             )}
+
           </div>
+
         </section>
 
-        {/* Notifications */}
+        {/* NOTIFICATIONS */}
         <section className="panel notifications-panel">
+
           <div className="panel-header">
+
             <div>
               <h2>Notifications</h2>
+
               <p>
                 {summary.unreadNotifications > 0
                   ? `${summary.unreadNotifications} unread notification${
-                      summary.unreadNotifications > 1 ? 's' : ''
+                      summary.unreadNotifications > 1
+                        ? 's'
+                        : ''
                     }`
                   : 'You are all caught up'}
               </p>
@@ -610,6 +800,7 @@ export default function SellerDashboardPage() {
             <Link href="/bodhimart/seller/notifications">
               View All
             </Link>
+
           </div>
 
           {notifications.length === 0 ? (
@@ -618,44 +809,86 @@ export default function SellerDashboardPage() {
             </div>
           ) : (
             <div className="notification-list">
-              {notifications.slice(0, 5).map((notification) => (
-                <div
-                  className={`notification ${
-                    !notification.is_read ? 'unread' : ''
-                  }`}
-                  key={notification.id}
-                >
-                  <div className="notification-dot" />
 
-                  <div>
-                    <strong>{notification.title}</strong>
-                    <p>{notification.message}</p>
-                    <small>
-                      {new Date(notification.created_at).toLocaleString(
-                        'en-IN'
-                      )}
-                    </small>
+              {notifications.slice(0, 5).map(
+                (notification) => (
+                  <div
+                    className={`notification ${
+                      !notification.is_read
+                        ? 'unread'
+                        : ''
+                    }`}
+                    key={notification.id}
+                  >
+
+                    <div className="notification-dot" />
+
+                    <div>
+                      <strong>
+                        {notification.title}
+                      </strong>
+
+                      <p>
+                        {notification.message}
+                      </p>
+
+                      <small>
+                        {new Date(
+                          notification.created_at
+                        ).toLocaleString('en-IN')}
+                      </small>
+                    </div>
+
                   </div>
-                </div>
-              ))}
+                )
+              )}
+
             </div>
           )}
+
         </section>
 
-        {/* Seller Menu */}
+        {/* SELLER MENU */}
         <section className="seller-menu">
-          <Link href="/bodhimart/seller/shop">🏪 My Shop</Link>
-          <Link href="/bodhimart/seller/products">📦 Products</Link>
-          <Link href="/bodhimart/seller/products/add">➕ Add Product</Link>
-          <Link href="/bodhimart/seller/inventory">📊 Inventory</Link>
-          <Link href="/bodhimart/seller/orders">🛍️ Orders</Link>
-          <Link href="/bodhimart/seller/returns">↩️ Returns</Link>
-          <Link href="/bodhimart/seller/sales">💰 Sales</Link>
-          <Link href="/bodhimart/seller/notifications">🔔 Notifications</Link>
+
+          <Link href="/bodhimart/seller/shop">
+            🏪 My Shop
+          </Link>
+
+          <Link href="/bodhimart/seller/products">
+            📦 Products
+          </Link>
+
+          <Link href="/bodhimart/seller/products/add">
+            ➕ Add Product
+          </Link>
+
+          <Link href="/bodhimart/seller/inventory">
+            📊 Inventory
+          </Link>
+
+          <Link href="/bodhimart/seller/orders">
+            🛍️ Orders
+          </Link>
+
+          <Link href="/bodhimart/seller/returns">
+            ↩️ Returns
+          </Link>
+
+          <Link href="/bodhimart/seller/sales">
+            💰 Sales
+          </Link>
+
+          <Link href="/bodhimart/seller/notifications">
+            🔔 Notifications
+          </Link>
+
         </section>
+
       </div>
 
       <style jsx>{`
+
         .seller-page {
           min-height: 80vh;
           background: #f5f8f5;
@@ -988,14 +1221,16 @@ export default function SellerDashboardPage() {
 
         .inventory-summary {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(3, 1fr);
           gap: 12px;
           padding: 17px 20px 5px;
         }
 
         .inventory-box {
+          background: #eef6ef;
           border-radius: 11px;
           padding: 14px;
+          color: #145c2b;
         }
 
         .inventory-box strong,
@@ -1022,22 +1257,28 @@ export default function SellerDashboardPage() {
           color: #a33131;
         }
 
+        .product-right {
+          text-align: right;
+        }
+
+        .stock-good,
+        .stock-warning,
+        .stock-danger {
+          display: block;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
         .stock-good {
           color: #16823a;
-          font-weight: 800;
-          font-size: 12px;
         }
 
         .stock-warning {
           color: #a06b00;
-          font-weight: 800;
-          font-size: 12px;
         }
 
         .stock-danger {
           color: #b32b2b;
-          font-weight: 800;
-          font-size: 12px;
         }
 
         .empty-small {
@@ -1199,7 +1440,12 @@ export default function SellerDashboardPage() {
           .order-row > strong:last-child {
             grid-column: 1 / -1;
           }
+
+          .inventory-summary {
+            grid-template-columns: 1fr;
+          }
         }
+
       `}</style>
     </main>
   );
