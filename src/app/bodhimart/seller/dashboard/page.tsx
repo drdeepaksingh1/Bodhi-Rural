@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '../../../../../lib/supabase/client';
+import { createClient } from '../../../../lib/supabase/client';
 
 type Seller = {
   id: string;
