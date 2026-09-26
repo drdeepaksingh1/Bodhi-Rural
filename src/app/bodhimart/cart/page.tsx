@@ -1,13 +1,17 @@
-SELECT
-  table_name,
-  column_name,
-  data_type,
-  is_nullable,
-  column_default
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name IN (
-    'marketplace_carts',
-    'marketplace_cart_items'
-  )
-ORDER BY table_name, ordinal_position;
+export default function BodhiMartCartPage() {
+  return (
+    <main className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="mx-auto max-w-5xl">
+        <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
+          <h1 className="text-3xl font-bold text-green-800">
+            BodhiMart Cart
+          </h1>
+
+          <p className="mt-3 text-gray-600">
+            Your shopping cart will appear here.
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
