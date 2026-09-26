@@ -37,17 +37,14 @@ type InventoryRow = {
 export default function SellerInventoryPage() {
   const supabase = createClient();
 
-  const [seller, setSeller] = useState<Seller | null>(
-    null
-  );
+  const [seller, setSeller] = useState<Seller | null>(null);
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const [search, setSearch] = useState('');
-  const [stockFilter, setStockFilter] =
-    useState('ALL');
+  const [stockFilter, setStockFilter] = useState('ALL');
 
   const [selectedRow, setSelectedRow] =
     useState<InventoryRow | null>(null);
@@ -55,12 +52,8 @@ export default function SellerInventoryPage() {
   const [adjustMode, setAdjustMode] =
     useState<'ADD' | 'REDUCE' | 'SET'>('ADD');
 
-  const [adjustQuantity, setAdjustQuantity] =
-    useState('');
-
-  const [threshold, setThreshold] =
-    useState('');
-
+  const [adjustQuantity, setAdjustQuantity] = useState('');
+  const [threshold, setThreshold] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -91,14 +84,10 @@ export default function SellerInventoryPage() {
           .eq('user_id', user.id)
           .maybeSingle();
 
-      if (sellerError) {
-        throw sellerError;
-      }
+      if (sellerError) throw sellerError;
 
       if (!sellerData) {
-        throw new Error(
-          'Seller profile not found.'
-        );
+        throw new Error('Seller profile not found.');
       }
 
       if (sellerData.status !== 'ACTIVE') {
@@ -109,30 +98,27 @@ export default function SellerInventoryPage() {
 
       setSeller(sellerData);
 
-      const { data: productData, error: productError } =
-        await supabase
-          .from('marketplace_products')
-          .select(
-            `
-              id,
-              product_id,
-              sku,
-              name,
-              unit,
-              status
-            `
-          )
-          .eq('seller_id', sellerData.id)
-          .order('name', {
-            ascending: true,
-          });
+      const {
+        data: productData,
+        error: productError,
+      } = await supabase
+        .from('marketplace_products')
+        .select(
+          `
+            id,
+            product_id,
+            sku,
+            name,
+            unit,
+            status
+          `
+        )
+        .eq('seller_id', sellerData.id)
+        .order('name', { ascending: true });
 
-      if (productError) {
-        throw productError;
-      }
+      if (productError) throw productError;
 
-      const products =
-        (productData || []) as Product[];
+      const products = (productData || []) as Product[];
 
       if (products.length === 0) {
         setRows([]);
@@ -143,30 +129,32 @@ export default function SellerInventoryPage() {
         (product) => product.id
       );
 
-      const { data: inventoryData, error: inventoryError } =
-        await supabase
-          .from('marketplace_inventory')
-          .select(
-            `
-              id,
-              product_id,
-              stock_quantity,
-              reserved_quantity,
-              low_stock_threshold,
-              updated_at
-            `
-          )
-          .in('product_id', productIds);
+      const {
+        data: inventoryData,
+        error: inventoryError,
+      } = await supabase
+        .from('marketplace_inventory')
+        .select(
+          `
+            id,
+            product_id,
+            stock_quantity,
+            reserved_quantity,
+            low_stock_threshold,
+            updated_at
+          `
+        )
+        .in('product_id', productIds);
 
-      if (inventoryError) {
-        throw inventoryError;
-      }
+      if (inventoryError) throw inventoryError;
 
       const inventories =
         (inventoryData || []) as Inventory[];
 
-      const inventoryMap =
-        new Map<string, Inventory>();
+      const inventoryMap = new Map<
+        string,
+        Inventory
+      >();
 
       inventories.forEach((inventory) => {
         inventoryMap.set(
@@ -215,13 +203,17 @@ export default function SellerInventoryPage() {
           row.inventory.reserved_quantity
         );
 
-      const low =
-        available <=
+      const thresholdValue =
         Number(
           row.inventory.low_stock_threshold
         );
 
-      const outOfStock = available <= 0;
+      const isLow =
+        available > 0 &&
+        available <= thresholdValue;
+
+      const isOut =
+        available <= 0;
 
       const matchesSearch =
         !keyword ||
@@ -237,16 +229,16 @@ export default function SellerInventoryPage() {
 
       let matchesFilter = true;
 
+      if (stockFilter === 'AVAILABLE') {
+        matchesFilter = available > 0;
+      }
+
       if (stockFilter === 'LOW') {
-        matchesFilter = low && !outOfStock;
+        matchesFilter = isLow;
       }
 
       if (stockFilter === 'OUT') {
-        matchesFilter = outOfStock;
-      }
-
-      if (stockFilter === 'AVAILABLE') {
-        matchesFilter = available > 0;
+        matchesFilter = isOut;
       }
 
       return (
@@ -264,13 +256,15 @@ export default function SellerInventoryPage() {
     let outOfStock = 0;
 
     rows.forEach((row) => {
-      const stock = Number(
-        row.inventory.stock_quantity
-      );
+      const stock =
+        Number(
+          row.inventory.stock_quantity
+        );
 
-      const reserved = Number(
-        row.inventory.reserved_quantity
-      );
+      const reserved =
+        Number(
+          row.inventory.reserved_quantity
+        );
 
       const available =
         stock - reserved;
@@ -317,16 +311,14 @@ export default function SellerInventoryPage() {
   function closeAdjustment() {
     setSelectedRow(null);
     setAdjustQuantity('');
+    setThreshold('');
   }
 
   async function saveInventory() {
     if (!selectedRow) return;
 
-    const quantity =
-      Number(adjustQuantity);
-
-    const newThreshold =
-      Number(threshold);
+    const quantity = Number(adjustQuantity);
+    const newThreshold = Number(threshold);
 
     if (
       Number.isNaN(quantity) ||
@@ -355,8 +347,7 @@ export default function SellerInventoryPage() {
 
     const reserved =
       Number(
-        selectedRow.inventory
-          .reserved_quantity
+        selectedRow.inventory.reserved_quantity
       );
 
     let newStock = currentStock;
@@ -394,33 +385,37 @@ export default function SellerInventoryPage() {
     setMessage('');
 
     try {
-      const { error: updateError } =
-        await supabase
-          .from('marketplace_inventory')
-          .update({
-            stock_quantity: newStock,
-            low_stock_threshold:
-              newThreshold,
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq(
-            'id',
-            selectedRow.inventory.id
-          )
-          .eq(
-            'product_id',
-            selectedRow.product.id
-          );
+      const {
+        error: updateError,
+      } = await supabase
+        .from('marketplace_inventory')
+        .update({
+          stock_quantity: newStock,
+          low_stock_threshold:
+            newThreshold,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq(
+          'id',
+          selectedRow.inventory.id
+        )
+        .eq(
+          'product_id',
+          selectedRow.product.id
+        );
 
       if (updateError) {
         throw updateError;
       }
 
+      const productName =
+        selectedRow.product.name;
+
       closeAdjustment();
 
       setMessage(
-        `Inventory updated successfully for ${selectedRow.product.name}.`
+        `Inventory updated successfully for ${productName}.`
       );
 
       await loadInventory();
@@ -430,45 +425,6 @@ export default function SellerInventoryPage() {
       setError(
         err?.message ||
           'Unable to update inventory.'
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function createInventory(
-    product: Product
-  ) {
-    setSaving(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const { error: insertError } =
-        await supabase
-          .from('marketplace_inventory')
-          .insert({
-            product_id: product.id,
-            stock_quantity: 0,
-            reserved_quantity: 0,
-            low_stock_threshold: 5,
-          });
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      setMessage(
-        `Inventory record created for ${product.name}.`
-      );
-
-      await loadInventory();
-    } catch (err: any) {
-      console.error(err);
-
-      setError(
-        err?.message ||
-          'Unable to create inventory record.'
       );
     } finally {
       setSaving(false);
@@ -490,17 +446,18 @@ export default function SellerInventoryPage() {
     const available =
       getAvailable(row);
 
-    const threshold =
+    const thresholdValue =
       Number(
-        row.inventory
-          .low_stock_threshold
+        row.inventory.low_stock_threshold
       );
 
     if (available <= 0) {
       return 'OUT OF STOCK';
     }
 
-    if (available <= threshold) {
+    if (
+      available <= thresholdValue
+    ) {
       return 'LOW STOCK';
     }
 
@@ -531,7 +488,7 @@ export default function SellerInventoryPage() {
           margin: '0 auto',
         }}
       >
-        {/* Header */}
+        {/* HEADER */}
         <div
           style={{
             background: '#145c2b',
@@ -574,8 +531,7 @@ export default function SellerInventoryPage() {
               {seller && (
                 <p
                   style={{
-                    margin:
-                      '8px 0 0',
+                    margin: '8px 0 0',
                     opacity: 0.9,
                   }}
                 >
@@ -613,7 +569,7 @@ export default function SellerInventoryPage() {
           </div>
         </div>
 
-        {/* Messages */}
+        {/* MESSAGES */}
         {error && (
           <div
             style={{
@@ -646,15 +602,9 @@ export default function SellerInventoryPage() {
           </div>
         )}
 
-        {/* Summary */}
+        {/* SUMMARY */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fit,minmax(180px,1fr))',
-            gap: 16,
-            marginBottom: 24,
-          }}
+          className="summary-grid"
         >
           <SummaryCard
             title="Products"
@@ -673,9 +623,7 @@ export default function SellerInventoryPage() {
 
           <SummaryCard
             title="Available"
-            value={
-              summary.availableStock
-            }
+            value={summary.availableStock}
           />
 
           <SummaryCard
@@ -691,7 +639,7 @@ export default function SellerInventoryPage() {
           />
         </div>
 
-        {/* Filters */}
+        {/* FILTERS */}
         <div
           style={{
             background: '#fff',
@@ -702,9 +650,7 @@ export default function SellerInventoryPage() {
             marginBottom: 20,
           }}
         >
-          <div
-            className="filter-grid"
-          >
+          <div className="filter-grid">
             <input
               value={search}
               onChange={(e) =>
@@ -751,7 +697,7 @@ export default function SellerInventoryPage() {
           </div>
         </div>
 
-        {/* Inventory table */}
+        {/* INVENTORY TABLE */}
         <div
           style={{
             background: '#fff',
@@ -800,8 +746,7 @@ export default function SellerInventoryPage() {
             <div
               style={{
                 padding: 50,
-                textAlign:
-                  'center',
+                textAlign: 'center',
                 color: '#6b7280',
               }}
             >
@@ -812,8 +757,7 @@ export default function SellerInventoryPage() {
             <div
               style={{
                 padding: 60,
-                textAlign:
-                  'center',
+                textAlign: 'center',
               }}
             >
               <div
@@ -837,39 +781,18 @@ export default function SellerInventoryPage() {
               <p
                 style={{
                   color: '#6b7280',
-                  margin:
-                    '0 0 20px',
+                  margin: 0,
                 }}
               >
-                Inventory records
-                will appear here
-                for your products.
+                Your products do not
+                have inventory records
+                yet.
               </p>
-
-              <Link
-                href="/bodhimart/seller/products"
-                style={{
-                  display:
-                    'inline-block',
-                  background:
-                    '#145c2b',
-                  color: '#fff',
-                  padding:
-                    '11px 18px',
-                  borderRadius: 9,
-                  textDecoration:
-                    'none',
-                  fontWeight: 700,
-                }}
-              >
-                Go to My Products
-              </Link>
             </div>
           ) : (
             <div
               style={{
-                overflowX:
-                  'auto',
+                overflowX: 'auto',
               }}
             >
               <table
@@ -889,57 +812,39 @@ export default function SellerInventoryPage() {
                         'left',
                     }}
                   >
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Product
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       SKU
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Total Stock
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Reserved
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Available
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Threshold
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Status
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Updated
                     </th>
 
-                    <th
-                      style={thStyle}
-                    >
+                    <th style={thStyle}>
                       Action
                     </th>
                   </tr>
@@ -965,11 +870,7 @@ export default function SellerInventoryPage() {
                               .id
                           }
                         >
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <div
                               style={{
                                 fontWeight:
@@ -999,28 +900,19 @@ export default function SellerInventoryPage() {
                                   .product_id
                               }
 
-                              {row
-                                .product
+                              {row.product
                                 .unit &&
                                 ` • ${row.product.unit}`}
                             </div>
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             {row.product
                               .sku ||
                               '—'}
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <strong>
                               {
                                 row
@@ -1030,11 +922,7 @@ export default function SellerInventoryPage() {
                             </strong>
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             {
                               row
                                 .inventory
@@ -1042,11 +930,7 @@ export default function SellerInventoryPage() {
                             }
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <strong
                               style={{
                                 color:
@@ -1060,11 +944,7 @@ export default function SellerInventoryPage() {
                             </strong>
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             {
                               row
                                 .inventory
@@ -1072,11 +952,7 @@ export default function SellerInventoryPage() {
                             }
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <StockBadge
                               status={
                                 status
@@ -1084,11 +960,7 @@ export default function SellerInventoryPage() {
                             />
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <span
                               style={{
                                 fontSize:
@@ -1105,11 +977,7 @@ export default function SellerInventoryPage() {
                             </span>
                           </td>
 
-                          <td
-                            style={
-                              tdStyle
-                            }
-                          >
+                          <td style={tdStyle}>
                             <button
                               onClick={() =>
                                 openAdjustment(
@@ -1133,7 +1001,7 @@ export default function SellerInventoryPage() {
           )}
         </div>
 
-        {/* Footer navigation */}
+        {/* NAVIGATION */}
         <div
           style={{
             display: 'flex',
@@ -1182,7 +1050,7 @@ export default function SellerInventoryPage() {
         </div>
       </div>
 
-      {/* Adjustment modal */}
+      {/* STOCK MODAL */}
       {selectedRow && (
         <div
           style={{
@@ -1191,10 +1059,8 @@ export default function SellerInventoryPage() {
             background:
               'rgba(0,0,0,0.45)',
             display: 'flex',
-            alignItems:
-              'center',
-            justifyContent:
-              'center',
+            alignItems: 'center',
+            justifyContent: 'center',
             padding: 20,
             zIndex: 1000,
           }}
@@ -1212,14 +1078,11 @@ export default function SellerInventoryPage() {
           >
             <div
               style={{
-                display:
-                  'flex',
+                display: 'flex',
                 justifyContent:
                   'space-between',
-                alignItems:
-                  'center',
-                marginBottom:
-                  18,
+                alignItems: 'center',
+                marginBottom: 18,
               }}
             >
               <div>
@@ -1276,18 +1139,11 @@ export default function SellerInventoryPage() {
                   '#f8faf8',
                 borderRadius: 12,
                 padding: 15,
-                marginBottom:
-                  18,
+                marginBottom: 18,
               }}
             >
               <div
-                style={{
-                  display:
-                    'grid',
-                  gridTemplateColumns:
-                    'repeat(3,1fr)',
-                  gap: 10,
-                }}
+                className="modal-summary"
               >
                 <Info
                   label="Current"
@@ -1356,8 +1212,7 @@ export default function SellerInventoryPage() {
             <label
               style={labelStyle}
             >
-              {adjustMode ===
-              'ADD'
+              {adjustMode === 'ADD'
                 ? 'Quantity to Add'
                 : adjustMode ===
                   'REDUCE'
@@ -1369,9 +1224,7 @@ export default function SellerInventoryPage() {
               type="number"
               min="0"
               step="1"
-              value={
-                adjustQuantity
-              }
+              value={adjustQuantity}
               onChange={(e) =>
                 setAdjustQuantity(
                   e.target.value
@@ -1408,8 +1261,7 @@ export default function SellerInventoryPage() {
 
             <div
               style={{
-                display:
-                  'flex',
+                display: 'flex',
                 justifyContent:
                   'flex-end',
                 gap: 10,
@@ -1441,10 +1293,8 @@ export default function SellerInventoryPage() {
                   color: '#fff',
                   padding:
                     '11px 20px',
-                  borderRadius:
-                    9,
-                  fontWeight:
-                    700,
+                  borderRadius: 9,
+                  fontWeight: 700,
                   cursor:
                     saving
                       ? 'not-allowed'
@@ -1461,17 +1311,34 @@ export default function SellerInventoryPage() {
       )}
 
       <style jsx>{`
+        .summary-grid {
+          display: grid;
+          grid-template-columns:
+            repeat(auto-fit, minmax(180px, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
         .filter-grid {
           display: grid;
           grid-template-columns:
-            minmax(220px, 1fr)
-            180px
-            100px;
+            minmax(220px, 1fr) 180px 100px;
           gap: 12px;
+        }
+
+        .modal-summary {
+          display: grid;
+          grid-template-columns:
+            repeat(3, 1fr);
+          gap: 10px;
         }
 
         @media (max-width: 700px) {
           .filter-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .modal-summary {
             grid-template-columns: 1fr;
           }
         }
@@ -1552,10 +1419,8 @@ function StockBadge({
   return (
     <span
       style={{
-        display:
-          'inline-block',
-        padding:
-          '5px 9px',
+        display: 'inline-block',
+        padding: '5px 9px',
         borderRadius: 20,
         fontSize: 11,
         fontWeight: 700,
@@ -1601,11 +1466,9 @@ function Info({
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
-  border:
-    '1px solid #d1d5db',
+  border: '1px solid #d1d5db',
   borderRadius: 9,
-  padding:
-    '11px 12px',
+  padding: '11px 12px',
   fontSize: 14,
   background: '#fff',
 };
@@ -1622,38 +1485,30 @@ const thStyle: React.CSSProperties = {
   padding: '13px 14px',
   fontSize: 12,
   color: '#4b5563',
-  borderBottom:
-    '1px solid #e5e7eb',
+  borderBottom: '1px solid #e5e7eb',
   whiteSpace: 'nowrap',
 };
 
 const tdStyle: React.CSSProperties = {
   padding: 14,
-  borderBottom:
-    '1px solid #f0f2f0',
+  borderBottom: '1px solid #f0f2f0',
   fontSize: 13,
-  verticalAlign:
-    'middle',
+  verticalAlign: 'middle',
 };
 
 const headerButton: React.CSSProperties = {
-  background:
-    'rgba(255,255,255,0.14)',
+  background: 'rgba(255,255,255,0.14)',
   color: '#fff',
-  padding:
-    '10px 16px',
+  padding: '10px 16px',
   borderRadius: 10,
-  textDecoration:
-    'none',
+  textDecoration: 'none',
   fontWeight: 600,
 };
 
 const refreshButton: React.CSSProperties = {
-  border:
-    '1px solid #d1d5db',
+  border: '1px solid #d1d5db',
   background: '#fff',
-  padding:
-    '10px 14px',
+  padding: '10px 14px',
   borderRadius: 9,
   cursor: 'pointer',
   fontWeight: 600,
@@ -1663,8 +1518,7 @@ const adjustButton: React.CSSProperties = {
   border: 0,
   background: '#eef6ef',
   color: '#145c2b',
-  padding:
-    '8px 12px',
+  padding: '8px 12px',
   borderRadius: 8,
   cursor: 'pointer',
   fontWeight: 700,
@@ -1673,18 +1527,15 @@ const adjustButton: React.CSSProperties = {
 
 const bottomLink: React.CSSProperties = {
   color: '#145c2b',
-  textDecoration:
-    'none',
+  textDecoration: 'none',
   fontWeight: 600,
 };
 
 const cancelButton: React.CSSProperties = {
-  border:
-    '1px solid #d1d5db',
+  border: '1px solid #d1d5db',
   background: '#fff',
   color: '#374151',
-  padding:
-    '11px 18px',
+  padding: '11px 18px',
   borderRadius: 9,
   fontWeight: 600,
   cursor: 'pointer',
