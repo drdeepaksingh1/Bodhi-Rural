@@ -91,7 +91,7 @@ export default function SellerOrdersPage() {
 
       const orderRows = (sellerOrderRows || []) as SellerOrder[];
       setOrders(orderRows);
-      const ids = [...new Set(orderRows.map((order) => order.order_id))];
+      const ids = orderRows.map((order) => order.order_id).filter((id, index, all) => all.indexOf(id) === index);
       if (ids.length === 0) {
         setMarketOrders({});
         setItemsByOrder({});
