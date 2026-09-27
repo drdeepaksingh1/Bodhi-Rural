@@ -15,7 +15,7 @@ export async function GET() {
 
     const credentials = getRazorpayCredentials();
     return jsonNoStore({
-      onlinePaymentsReady: Boolean(credentials),
+      onlinePaymentsReady: Boolean(credentials && process.env.SUPABASE_SERVICE_ROLE_KEY),
       deliveryFee: Number(data?.delivery_fee || 0),
       freeDeliveryThreshold: data?.free_delivery_threshold == null
         ? null
