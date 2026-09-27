@@ -235,6 +235,17 @@ export default function BodhiMartProductsPage() {
         return;
       }
 
+      const minimumQuantity = Math.max(
+        1,
+        Number(product.minimum_order_quantity) || 1
+      );
+      const maximumQuantity = product.maximum_order_quantity
+        ? Math.min(
+            stock,
+            Number(product.maximum_order_quantity)
+          )
+        : stock;
+
       /*
        * Find customer's existing cart.
        */
@@ -296,11 +307,11 @@ export default function BodhiMartProductsPage() {
 
         const newQuantity = currentQuantity + 1;
 
-        if (newQuantity > stock) {
+        if (newQuantity > maximumQuantity) {
           alert(
-            `Only ${stock} unit${
-              stock === 1 ? "" : "s"
-            } available.`
+            `Maximum order quantity is ${maximumQuantity} unit${
+              maximumQuantity === 1 ? "" : "s"
+            }.`
           );
 
           return;
@@ -321,15 +332,23 @@ export default function BodhiMartProductsPage() {
         }
       } else {
         /*
-         * New product in cart.
+         * Start at the seller's minimum order quantity and
+         * refuse the add if current stock cannot satisfy it.
          */
+        if (minimumQuantity > maximumQuantity) {
+          alert(
+            `This product requires a minimum order of ${minimumQuantity} units, but only ${stock} are available.`
+          );
+          return;
+        }
+
         const { error: insertError } =
           await supabase
             .from("marketplace_cart_items")
             .insert({
               cart_id: cart.id,
               product_id: product.id,
-              quantity: 1,
+              quantity: minimumQuantity,
               price_snapshot: product.selling_price,
             });
 

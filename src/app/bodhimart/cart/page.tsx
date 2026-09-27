@@ -11,6 +11,8 @@ type Product = {
   unit: string | null;
   mrp: number;
   selling_price: number;
+  minimum_order_quantity: number;
+  maximum_order_quantity: number | null;
   delivery_available: boolean;
   status: string;
 };
@@ -119,7 +121,7 @@ export default function BodhiMartCartPage() {
         await supabase
           .from("marketplace_products")
           .select(
-            "id, product_id, name, brand, unit, mrp, selling_price, delivery_available, status"
+            "id, product_id, name, brand, unit, mrp, selling_price, minimum_order_quantity, maximum_order_quantity, delivery_available, status"
           )
           .in("id", productIds);
 
@@ -193,11 +195,31 @@ export default function BodhiMartCartPage() {
       return;
     }
 
-    if (newQuantity > item.availableStock) {
+    const minimumQuantity = Math.max(
+      1,
+      Number(item.product?.minimum_order_quantity) || 1
+    );
+    const maximumQuantity = Math.min(
+      item.availableStock,
+      item.product?.maximum_order_quantity
+        ? Number(item.product.maximum_order_quantity)
+        : item.availableStock
+    );
+
+    if (newQuantity < minimumQuantity) {
       alert(
-        `Only ${item.availableStock} unit${
-          item.availableStock === 1 ? "" : "s"
-        } available.`
+        `Minimum order quantity is ${minimumQuantity} unit${
+          minimumQuantity === 1 ? "" : "s"
+        }.`
+      );
+      return;
+    }
+
+    if (newQuantity > maximumQuantity) {
+      alert(
+        `Maximum order quantity is ${maximumQuantity} unit${
+          maximumQuantity === 1 ? "" : "s"
+        }.`
       );
       return;
     }
@@ -485,7 +507,14 @@ export default function BodhiMartCartPage() {
                           <div className="flex items-center overflow-hidden rounded-lg border border-gray-300">
                             <button
                               disabled={
-                                updating === item.id
+                                updating === item.id ||
+                                item.quantity <=
+                                  Math.max(
+                                    1,
+                                    Number(
+                                      item.product?.minimum_order_quantity
+                                    ) || 1
+                                  )
                               }
                               onClick={() =>
                                 updateQuantity(
@@ -506,7 +535,14 @@ export default function BodhiMartCartPage() {
                               disabled={
                                 updating === item.id ||
                                 item.quantity >=
-                                  item.availableStock
+                                  Math.min(
+                                    item.availableStock,
+                                    item.product?.maximum_order_quantity
+                                      ? Number(
+                                          item.product.maximum_order_quantity
+                                        )
+                                      : item.availableStock
+                                  )
                               }
                               onClick={() =>
                                 updateQuantity(
