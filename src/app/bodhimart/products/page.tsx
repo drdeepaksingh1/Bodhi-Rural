@@ -49,6 +49,7 @@ export default function BodhiMartProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
   const [sort, setSort] = useState("DEFAULT");
+  const [addingProduct, setAddingProduct] = useState<string | null>(null);
 
   async function loadProducts() {
     setLoading(true);
@@ -135,9 +136,15 @@ export default function BodhiMartProductsPage() {
 
         return (
           product.name.toLowerCase().includes(searchText) ||
-          (product.product_id || "").toLowerCase().includes(searchText) ||
-          (product.sku || "").toLowerCase().includes(searchText) ||
-          (product.brand || "").toLowerCase().includes(searchText) ||
+          (product.product_id || "")
+            .toLowerCase()
+            .includes(searchText) ||
+          (product.sku || "")
+            .toLowerCase()
+            .includes(searchText) ||
+          (product.brand || "")
+            .toLowerCase()
+            .includes(searchText) ||
           categoryName.toLowerCase().includes(searchText)
         );
       });
@@ -164,7 +171,8 @@ export default function BodhiMartProductsPage() {
     if (sort === "SAVINGS") {
       result.sort(
         (a, b) =>
-          (b.mrp - b.selling_price) -
+          b.mrp -
+          b.selling_price -
           (a.mrp - a.selling_price)
       );
     }
@@ -185,28 +193,166 @@ export default function BodhiMartProductsPage() {
   }
 
   function getSavings(product: Product) {
-    return Math.max(0, Number(product.mrp) - Number(product.selling_price));
+    return Math.max(
+      0,
+      Number(product.mrp) -
+        Number(product.selling_price)
+    );
   }
 
   function getSavingsPercent(product: Product) {
     if (!product.mrp || product.mrp <= 0) return 0;
 
     return Math.round(
-      ((product.mrp - product.selling_price) / product.mrp) * 100
+      ((product.mrp - product.selling_price) /
+        product.mrp) *
+        100
     );
   }
 
-  function handleAddToCart(product: Product) {
-    const stock = getAvailableStock(product.id);
+  async function handleAddToCart(product: Product) {
+    setAddingProduct(product.id);
+    setError("");
 
-    if (stock <= 0) {
-      alert("This product is currently out of stock.");
-      return;
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert(
+          "Please login before adding products to your cart."
+        );
+
+        window.location.href = "/login";
+        return;
+      }
+
+      const stock = getAvailableStock(product.id);
+
+      if (stock <= 0) {
+        alert("This product is currently out of stock.");
+        return;
+      }
+
+      /*
+       * Find customer's existing cart.
+       */
+      let { data: cart, error: cartError } =
+        await supabase
+          .from("marketplace_carts")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+      if (cartError) {
+        throw cartError;
+      }
+
+      /*
+       * Create cart if customer does not have one.
+       */
+      if (!cart) {
+        const { data: newCart, error: createCartError } =
+          await supabase
+            .from("marketplace_carts")
+            .insert({
+              user_id: user.id,
+            })
+            .select("id")
+            .single();
+
+        if (createCartError) {
+          throw createCartError;
+        }
+
+        cart = newCart;
+      }
+
+      /*
+       * Check whether product is already in cart.
+       */
+      const {
+        data: existingItem,
+        error: existingItemError,
+      } = await supabase
+        .from("marketplace_cart_items")
+        .select("id, quantity")
+        .eq("cart_id", cart.id)
+        .eq("product_id", product.id)
+        .maybeSingle();
+
+      if (existingItemError) {
+        throw existingItemError;
+      }
+
+      /*
+       * Product already exists in cart.
+       */
+      if (existingItem) {
+        const currentQuantity = Number(
+          existingItem.quantity || 0
+        );
+
+        const newQuantity = currentQuantity + 1;
+
+        if (newQuantity > stock) {
+          alert(
+            `Only ${stock} unit${
+              stock === 1 ? "" : "s"
+            } available.`
+          );
+
+          return;
+        }
+
+        const { error: updateError } =
+          await supabase
+            .from("marketplace_cart_items")
+            .update({
+              quantity: newQuantity,
+              price_snapshot: product.selling_price,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingItem.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      } else {
+        /*
+         * New product in cart.
+         */
+        const { error: insertError } =
+          await supabase
+            .from("marketplace_cart_items")
+            .insert({
+              cart_id: cart.id,
+              product_id: product.id,
+              quantity: 1,
+              price_snapshot: product.selling_price,
+            });
+
+        if (insertError) {
+          throw insertError;
+        }
+      }
+
+      alert(
+        `${product.name} has been added to your cart.`
+      );
+
+      window.location.href = "/bodhimart/cart";
+    } catch (err: any) {
+      console.error(err);
+
+      setError(
+        err?.message ||
+          "Unable to add this product to your cart."
+      );
+    } finally {
+      setAddingProduct(null);
     }
-
-    alert(
-      `${product.name} is ready to be added to the cart.`
-    );
   }
 
   return (
@@ -224,8 +370,8 @@ export default function BodhiMartProductsPage() {
             </h1>
 
             <p className="mt-3 text-green-100">
-              Discover products from approved BodhiMart sellers
-              and support rural livelihoods.
+              Discover products from approved BodhiMart
+              sellers and support rural livelihoods.
             </p>
           </div>
         </div>
@@ -233,11 +379,10 @@ export default function BodhiMartProductsPage() {
 
       {/* Main */}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Search + filters */}
+        {/* Search and filters */}
         <div className="mb-8 rounded-2xl bg-white p-4 shadow-sm">
           <div className="grid gap-4 md:grid-cols-3">
-            {/* Search */}
-            <div className="md:col-span-1">
+            <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Search Products
               </label>
@@ -245,13 +390,14 @@ export default function BodhiMartProductsPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Search product, SKU or brand..."
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
               />
             </div>
 
-            {/* Category */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Category
@@ -259,20 +405,26 @@ export default function BodhiMartProductsPage() {
 
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) =>
+                  setCategory(e.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
-                <option value="ALL">All Categories</option>
+                <option value="ALL">
+                  All Categories
+                </option>
 
                 {categories.map((item) => (
-                  <option key={item.id} value={item.id}>
+                  <option
+                    key={item.id}
+                    value={item.id}
+                  >
                     {item.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Sort */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Sort By
@@ -280,26 +432,36 @@ export default function BodhiMartProductsPage() {
 
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value)}
+                onChange={(e) =>
+                  setSort(e.target.value)
+                }
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
-                <option value="DEFAULT">Latest</option>
+                <option value="DEFAULT">
+                  Latest
+                </option>
+
                 <option value="PRICE_LOW">
                   Price: Low to High
                 </option>
+
                 <option value="PRICE_HIGH">
                   Price: High to Low
                 </option>
+
                 <option value="SAVINGS">
                   Highest Savings
                 </option>
-                <option value="NAME">Product Name</option>
+
+                <option value="NAME">
+                  Product Name
+                </option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Status */}
+        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
@@ -309,23 +471,35 @@ export default function BodhiMartProductsPage() {
             {!loading && (
               <p className="mt-1 text-sm text-gray-500">
                 {filteredProducts.length} product
-                {filteredProducts.length !== 1 ? "s" : ""} available
+                {filteredProducts.length !== 1
+                  ? "s"
+                  : ""}{" "}
+                available
               </p>
             )}
           </div>
 
-          <button
-            onClick={loadProducts}
-            className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
-          >
-            Refresh
-          </button>
+          <div className="flex gap-2">
+            <a
+              href="/bodhimart/cart"
+              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+            >
+              🛒 Cart
+            </a>
+
+            <button
+              onClick={loadProducts}
+              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Error */}
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <strong>Unable to load products:</strong>{" "}
+            <strong>Unable to complete the request:</strong>{" "}
             {error}
           </div>
         )}
@@ -342,166 +516,199 @@ export default function BodhiMartProductsPage() {
         )}
 
         {/* Empty */}
-        {!loading && !error && filteredProducts.length === 0 && (
-          <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
-            <div className="text-5xl">🛒</div>
+        {!loading &&
+          !error &&
+          filteredProducts.length === 0 && (
+            <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
+              <div className="text-5xl">🛒</div>
 
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              No products found
-            </h3>
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                No products found
+              </h3>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Try changing your search or category filter.
-            </p>
-          </div>
-        )}
+              <p className="mt-2 text-sm text-gray-500">
+                Try changing your search or category
+                filter.
+              </p>
+            </div>
+          )}
 
-        {/* Product grid */}
-        {!loading && !error && filteredProducts.length > 0 && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredProducts.map((product) => {
-              const availableStock = getAvailableStock(product.id);
-              const savings = getSavings(product);
-              const savingsPercent =
-                getSavingsPercent(product);
+        {/* Products */}
+        {!loading &&
+          !error &&
+          filteredProducts.length > 0 && (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredProducts.map((product) => {
+                const availableStock =
+                  getAvailableStock(product.id);
 
-              const categoryName = product.category_id
-                ? categoryMap[product.category_id] || "Product"
-                : "Product";
+                const savings =
+                  getSavings(product);
 
-              const outOfStock = availableStock <= 0;
+                const savingsPercent =
+                  getSavingsPercent(product);
 
-              return (
-                <article
-                  key={product.id}
-                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  {/* Product image placeholder */}
-                  <div className="flex h-48 items-center justify-center bg-gradient-to-br from-green-50 to-amber-50">
-                    <div className="text-center">
-                      <div className="text-5xl">🌾</div>
+                const categoryName =
+                  product.category_id
+                    ? categoryMap[
+                        product.category_id
+                      ] || "Product"
+                    : "Product";
 
-                      <p className="mt-2 text-xs font-medium text-gray-500">
-                        BODHI MART
-                      </p>
-                    </div>
+                const outOfStock =
+                  availableStock <= 0;
 
-                    {savingsPercent > 0 && (
-                      <span className="absolute ml-[-180px] mt-[-150px] rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
-                        {savingsPercent}% OFF
-                      </span>
-                    )}
-                  </div>
+                const isAdding =
+                  addingProduct === product.id;
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                        {categoryName}
-                      </span>
+                return (
+                  <article
+                    key={product.id}
+                    className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  >
+                    {/* Product image area */}
+                    <div className="relative flex h-48 items-center justify-center bg-gradient-to-br from-green-50 to-amber-50">
+                      <div className="text-center">
+                        <div className="text-5xl">
+                          🌾
+                        </div>
 
-                      {product.delivery_available ? (
-                        <span className="text-xs font-medium text-green-700">
-                          Delivery
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500">
-                          Pickup
+                        <p className="mt-2 text-xs font-medium text-gray-500">
+                          BODHI MART
+                        </p>
+                      </div>
+
+                      {savingsPercent > 0 && (
+                        <span className="absolute left-3 top-3 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
+                          {savingsPercent}% OFF
                         </span>
                       )}
                     </div>
 
-                    <h3 className="line-clamp-2 min-h-[48px] text-lg font-bold text-gray-900">
-                      {product.name}
-                    </h3>
-
-                    {product.brand && (
-                      <p className="mt-1 text-sm text-gray-500">
-                        Brand: {product.brand}
-                      </p>
-                    )}
-
-                    {product.unit && (
-                      <p className="mt-1 text-sm text-gray-500">
-                        Unit: {product.unit}
-                      </p>
-                    )}
-
-                    {/* Price */}
-                    <div className="mt-4">
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-green-800">
-                          ₹
-                          {Number(
-                            product.selling_price
-                          ).toLocaleString("en-IN")}
+                    {/* Product content */}
+                    <div className="p-5">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                          {categoryName}
                         </span>
 
-                        {product.mrp >
-                          product.selling_price && (
-                          <span className="text-sm text-gray-400 line-through">
-                            ₹
-                            {Number(
-                              product.mrp
-                            ).toLocaleString("en-IN")}
+                        {product.delivery_available ? (
+                          <span className="text-xs font-medium text-green-700">
+                            Delivery
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            Pickup
                           </span>
                         )}
                       </div>
 
-                      {savings > 0 && (
-                        <p className="mt-1 text-sm font-medium text-green-600">
-                          Save ₹
-                          {savings.toLocaleString("en-IN")}
+                      <h3 className="min-h-[48px] text-lg font-bold text-gray-900">
+                        {product.name}
+                      </h3>
+
+                      {product.brand && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          Brand: {product.brand}
                         </p>
                       )}
-                    </div>
 
-                    {/* Stock */}
-                    <div className="mt-4">
-                      {outOfStock ? (
-                        <span className="font-semibold text-red-600">
-                          Out of Stock
-                        </span>
-                      ) : availableStock <=
-                        (inventoryMap[product.id]
-                          ?.low_stock_threshold || 5) ? (
-                        <span className="font-medium text-orange-600">
-                          Only {availableStock} available
-                        </span>
-                      ) : (
-                        <span className="font-medium text-green-600">
-                          In Stock
-                        </span>
+                      {product.unit && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          Unit: {product.unit}
+                        </p>
                       )}
+
+                      {/* Price */}
+                      <div className="mt-4">
+                        <div className="flex items-end gap-2">
+                          <span className="text-2xl font-bold text-green-800">
+                            ₹
+                            {Number(
+                              product.selling_price
+                            ).toLocaleString("en-IN")}
+                          </span>
+
+                          {product.mrp >
+                            product.selling_price && (
+                            <span className="text-sm text-gray-400 line-through">
+                              ₹
+                              {Number(
+                                product.mrp
+                              ).toLocaleString(
+                                "en-IN"
+                              )}
+                            </span>
+                          )}
+                        </div>
+
+                        {savings > 0 && (
+                          <p className="mt-1 text-sm font-medium text-green-600">
+                            Save ₹
+                            {savings.toLocaleString(
+                              "en-IN"
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Stock */}
+                      <div className="mt-4">
+                        {outOfStock ? (
+                          <span className="font-semibold text-red-600">
+                            Out of Stock
+                          </span>
+                        ) : availableStock <=
+                          (inventoryMap[
+                            product.id
+                          ]
+                            ?.low_stock_threshold ||
+                            5) ? (
+                          <span className="font-medium text-orange-600">
+                            Only {availableStock}{" "}
+                            available
+                          </span>
+                        ) : (
+                          <span className="font-medium text-green-600">
+                            In Stock
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Product ID */}
+                      <p className="mt-2 text-xs text-gray-400">
+                        Product ID:{" "}
+                        {product.product_id}
+                      </p>
+
+                      {/* Add to cart */}
+                      <button
+                        disabled={
+                          outOfStock || isAdding
+                        }
+                        onClick={() =>
+                          handleAddToCart(product)
+                        }
+                        className={`mt-5 w-full rounded-xl px-4 py-3 font-semibold transition ${
+                          outOfStock
+                            ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                            : isAdding
+                            ? "cursor-wait bg-green-500 text-white"
+                            : "bg-green-700 text-white hover:bg-green-800"
+                        }`}
+                      >
+                        {outOfStock
+                          ? "Out of Stock"
+                          : isAdding
+                          ? "Adding..."
+                          : "Add to Cart"}
+                      </button>
                     </div>
-
-                    {/* Product ID */}
-                    <p className="mt-2 text-xs text-gray-400">
-                      Product ID: {product.product_id}
-                    </p>
-
-                    {/* Button */}
-                    <button
-                      disabled={outOfStock}
-                      onClick={() =>
-                        handleAddToCart(product)
-                      }
-                      className={`mt-5 w-full rounded-xl px-4 py-3 font-semibold transition ${
-                        outOfStock
-                          ? "cursor-not-allowed bg-gray-200 text-gray-500"
-                          : "bg-green-700 text-white hover:bg-green-800"
-                      }`}
-                    >
-                      {outOfStock
-                        ? "Out of Stock"
-                        : "Add to Cart"}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
       </section>
     </main>
   );
