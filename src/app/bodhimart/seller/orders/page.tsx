@@ -152,6 +152,24 @@ export default function SellerOrdersPage() {
     }
   }
 
+  async function markPickedUp(orderId: string) {
+    setUpdatingOrderId(orderId);
+    setActionMessage('');
+    try {
+      const { error: pickupError } = await supabase.rpc('seller_mark_marketplace_order_picked_up', {
+        p_seller_order_id: orderId,
+      });
+      if (pickupError) throw pickupError;
+      setActionMessage('Pickup recorded. Payment status is unchanged.');
+      await loadOrders();
+    } catch (cause) {
+      console.error('Unable to record marketplace order pickup.', cause);
+      setActionMessage('Pickup could not be recorded. Refresh and try again.');
+    } finally {
+      setUpdatingOrderId('');
+    }
+  }
+
   const statuses = useMemo(() => orders.map((order) => order.status).filter((status, index, all) => all.indexOf(status) === index).sort(), [orders]);
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -268,6 +286,16 @@ export default function SellerOrdersPage() {
                               disabled={updatingOrderId === order.id}
                             >
                               {updatingOrderId === order.id ? 'Saving…' : market?.delivery_method === 'PICKUP' ? 'Ready for pickup' : 'Ready for dispatch'}
+                            </button>
+                          )}
+                          {order.status === 'READY' && market?.delivery_method === 'PICKUP' && (
+                            <button
+                              className="accept-button"
+                              type="button"
+                              onClick={() => void markPickedUp(order.id)}
+                              disabled={updatingOrderId === order.id}
+                            >
+                              {updatingOrderId === order.id ? 'Saving…' : 'Mark picked up'}
                             </button>
                           )}
                           <span className="muted">Payment: {readable(market?.payment_status)}</span>
