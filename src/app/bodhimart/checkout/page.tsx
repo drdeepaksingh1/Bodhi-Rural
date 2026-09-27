@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import PayMarketplaceOrderButton from "../../../components/bodhimart/PayMarketplaceOrderButton";
 
 type CheckoutConfig = { onlinePaymentsReady: boolean; deliveryFee: number; freeDeliveryThreshold: number | null; currency: string };
 type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
@@ -144,71 +145,6 @@ export default function BodhiMartCheckoutPage() {
     setAddressForm((current) => ({ ...current, [key]: value }));
   }
 
-  async function startOnlinePayment(currentOrder: Order) {
-    if (!checkoutConfig.onlinePaymentsReady) {
-      setError("Online payment is not configured yet. Please contact support before placing this order.");
-      return;
-    }
-    setError("");
-    try {
-      const attemptId = crypto.randomUUID();
-      const orderResponse = await fetch("/api/bodhimart/payments/order", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ marketplaceOrderId: currentOrder.order_id, attemptId }),
-      });
-      const gatewayOrder = await orderResponse.json();
-      if (!orderResponse.ok) throw new Error(gatewayOrder.error || "Unable to start online payment.");
-
-      if (!window.Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Secure payment checkout could not be loaded."));
-          document.body.appendChild(script);
-        });
-      }
-      if (!window.Razorpay) throw new Error("Secure payment checkout could not be loaded.");
-
-      const checkout = new window.Razorpay({
-        key: gatewayOrder.keyId,
-        amount: gatewayOrder.amount,
-        currency: gatewayOrder.currency,
-        name: "Bodhi Rural Marketplace",
-        description: "Order " + currentOrder.order_number,
-        order_id: gatewayOrder.razorpayOrderId,
-        theme: { color: "#15803d" },
-        handler: async (payment: RazorpaySuccess) => {
-          try {
-            const verifyResponse = await fetch("/api/bodhimart/payments/verify", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                marketplaceOrderId: currentOrder.order_id,
-                razorpayOrderId: payment.razorpay_order_id,
-                razorpayPaymentId: payment.razorpay_payment_id,
-                razorpaySignature: payment.razorpay_signature,
-              }),
-            });
-            const verification = await verifyResponse.json();
-            if (verification.paymentStatus === "PAID") {
-              setOrder({ ...currentOrder, paid: true });
-              setError("");
-            } else {
-              setError(verification.message || "Payment is being confirmed. Your order status will update shortly.");
-            }
-          } catch {
-            setError("Payment is being confirmed. Please check your order status shortly.");
-          }
-        },
-      });
-      checkout.on("payment.failed", () => setError("Payment did not complete. You can retry securely below."));
-      checkout.open();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to start online payment.");
-    }
-  }
-
   async function placeOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting || invalidItems || !items.length) return;
@@ -254,7 +190,7 @@ export default function BodhiMartCheckoutPage() {
       const placedOrder: Order = { order_id: result.order_id, order_number: result.order_number, total_amount: Number(result.total_amount || 0), paid: false };
       setOrder(placedOrder);
       setItems([]);
-      void startOnlinePayment(placedOrder);
+
     } catch (cause: unknown) {
       console.error(cause);
       setError(cause instanceof Error ? cause.message : "Unable to place this order.");
@@ -271,8 +207,8 @@ export default function BodhiMartCheckoutPage() {
         <p className="mt-3 text-gray-600">Order number: <strong>{order.order_number}</strong></p>
         <p className="mt-2">Total: {money(order.total_amount)}</p>
         {error && <p role="alert" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{error}</p>}
-        {!order.paid && <button onClick={() => void startOnlinePayment(order)} className="mt-6 w-full rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800">Retry online payment</button>}
-        <Link className="mt-4 inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/products">Continue shopping</Link>
+        {!order.paid && <div className="mt-6"><PayMarketplaceOrderButton marketplaceOrderId={order.order_id} orderNumber={order.order_number} autoStart onPaid={() => setOrder((current) => current ? { ...current, paid: true } : current)} /></div>}
+        <Link className="mt-4 inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/orders">View my orders</Link>
       </section>
     </main>
   );
