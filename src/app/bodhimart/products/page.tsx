@@ -26,9 +26,7 @@ type Product = {
 
 type Inventory = {
   product_id: string;
-  stock_quantity: number;
-  reserved_quantity: number;
-  low_stock_threshold: number;
+  available_quantity: number;
 };
 
 type Category = {
@@ -65,10 +63,8 @@ export default function BodhiMartProductsPage() {
             .order("created_at", { ascending: false }),
 
           supabase
-            .from("marketplace_inventory")
-            .select(
-              "product_id, stock_quantity, reserved_quantity, low_stock_threshold"
-            ),
+            .from("marketplace_public_inventory")
+            .select("product_id, available_quantity"),
 
           supabase
             .from("marketplace_categories")
@@ -185,11 +181,7 @@ export default function BodhiMartProductsPage() {
 
     if (!item) return 0;
 
-    return Math.max(
-      0,
-      Number(item.stock_quantity || 0) -
-        Number(item.reserved_quantity || 0)
-    );
+    return Math.max(0, Number(item.available_quantity || 0));
   }
 
   function getSavings(product: Product) {

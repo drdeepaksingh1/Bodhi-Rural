@@ -24,20 +24,17 @@ type Product = {
 };
 
 type InventoryItem = {
-  id: string;
   product_id: string;
-  quantity: number | null;
-  available_quantity: number | null;
-  stock_quantity: number | null;
-  current_stock: number | null;
-  status: string | null;
+  stock_quantity: number;
+  reserved_quantity: number;
+  low_stock_threshold: number;
 };
 
 type SellerOrder = {
   id: string;
   seller_order_number: string | null;
   status: string;
-  total_amount: number | null;
+  seller_amount: number | null;
   created_at: string;
 };
 
@@ -125,23 +122,24 @@ export default function SellerDashboardPage() {
       setProducts(productData || []);
 
       /*
-       * Inventory
-       *
-       * We deliberately don't assume a particular stock column here.
-       * The dashboard will show the inventory module separately until
-       * the exact marketplace_inventory schema is confirmed.
+       * Inventory is keyed by product_id, not seller_id.
        */
-      const { data: inventoryData, error: inventoryError } = await supabase
-        .from('marketplace_inventory')
-        .select('*')
-        .eq('seller_id', sellerData.id)
-        .limit(100);
-
-      if (inventoryError) {
-        console.warn('Inventory could not be loaded:', inventoryError.message);
+      const productIds = (productData || []).map((product) => product.id);
+      if (productIds.length === 0) {
         setInventory([]);
       } else {
-        setInventory(inventoryData || []);
+        const { data: inventoryData, error: inventoryError } =
+          await supabase
+            .from('marketplace_inventory')
+            .select('product_id, stock_quantity, reserved_quantity, low_stock_threshold')
+            .in('product_id', productIds);
+
+        if (inventoryError) {
+          console.warn('Inventory could not be loaded:', inventoryError.message);
+          setInventory([]);
+        } else {
+          setInventory(inventoryData || []);
+        }
       }
 
       /*
@@ -150,7 +148,7 @@ export default function SellerDashboardPage() {
       const { data: orderData, error: orderError } = await supabase
         .from('marketplace_seller_orders')
         .select(
-          'id, seller_order_number, status, total_amount, created_at'
+          'id, seller_order_number, status, seller_amount, created_at'
         )
         .eq('seller_id', sellerData.id)
         .order('created_at', { ascending: false })
@@ -196,13 +194,9 @@ export default function SellerDashboardPage() {
 
     for (const item of inventory) {
       const possibleQuantity =
-        item.available_quantity ??
-        item.quantity ??
-        item.stock_quantity ??
-        item.current_stock ??
-        0;
+        Number(item.stock_quantity || 0) - Number(item.reserved_quantity || 0);
 
-      map[item.product_id] = Number(possibleQuantity || 0);
+      map[item.product_id] = Math.max(0, Number(possibleQuantity || 0));
     }
 
     return map;
@@ -211,16 +205,14 @@ export default function SellerDashboardPage() {
   const summary = useMemo(() => {
     const newOrders = orders.filter(
       (order) =>
-        order.status === 'NEW' ||
-        order.status === 'ORDER_PLACED' ||
-        order.status === 'PAYMENT_CONFIRMED'
+        order.status === 'PLACED' ||
+        order.status === 'ACCEPTED'
     ).length;
 
     const processingOrders = orders.filter(
       (order) =>
         order.status === 'PROCESSING' ||
-        order.status === 'SELLER_ACCEPTED' ||
-        order.status === 'PACKING'
+        order.status === 'PACKED'
     ).length;
 
     const readyOrders = orders.filter(
@@ -236,7 +228,7 @@ export default function SellerDashboardPage() {
     const totalSales = orders
       .filter((order) => order.status === 'DELIVERED')
       .reduce(
-        (sum, order) => sum + Number(order.total_amount || 0),
+        (sum, order) => sum + Number(order.seller_amount || 0),
         0
       );
 
@@ -667,7 +659,7 @@ export default function SellerDashboardPage() {
                     <strong>
                       ₹
                       {Number(
-                        order.total_amount || 0
+                        order.seller_amount || 0
                       ).toLocaleString('en-IN')}
                     </strong>
 
