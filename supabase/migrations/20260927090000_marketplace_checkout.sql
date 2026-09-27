@@ -57,7 +57,7 @@ begin
   v_user_id := auth.uid();
   if v_user_id is null then raise exception 'Authentication is required to place an order.'; end if;
   if p_checkout_request_id is null then raise exception 'A checkout request ID is required.'; end if;
-  if p_delivery_method not in ('STANDARD', 'EXPRESS', 'PICKUP') then
+  if p_delivery_method is null or p_delivery_method not in ('STANDARD', 'EXPRESS', 'PICKUP') then
     raise exception 'Select a valid delivery method.';
   end if;
   if p_delivery_method <> 'PICKUP' and p_delivery_address_id is null then
