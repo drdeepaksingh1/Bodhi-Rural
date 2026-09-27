@@ -58,12 +58,23 @@ export async function POST(request: Request) {
       .eq("attempt_id", attemptId)
       .maybeSingle();
     if (previousError) throw previousError;
-    if (previous) {
+
+    const { data: activeAttempt, error: activeError } = await admin
+      .from("marketplace_payment_transactions")
+      .select("provider_order_id, amount_minor, currency, status")
+      .eq("order_id", order.id)
+      .in("status", ["CREATED", "AUTHORIZED"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (activeError) throw activeError;
+    const reusable = previous || activeAttempt;
+    if (reusable) {
       return jsonNoStore({
         keyId: credentials.keyId,
-        razorpayOrderId: previous.provider_order_id,
-        amount: Number(previous.amount_minor),
-        currency: previous.currency,
+        razorpayOrderId: reusable.provider_order_id,
+        amount: Number(reusable.amount_minor),
+        currency: reusable.currency,
         orderNumber: order.order_number,
       });
     }
@@ -94,7 +105,11 @@ export async function POST(request: Request) {
       // A concurrent retry may have created the same idempotent attempt.
       const { data: raced } = await admin.from("marketplace_payment_transactions")
         .select("provider_order_id, amount_minor, currency")
-        .eq("order_id", order.id).eq("attempt_id", attemptId).maybeSingle();
+        .eq("order_id", order.id)
+        .in("status", ["CREATED", "AUTHORIZED"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       if (!raced) throw insertError;
       return jsonNoStore({
         keyId: credentials.keyId,

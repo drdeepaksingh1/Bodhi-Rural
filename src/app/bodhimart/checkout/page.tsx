@@ -5,9 +5,6 @@ import Link from "next/link";
 import PayMarketplaceOrderButton from "../../../components/bodhimart/PayMarketplaceOrderButton";
 
 type CheckoutConfig = { onlinePaymentsReady: boolean; deliveryFee: number; freeDeliveryThreshold: number | null; currency: string };
-type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
-type RazorpayInstance = { open: () => void; on: (event: string, callback: (response: unknown) => void) => void };
-declare global { interface Window { Razorpay?: new (options: Record<string, unknown>) => RazorpayInstance } }
 import { createClient } from "../../../lib/supabase/client";
 
 type Product = {

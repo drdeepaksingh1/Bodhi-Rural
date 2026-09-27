@@ -41,6 +41,9 @@ revoke all on public.marketplace_payment_transactions from public, anon, authent
 grant all on public.marketplace_payment_transactions to service_role;
 create index if not exists marketplace_payment_transactions_order_idx
   on public.marketplace_payment_transactions (order_id, created_at desc);
+create unique index if not exists marketplace_payment_transactions_one_active_per_order_key
+  on public.marketplace_payment_transactions (order_id)
+  where status in ('CREATED', 'AUTHORIZED');
 
 create table if not exists public.marketplace_payment_webhook_events (
   provider_event_id text primary key,
@@ -93,9 +96,12 @@ begin
     raise exception 'This order was cancelled and cannot be paid.';
   end if;
   if v_order.payment_status = 'PAID' then
+    if v_transaction.status <> 'CAPTURED'
+       or v_transaction.provider_payment_id is distinct from p_provider_payment_id then
+      raise exception 'Another payment already completed for this order.';
+    end if;
     update public.marketplace_payment_transactions
-      set status = 'CAPTURED', provider_payment_id = coalesce(provider_payment_id, p_provider_payment_id),
-          captured_at = coalesce(captured_at, now()), updated_at = now()
+      set captured_at = coalesce(captured_at, now()), updated_at = now()
       where id = v_transaction.id;
     return;
   end if;
@@ -108,6 +114,12 @@ begin
         captured_at = now(), updated_at = now()
     where id = v_transaction.id;
   update public.marketplace_orders set payment_status = 'PAID' where id = v_order.id;
+  update public.marketplace_payment_transactions
+    set status = 'FAILED',
+        failure_description = 'Another checkout attempt completed first.',
+        updated_at = now()
+    where order_id = v_order.id and id <> v_transaction.id
+      and status in ('CREATED', 'AUTHORIZED');
 end;
 $function$;
 

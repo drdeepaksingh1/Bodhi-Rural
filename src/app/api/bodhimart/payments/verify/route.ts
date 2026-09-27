@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         failure_code: payment.error_code || null,
         failure_description: payment.error_description || null,
         updated_at: new Date().toISOString(),
-      }).eq("id", transaction.id);
+      }).eq("id", transaction.id).neq("status", "CAPTURED");
       return jsonNoStore({ paymentStatus: "PENDING", message: "Payment did not complete. You can retry." }, 402);
     }
 
