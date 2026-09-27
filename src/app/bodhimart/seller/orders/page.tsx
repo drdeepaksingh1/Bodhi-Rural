@@ -134,18 +134,18 @@ export default function SellerOrdersPage() {
     }
   }
 
-  async function acceptOrder(orderId: string) {
+  async function advanceOrder(orderId: string) {
     setUpdatingOrderId(orderId);
     setActionMessage('');
     try {
-      const { error: acceptError } = await supabase.rpc('seller_accept_marketplace_order', {
+      const { error: acceptError } = await supabase.rpc('seller_start_marketplace_order_processing', {
         p_seller_order_id: orderId,
       });
       if (acceptError) throw acceptError;
-      setActionMessage('Order accepted. The status has been updated.');
+      setActionMessage('Preparation started. The order is now processing.');
       await loadOrders();
     } catch (cause) {
-      console.error('Unable to accept seller order.', cause);
+      console.error('Unable to start seller order processing.', cause);
       setActionMessage('The order could not be accepted. Refresh and try again.');
     } finally {
       setUpdatingOrderId('');
@@ -260,14 +260,14 @@ export default function SellerOrdersPage() {
                         </div>
                         <div className="status-stack">
                           <span className="status-pill">{readable(order.status)}</span>
-                          {order.status === 'PLACED' && (
+                          {order.status === 'ACCEPTED' && (
                             <button
                               className="accept-button"
                               type="button"
-                              onClick={() => void acceptOrder(order.id)}
+                              onClick={() => void advanceOrder(order.id)}
                               disabled={updatingOrderId === order.id}
                             >
-                              {updatingOrderId === order.id ? 'Accepting…' : 'Accept order'}
+                              {updatingOrderId === order.id ? 'Starting…' : 'Start processing'}
                             </button>
                           )}
                           <span className="muted">Payment: {readable(market?.payment_status)}</span>
