@@ -11,6 +11,8 @@ type Product = {
   unit: string | null;
   mrp: number;
   selling_price: number;
+  minimum_order_quantity: number;
+  maximum_order_quantity: number | null;
   delivery_available: boolean;
   status: string;
 };
@@ -32,8 +34,7 @@ type CartLine = CartItem & {
 
 type Inventory = {
   product_id: string;
-  stock_quantity: number;
-  reserved_quantity: number;
+  available_quantity: number;
 };
 
 export default function BodhiMartCartPage() {
@@ -119,7 +120,7 @@ export default function BodhiMartCartPage() {
         await supabase
           .from("marketplace_products")
           .select(
-            "id, product_id, name, brand, unit, mrp, selling_price, delivery_available, status"
+            "id, product_id, name, brand, unit, mrp, selling_price, minimum_order_quantity, maximum_order_quantity, delivery_available, status"
           )
           .in("id", productIds);
 
@@ -129,10 +130,8 @@ export default function BodhiMartCartPage() {
 
       const { data: inventory, error: inventoryError } =
         await supabase
-          .from("marketplace_inventory")
-          .select(
-            "product_id, stock_quantity, reserved_quantity"
-          )
+          .from("marketplace_public_inventory")
+          .select("product_id, available_quantity")
           .in("product_id", productIds);
 
       if (inventoryError) {
@@ -145,21 +144,46 @@ export default function BodhiMartCartPage() {
         productMap[product.id] = product;
       }
 
+      const refreshedItems = await Promise.all(
+        rawItems.map(async (item) => {
+          const product = productMap[item.product_id];
+          const currentPrice = Number(product?.selling_price);
+
+          if (
+            product &&
+            Number.isFinite(currentPrice) &&
+            currentPrice !== Number(item.price_snapshot)
+          ) {
+            const { error: priceUpdateError } = await supabase
+              .from("marketplace_cart_items")
+              .update({
+                price_snapshot: currentPrice,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", item.id);
+
+            if (priceUpdateError) {
+              throw priceUpdateError;
+            }
+
+            return { ...item, price_snapshot: currentPrice };
+          }
+
+          return item;
+        })
+      );
+
       const inventoryMap: Record<string, Inventory> = {};
 
       for (const stock of (inventory || []) as Inventory[]) {
         inventoryMap[stock.product_id] = stock;
       }
 
-      const lines: CartLine[] = rawItems.map((item) => {
+      const lines: CartLine[] = refreshedItems.map((item) => {
         const stock = inventoryMap[item.product_id];
 
         const availableStock = stock
-          ? Math.max(
-              0,
-              Number(stock.stock_quantity || 0) -
-                Number(stock.reserved_quantity || 0)
-            )
+          ? Math.max(0, Number(stock.available_quantity || 0))
           : 0;
 
         return {
@@ -193,11 +217,31 @@ export default function BodhiMartCartPage() {
       return;
     }
 
-    if (newQuantity > item.availableStock) {
+    const minimumQuantity = Math.max(
+      1,
+      Number(item.product?.minimum_order_quantity) || 1
+    );
+    const maximumQuantity = Math.min(
+      item.availableStock,
+      item.product?.maximum_order_quantity
+        ? Number(item.product.maximum_order_quantity)
+        : item.availableStock
+    );
+
+    if (newQuantity < minimumQuantity) {
       alert(
-        `Only ${item.availableStock} unit${
-          item.availableStock === 1 ? "" : "s"
-        } available.`
+        `Minimum order quantity is ${minimumQuantity} unit${
+          minimumQuantity === 1 ? "" : "s"
+        }.`
+      );
+      return;
+    }
+
+    if (newQuantity > maximumQuantity) {
+      alert(
+        `Maximum order quantity is ${maximumQuantity} unit${
+          maximumQuantity === 1 ? "" : "s"
+        }.`
       );
       return;
     }
@@ -485,7 +529,14 @@ export default function BodhiMartCartPage() {
                           <div className="flex items-center overflow-hidden rounded-lg border border-gray-300">
                             <button
                               disabled={
-                                updating === item.id
+                                updating === item.id ||
+                                item.quantity <=
+                                  Math.max(
+                                    1,
+                                    Number(
+                                      item.product?.minimum_order_quantity
+                                    ) || 1
+                                  )
                               }
                               onClick={() =>
                                 updateQuantity(
@@ -506,7 +557,14 @@ export default function BodhiMartCartPage() {
                               disabled={
                                 updating === item.id ||
                                 item.quantity >=
-                                  item.availableStock
+                                  Math.min(
+                                    item.availableStock,
+                                    item.product?.maximum_order_quantity
+                                      ? Number(
+                                          item.product.maximum_order_quantity
+                                        )
+                                      : item.availableStock
+                                  )
                               }
                               onClick={() =>
                                 updateQuantity(
@@ -606,16 +664,15 @@ export default function BodhiMartCartPage() {
                 </div>
               </div>
 
-              <button
-                disabled
-                className="mt-7 w-full cursor-not-allowed rounded-xl bg-gray-300 px-5 py-3 font-bold text-gray-600"
+              <a
+                href="/bodhimart/checkout"
+                className="mt-7 block w-full rounded-xl bg-green-700 px-5 py-3 text-center font-bold text-white hover:bg-green-800"
               >
                 Proceed to Checkout
-              </button>
+              </a>
 
               <p className="mt-3 text-center text-xs text-gray-500">
-                Checkout and payment will be enabled in
-                the next module.
+                Online payment is not configured. Orders are submitted with payment pending.
               </p>
             </aside>
           </div>
