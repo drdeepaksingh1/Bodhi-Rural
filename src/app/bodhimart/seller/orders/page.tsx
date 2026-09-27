@@ -47,6 +47,7 @@ export default function SellerOrdersPage() {
   const [itemsByOrder, setItemsByOrder] = useState<Record<string, OrderItem[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [needsLogin, setNeedsLogin] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
 
@@ -57,13 +58,15 @@ export default function SellerOrdersPage() {
   async function loadOrders() {
     setLoading(true);
     setError('');
+    setNeedsLogin(false);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
       if (!user) {
+        setNeedsLogin(true);
         setError('Please sign in with your seller account to view orders.');
         return;
       }
+      if (userError) throw userError;
 
       const { data: sellerData, error: sellerError } = await supabase
         .from('marketplace_sellers')
@@ -174,7 +177,10 @@ export default function SellerOrdersPage() {
           <section className="message-card" role="alert">
             <h2>Orders unavailable</h2>
             <p>{error}</p>
-            <button className="primary" type="button" onClick={() => void loadOrders()}>Try again</button>
+            <div className="error-actions">
+              <button className="primary" type="button" onClick={() => void loadOrders()}>Try again</button>
+              {needsLogin && <Link className="secondary" href="/login">Sign in</Link>}
+            </div>
           </section>
         ) : loading ? (
           <section className="message-card" aria-live="polite">
@@ -288,6 +294,7 @@ export default function SellerOrdersPage() {
         .primary,.secondary { display:inline-flex; justify-content:center; align-items:center; border:0; border-radius:9px; padding:11px 16px; font-weight:700; font-size:14px; text-decoration:none; cursor:pointer; }
         .primary { background:#145c2b; color:white; }
         .primary:disabled { opacity:.65; cursor:wait; }
+        .error-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
         .secondary { background:white; color:#145c2b; border:1px solid #dce6dd; }
         .message-card { background:white; border:1px solid #e2e9e3; border-radius:16px; padding:42px 24px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.04); }
         .message-card h2 { color:#173d24; margin:8px 0; }
