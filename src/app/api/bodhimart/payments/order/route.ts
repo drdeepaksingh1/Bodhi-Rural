@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "../../../../../../lib/supabase/server";
+import { createClient } from "../../../../../lib/supabase/server";
 import {
   createMarketplaceAdminClient,
   getRazorpayCredentials,
   isSameOrigin,
   jsonNoStore,
   razorpayRequest,
-} from "../../../../../../lib/marketplace-payments";
+} from "../../../../../lib/marketplace-payments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -4,7 +4,7 @@ import {
   getRazorpayCredentials,
   jsonNoStore,
   verifyHmacHex,
-} from "../../../../../../lib/marketplace-payments";
+} from "../../../../../lib/marketplace-payments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

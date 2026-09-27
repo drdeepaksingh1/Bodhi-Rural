@@ -2,6 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+
+type CheckoutConfig = { onlinePaymentsReady: boolean; deliveryFee: number; freeDeliveryThreshold: number | null; currency: string };
+type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
+type RazorpayInstance = { open: () => void; on: (event: string, callback: (response: unknown) => void) => void };
+declare global { interface Window { Razorpay?: new (options: Record<string, unknown>) => RazorpayInstance } }
 import { createClient } from "../../../lib/supabase/client";
 
 type Product = {
@@ -16,7 +21,7 @@ type Address = {
   address_line1: string; address_line2: string | null; landmark: string | null;
   pincode: string | null; is_default: boolean;
 };
-type Order = { order_id: string; order_number: string; total_amount: number };
+type Order = { order_id: string; order_number: string; total_amount: number; paid: boolean };
 type AddressForm = {
   address_name: string; recipient_name: string; mobile: string; address_line1: string;
   address_line2: string; landmark: string; pincode: string;
@@ -38,6 +43,7 @@ export default function BodhiMartCheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
+  const [checkoutConfig, setCheckoutConfig] = useState<CheckoutConfig>({ onlinePaymentsReady: false, deliveryFee: 0, freeDeliveryThreshold: null, currency: "INR" });
   const requestId = useRef<string | null>(null);
 
   useEffect(() => { void load(); }, []);
@@ -46,6 +52,10 @@ export default function BodhiMartCheckoutPage() {
     setLoading(true);
     setError("");
     try {
+      const configResponse = await fetch("/api/bodhimart/checkout-config", { cache: "no-store" });
+      const configData = await configResponse.json();
+      if (!configResponse.ok) throw new Error(configData.message || "Checkout configuration is unavailable.");
+      setCheckoutConfig(configData as CheckoutConfig);
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) { setError("Please sign in before checking out."); return; }
@@ -112,7 +122,10 @@ export default function BodhiMartCheckoutPage() {
     const base = Number(item.product?.selling_price || 0) * Number(item.quantity);
     return sum + Math.round(base * Number(item.product?.tax_percent || 0)) / 100;
   }, 0), [items]);
-  const total = subtotal + tax;
+  const deliveryCharge = deliveryMethod === "PICKUP"
+    || (checkoutConfig.freeDeliveryThreshold !== null && subtotal >= checkoutConfig.freeDeliveryThreshold)
+    ? 0 : checkoutConfig.deliveryFee;
+  const total = subtotal + tax + deliveryCharge;
   const invalidItems = items.some((item) => {
     const product = item.product;
     if (!product || product.status !== "ACTIVE") return true;
@@ -129,6 +142,71 @@ export default function BodhiMartCheckoutPage() {
   }
   function setAddress<K extends keyof AddressForm>(key: K, value: AddressForm[K]) {
     setAddressForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function startOnlinePayment(currentOrder: Order) {
+    if (!checkoutConfig.onlinePaymentsReady) {
+      setError("Online payment is not configured yet. Please contact support before placing this order.");
+      return;
+    }
+    setError("");
+    try {
+      const attemptId = crypto.randomUUID();
+      const orderResponse = await fetch("/api/bodhimart/payments/order", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marketplaceOrderId: currentOrder.order_id, attemptId }),
+      });
+      const gatewayOrder = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(gatewayOrder.error || "Unable to start online payment.");
+
+      if (!window.Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Secure payment checkout could not be loaded."));
+          document.body.appendChild(script);
+        });
+      }
+      if (!window.Razorpay) throw new Error("Secure payment checkout could not be loaded.");
+
+      const checkout = new window.Razorpay({
+        key: gatewayOrder.keyId,
+        amount: gatewayOrder.amount,
+        currency: gatewayOrder.currency,
+        name: "Bodhi Rural Marketplace",
+        description: "Order " + currentOrder.order_number,
+        order_id: gatewayOrder.razorpayOrderId,
+        theme: { color: "#15803d" },
+        handler: async (payment: RazorpaySuccess) => {
+          try {
+            const verifyResponse = await fetch("/api/bodhimart/payments/verify", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                marketplaceOrderId: currentOrder.order_id,
+                razorpayOrderId: payment.razorpay_order_id,
+                razorpayPaymentId: payment.razorpay_payment_id,
+                razorpaySignature: payment.razorpay_signature,
+              }),
+            });
+            const verification = await verifyResponse.json();
+            if (verification.paymentStatus === "PAID") {
+              setOrder({ ...currentOrder, paid: true });
+              setError("");
+            } else {
+              setError(verification.message || "Payment is being confirmed. Your order status will update shortly.");
+            }
+          } catch {
+            setError("Payment is being confirmed. Please check your order status shortly.");
+          }
+        },
+      });
+      checkout.on("payment.failed", () => setError("Payment did not complete. You can retry securely below."));
+      checkout.open();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to start online payment.");
+    }
   }
 
   async function placeOrder(event: FormEvent<HTMLFormElement>) {
@@ -173,8 +251,10 @@ export default function BodhiMartCheckoutPage() {
       if (orderError) throw orderError;
       const result = Array.isArray(data) ? data[0] : data;
       if (!result?.order_id || !result?.order_number) throw new Error("Order confirmation was not returned.");
-      setOrder({ order_id: result.order_id, order_number: result.order_number, total_amount: Number(result.total_amount || 0) });
+      const placedOrder: Order = { order_id: result.order_id, order_number: result.order_number, total_amount: Number(result.total_amount || 0), paid: false };
+      setOrder(placedOrder);
       setItems([]);
+      void startOnlinePayment(placedOrder);
     } catch (cause: unknown) {
       console.error(cause);
       setError(cause instanceof Error ? cause.message : "Unable to place this order.");
@@ -186,12 +266,13 @@ export default function BodhiMartCheckoutPage() {
   if (order) return (
     <main className="min-h-screen bg-gray-50 px-4 py-16">
       <section className="mx-auto max-w-2xl rounded-2xl bg-white p-8 text-center shadow-sm">
-        <div className="text-5xl text-green-700">✓</div>
-        <h1 className="mt-4 text-2xl font-bold">Order placed</h1>
+        <div className={order.paid ? "text-5xl text-green-700" : "text-5xl text-amber-600"}>{order.paid ? "✓" : "₹"}</div>
+        <h1 className="mt-4 text-2xl font-bold">{order.paid ? "Payment confirmed" : "Order created — payment pending"}</h1>
         <p className="mt-3 text-gray-600">Order number: <strong>{order.order_number}</strong></p>
         <p className="mt-2">Total: {money(order.total_amount)}</p>
-        <p className="mt-3 text-sm text-amber-800">Payment is pending. Online payment is not configured.</p>
-        <Link className="mt-7 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/products">Continue shopping</Link>
+        {error && <p role="alert" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{error}</p>}
+        {!order.paid && <button onClick={() => void startOnlinePayment(order)} className="mt-6 w-full rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800">Retry online payment</button>}
+        <Link className="mt-4 inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/products">Continue shopping</Link>
       </section>
     </main>
   );
@@ -221,7 +302,7 @@ export default function BodhiMartCheckoutPage() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
-                  <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Current delivery charge: ₹0.</small></span>
+                  <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Delivery charge: {money(checkoutConfig.deliveryFee)}{checkoutConfig.freeDeliveryThreshold !== null ? " (free above " + money(checkoutConfig.freeDeliveryThreshold) + ")" : ""}.</small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "PICKUP"} onChange={() => setDeliveryMethod("PICKUP")} />
@@ -268,12 +349,13 @@ export default function BodhiMartCheckoutPage() {
               </div>)}
               <div className="flex justify-between border-t pt-3 text-sm"><span>Subtotal</span><span>{money(subtotal)}</span></div>
               <div className="flex justify-between text-sm"><span>Tax</span><span>{money(tax)}</span></div>
-              <div className="flex justify-between text-sm"><span>Delivery</span><span>{money(0)}</span></div>
+              <div className="flex justify-between text-sm"><span>Delivery</span><span>{money(deliveryCharge)}</span></div>
               <div className="flex justify-between border-t pt-3 text-lg font-bold"><span>Total</span><span className="text-green-800">{money(total)}</span></div>
             </div>
-            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Online payment is not configured. The order will be recorded with payment pending.</p>
-            <button type="submit" disabled={submitting || invalidItems || !items.length} className="mt-5 w-full rounded-xl bg-green-700 px-5 py-3 font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600">
-              {submitting ? "Placing order…" : "Place order"}
+            {!checkoutConfig.onlinePaymentsReady && <p role="alert" className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Online payment setup is incomplete. Checkout is disabled until gateway credentials and the payment migration are configured.</p>}
+            <p className="mt-4 text-xs text-gray-500">Pay securely online by card, UPI, or other methods enabled on the merchant gateway.</p>
+            <button type="submit" disabled={submitting || invalidItems || !items.length || !checkoutConfig.onlinePaymentsReady} className="mt-5 w-full rounded-xl bg-green-700 px-5 py-3 font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600">
+              {submitting ? "Preparing secure payment…" : "Pay securely and place order"}
             </button>
           </aside>
         </form>

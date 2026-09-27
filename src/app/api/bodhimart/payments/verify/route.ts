@@ -1,4 +1,4 @@
-import { createClient } from "../../../../../../lib/supabase/server";
+import { createClient } from "../../../../../lib/supabase/server";
 import {
   createMarketplaceAdminClient,
   getRazorpayCredentials,
@@ -6,7 +6,7 @@ import {
   jsonNoStore,
   razorpayRequest,
   verifyHmacHex,
-} from "../../../../../../lib/marketplace-payments";
+} from "../../../../../lib/marketplace-payments";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
