@@ -50,6 +50,8 @@ export default function SellerOrdersPage() {
   const [needsLogin, setNeedsLogin] = useState(false);
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [updatingOrderId, setUpdatingOrderId] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
 
   useEffect(() => {
     void loadOrders();
@@ -132,6 +134,24 @@ export default function SellerOrdersPage() {
     }
   }
 
+  async function acceptOrder(orderId: string) {
+    setUpdatingOrderId(orderId);
+    setActionMessage('');
+    try {
+      const { error: acceptError } = await supabase.rpc('seller_accept_marketplace_order', {
+        p_seller_order_id: orderId,
+      });
+      if (acceptError) throw acceptError;
+      setActionMessage('Order accepted. The status has been updated.');
+      await loadOrders();
+    } catch (cause) {
+      console.error('Unable to accept seller order.', cause);
+      setActionMessage('The order could not be accepted. Refresh and try again.');
+    } finally {
+      setUpdatingOrderId('');
+    }
+  }
+
   const statuses = useMemo(() => orders.map((order) => order.status).filter((status, index, all) => all.indexOf(status) === index).sort(), [orders]);
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -172,6 +192,8 @@ export default function SellerOrdersPage() {
             </button>
           </div>
         </header>
+
+        {actionMessage && <p className="action-message" role="status">{actionMessage}</p>}
 
         {error ? (
           <section className="message-card" role="alert">
@@ -238,6 +260,16 @@ export default function SellerOrdersPage() {
                         </div>
                         <div className="status-stack">
                           <span className="status-pill">{readable(order.status)}</span>
+                          {order.status === 'PLACED' && (
+                            <button
+                              className="accept-button"
+                              type="button"
+                              onClick={() => void acceptOrder(order.id)}
+                              disabled={updatingOrderId === order.id}
+                            >
+                              {updatingOrderId === order.id ? 'Accepting…' : 'Accept order'}
+                            </button>
+                          )}
                           <span className="muted">Payment: {readable(market?.payment_status)}</span>
                         </div>
                       </div>
@@ -310,6 +342,9 @@ export default function SellerOrdersPage() {
         .order-heading h2 { color:#173d24; font-size:19px; margin:0; }
         .muted { color:#778078; font-size:12px; margin:6px 0 0; }
         .status-stack { display:flex; flex-direction:column; align-items:flex-end; gap:7px; text-align:right; }
+        .accept-button { border:0; border-radius:8px; padding:8px 12px; background:#145c2b; color:#fff; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+        .accept-button:disabled { opacity:.65; cursor:wait; }
+        .action-message { max-width:1100px; margin:0 auto 14px; padding:11px 14px; border-radius:9px; background:#eaf4ec; color:#145c2b; font-size:13px; }
         .status-pill { display:inline-flex; border-radius:99px; background:#eaf4ec; color:#145c2b; padding:6px 10px; font-size:11px; font-weight:800; }
         .order-meta { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:16px 0; }
         .order-meta div { background:#f7faf7; border-radius:9px; padding:11px; }
