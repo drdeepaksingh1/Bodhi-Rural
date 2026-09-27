@@ -670,11 +670,7 @@ export default function BodhiMartProductsPage() {
                             Out of Stock
                           </span>
                         ) : availableStock <=
-                          (inventoryMap[
-                            product.id
-                          ]
-                            ?.low_stock_threshold ||
-                            5) ? (
+                          (5) ? (
                           <span className="font-medium text-orange-600">
                             Only {availableStock}{" "}
                             available
