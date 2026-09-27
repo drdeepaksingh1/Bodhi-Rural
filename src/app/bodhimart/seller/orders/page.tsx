@@ -129,7 +129,7 @@ export default function SellerOrdersPage() {
     }
   }
 
-  const statuses = useMemo(() => [...new Set(orders.map((order) => order.status))].sort(), [orders]);
+  const statuses = useMemo(() => orders.map((order) => order.status).filter((status, index, all) => all.indexOf(status) === index).sort(), [orders]);
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
     return orders.filter((order) => {
