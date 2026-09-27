@@ -134,18 +134,18 @@ export default function SellerOrdersPage() {
     }
   }
 
-  async function markPacked(orderId: string) {
+  async function markReady(orderId: string, deliveryMethod: string) {
     setUpdatingOrderId(orderId);
     setActionMessage('');
     try {
-      const { error: acceptError } = await supabase.rpc('seller_mark_marketplace_order_packed', {
+      const { error: acceptError } = await supabase.rpc('seller_mark_marketplace_order_ready', {
         p_seller_order_id: orderId,
       });
       if (acceptError) throw acceptError;
-      setActionMessage('Order marked as packed.');
+      setActionMessage(deliveryMethod === 'PICKUP' ? 'Order is ready for customer pickup.' : 'Order is ready for dispatch.');
       await loadOrders();
     } catch (cause) {
-      console.error('Unable to mark seller order packed.', cause);
+      console.error('Unable to mark seller order ready.', cause);
       setActionMessage('The order could not be updated. Refresh and try again.');
     } finally {
       setUpdatingOrderId('');
@@ -260,14 +260,14 @@ export default function SellerOrdersPage() {
                         </div>
                         <div className="status-stack">
                           <span className="status-pill">{readable(order.status)}</span>
-                          {order.status === 'PROCESSING' && (
+                          {order.status === 'PACKED' && (
                             <button
                               className="accept-button"
                               type="button"
-                              onClick={() => void markPacked(order.id)}
+                              onClick={() => void markReady(order.id, market?.delivery_method || '')}
                               disabled={updatingOrderId === order.id}
                             >
-                              {updatingOrderId === order.id ? 'Starting…' : 'Mark packed'}
+                              {updatingOrderId === order.id ? 'Saving…' : market?.delivery_method === 'PICKUP' ? 'Ready for pickup' : 'Ready for dispatch'}
                             </button>
                           )}
                           <span className="muted">Payment: {readable(market?.payment_status)}</span>
