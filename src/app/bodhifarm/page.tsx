@@ -108,13 +108,6 @@ const veterinaryRoles = [
   'VETERINARY',
 ];
 
-const financeRoles = [
-  'SUPER_ADMIN',
-  'CEO',
-  'CORPORATE_ADMIN',
-  'FINANCE',
-];
-
 const reportingRoles = [
   ...managementRoles,
   'FARMER_LEADER',
@@ -224,28 +217,35 @@ export default function BodhiFarmPage() {
   const [batches, setBatches] = useState<BirdBatch[]>([]);
   const [eggs, setEggs] = useState<EggRecord[]>([]);
   const [feeds, setFeeds] = useState<FeedRecord[]>([]);
-  const [veterinary, setVeterinary] = useState<
-    VeterinaryRecord[]
-  >([]);
+  const [veterinary, setVeterinary] =
+    useState<VeterinaryRecord[]>([]);
 
-  const [selectedFarmer, setSelectedFarmer] = useState('');
-  const [selectedFarm, setSelectedFarm] = useState('');
+  const [selectedFarmer, setSelectedFarmer] =
+    useState('');
+  const [selectedFarm, setSelectedFarm] =
+    useState('');
 
-  const [batchCode, setBatchCode] = useState('');
   const [breed, setBreed] = useState('');
   const [birdType, setBirdType] = useState('');
-  const [placementDate, setPlacementDate] = useState('');
-  const [initialQuantity, setInitialQuantity] = useState('');
-  const [currentQuantity, setCurrentQuantity] = useState('');
+  const [placementDate, setPlacementDate] =
+    useState('');
+  const [initialQuantity, setInitialQuantity] =
+    useState('');
+  const [currentQuantity, setCurrentQuantity] =
+    useState('');
   const [mortalityQuantity, setMortalityQuantity] =
     useState('0');
   const [source, setSource] =
     useState('Bodhi Rural');
-  const [status, setStatus] = useState('ACTIVE');
+  const [status, setStatus] =
+    useState('ACTIVE');
 
-  const [loading, setLoading] = useState(true);
-  const [loadingRole, setLoadingRole] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
+  const [loadingRole, setLoadingRole] =
+    useState(true);
+  const [saving, setSaving] =
+    useState(false);
   const [loadingFarms, setLoadingFarms] =
     useState(false);
 
@@ -254,8 +254,10 @@ export default function BodhiFarmPage() {
   const [roleName, setRoleName] =
     useState<string | null>(null);
 
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] =
+    useState('');
+  const [error, setError] =
+    useState('');
 
   /*
    * =========================================================
@@ -278,14 +280,16 @@ export default function BodhiFarmPage() {
         return;
       }
 
-      const { data: profile, error: profileError } =
-        await supabase
-          .from('profiles')
-          .select(
-            'role_id, is_active, full_name'
-          )
-          .eq('id', user.id)
-          .maybeSingle();
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from('profiles')
+        .select(
+          'role_id, is_active, full_name'
+        )
+        .eq('id', user.id)
+        .maybeSingle();
 
       if (profileError) {
         console.error(
@@ -305,12 +309,14 @@ export default function BodhiFarmPage() {
         return;
       }
 
-      const { data: role, error: roleError } =
-        await supabase
-          .from('roles')
-          .select('code, name')
-          .eq('id', profile.role_id)
-          .maybeSingle();
+      const {
+        data: role,
+        error: roleError,
+      } = await supabase
+        .from('roles')
+        .select('code, name')
+        .eq('id', profile.role_id)
+        .maybeSingle();
 
       if (roleError) {
         console.error(
@@ -334,7 +340,10 @@ export default function BodhiFarmPage() {
    */
 
   async function loadFarmers() {
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    } = await supabase
       .from('farmers')
       .select(
         'id, farmer_id, full_name'
@@ -361,7 +370,10 @@ export default function BodhiFarmPage() {
    */
 
   async function loadBatches() {
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    } = await supabase
       .from('bird_batches')
       .select(`
         id,
@@ -443,7 +455,9 @@ export default function BodhiFarmPage() {
         `Unable to load egg production: ${eggsResult.error.message}`
       );
     } else {
-      setEggs(eggsResult.data ?? []);
+      setEggs(
+        eggsResult.data ?? []
+      );
     }
 
     if (feedsResult.error) {
@@ -451,7 +465,9 @@ export default function BodhiFarmPage() {
         `Unable to load feed records: ${feedsResult.error.message}`
       );
     } else {
-      setFeeds(feedsResult.data ?? []);
+      setFeeds(
+        feedsResult.data ?? []
+      );
     }
 
     if (veterinaryResult.error) {
@@ -467,7 +483,7 @@ export default function BodhiFarmPage() {
 
   /*
    * =========================================================
-   * LOAD FARMS FOR FARMER
+   * LOAD FARMS
    * =========================================================
    */
 
@@ -484,16 +500,18 @@ export default function BodhiFarmPage() {
     setLoadingFarms(true);
     setError('');
 
-    const { data, error } =
-      await supabase
-        .from('farms')
-        .select(
-          'id, farm_name, farm_type, shed_capacity, status'
-        )
-        .eq('farmer_id', farmerId)
-        .order('created_at', {
-          ascending: true,
-        });
+    const {
+      data,
+      error,
+    } = await supabase
+      .from('farms')
+      .select(
+        'id, farm_name, farm_type, shed_capacity, status'
+      )
+      .eq('farmer_id', farmerId)
+      .order('created_at', {
+        ascending: true,
+      });
 
     setLoadingFarms(false);
 
@@ -584,13 +602,6 @@ export default function BodhiFarmPage() {
       return;
     }
 
-    if (!batchCode.trim()) {
-      setError(
-        'Please enter a batch code.'
-      );
-      return;
-    }
-
     if (!breed) {
       setError(
         'Please select a breed.'
@@ -656,31 +667,53 @@ export default function BodhiFarmPage() {
 
     setSaving(true);
 
+    /*
+     * IMPORTANT:
+     *
+     * batch_code is deliberately NOT sent here.
+     *
+     * PostgreSQL will generate it through the
+     * trg_generate_bird_batch_code trigger.
+     */
+
     const {
+      data: createdBatch,
       error: insertError,
     } = await supabase
       .from('bird_batches')
       .insert({
-        farmer_id: selectedFarmer,
+        farmer_id:
+          selectedFarmer,
+
         farm_id:
           selectedFarm || null,
-        batch_code:
-          batchCode.trim(),
+
         breed,
+
         bird_type:
           birdType || null,
+
         placement_date:
           placementDate,
+
         initial_quantity:
           initial,
+
         current_quantity:
           current,
+
         mortality_quantity:
           mortality,
+
         source:
           source.trim() || null,
+
         status,
-      });
+      })
+      .select(
+        'id, batch_code'
+      )
+      .single();
 
     setSaving(false);
 
@@ -691,11 +724,14 @@ export default function BodhiFarmPage() {
       return;
     }
 
+    const generatedCode =
+      createdBatch?.batch_code ||
+      'Automatically generated';
+
     setMessage(
-      `Bird batch ${batchCode.trim()} has been successfully created.`
+      `Bird batch ${generatedCode} has been successfully created.`
     );
 
-    setBatchCode('');
     setBreed('');
     setBirdType('');
     setPlacementDate('');
@@ -914,135 +950,105 @@ export default function BodhiFarmPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Farmers
               </p>
-
               <p className="mt-2 text-3xl font-bold text-emerald-700">
                 {farmers.length.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Active farmers
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Farms
               </p>
-
               <p className="mt-2 text-3xl font-bold text-blue-700">
                 {totalFarms.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Registered farms
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Live Birds
               </p>
-
               <p className="mt-2 text-3xl font-bold text-emerald-700">
                 {totalCurrentBirds.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Current flock
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Mortality
               </p>
-
               <p className="mt-2 text-3xl font-bold text-red-600">
                 {totalMortality.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Total recorded
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Total Eggs
               </p>
-
               <p className="mt-2 text-3xl font-bold text-amber-600">
                 {totalEggs.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Production records
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Saleable Eggs
               </p>
-
               <p className="mt-2 text-3xl font-bold text-green-700">
                 {totalSaleableEggs.toLocaleString(
                   'en-IN'
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Saleable production
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Feed Consumed
               </p>
-
               <p className="mt-2 text-3xl font-bold text-orange-600">
                 {totalFeedKg.toFixed(2)} kg
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Recorded feed
               </p>
-
             </div>
 
             <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
-
               <p className="text-sm text-slate-500">
                 Feed Cost
               </p>
-
               <p className="mt-2 text-3xl font-bold text-purple-700">
                 ₹
                 {totalFeedCost.toLocaleString(
@@ -1053,18 +1059,14 @@ export default function BodhiFarmPage() {
                   }
                 )}
               </p>
-
               <p className="mt-1 text-xs text-slate-400">
                 Recorded feed cost
               </p>
-
             </div>
 
           </div>
 
-          {/* =================================================
-              ROLE BASED MODULES
-          ================================================= */}
+          {/* MODULES */}
 
           <div className="mt-6">
 
@@ -1083,7 +1085,8 @@ export default function BodhiFarmPage() {
               </div>
 
               <span className="text-xs font-medium text-slate-400">
-                {visibleModules.length} module
+                {visibleModules.length}{' '}
+                module
                 {visibleModules.length === 1
                   ? ''
                   : 's'}
@@ -1151,57 +1154,45 @@ export default function BodhiFarmPage() {
         <div className="grid gap-5 md:grid-cols-4">
 
           <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-
             <p className="text-sm text-slate-500">
               Total Batches
             </p>
-
             <p className="mt-2 text-3xl font-bold text-emerald-700">
               {batches.length}
             </p>
-
           </div>
 
           <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-
             <p className="text-sm text-slate-500">
               Initial Birds
             </p>
-
             <p className="mt-2 text-3xl font-bold text-emerald-700">
               {totalInitialBirds.toLocaleString(
                 'en-IN'
               )}
             </p>
-
           </div>
 
           <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-
             <p className="text-sm text-slate-500">
               Current Birds
             </p>
-
             <p className="mt-2 text-3xl font-bold text-emerald-700">
               {totalCurrentBirds.toLocaleString(
                 'en-IN'
               )}
             </p>
-
           </div>
 
           <div className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
-
             <p className="text-sm text-slate-500">
               Mortality
             </p>
-
             <p className="mt-2 text-3xl font-bold text-red-600">
               {totalMortality.toLocaleString(
                 'en-IN'
               )}
             </p>
-
           </div>
 
         </div>
@@ -1239,15 +1230,11 @@ export default function BodhiFarmPage() {
                 </p>
 
                 <p className="mt-1 text-sm text-slate-500">
-
                   Signed in as{' '}
-
                   <span className="font-semibold text-slate-700">
                     {roleName || roleCode}
                   </span>
-
                   .
-
                 </p>
 
               </div>
@@ -1286,13 +1273,25 @@ export default function BodhiFarmPage() {
 
             <div className="border-b px-6 py-5">
 
-              <h2 className="text-xl font-bold text-slate-900">
-                Add Bird Batch
-              </h2>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-              <p className="mt-1 text-sm text-slate-500">
-                Register a new poultry batch under a farmer and farm.
-              </p>
+                <div>
+
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Add Bird Batch
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Register a new poultry batch under a farmer and farm.
+                  </p>
+
+                </div>
+
+                <span className="inline-flex w-fit items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+                  Batch Code Auto Generated
+                </span>
+
+              </div>
 
             </div>
 
@@ -1396,30 +1395,43 @@ export default function BodhiFarmPage() {
 
               </div>
 
-              {/* BATCH / BREED */}
+              {/* AUTOMATIC BATCH CODE */}
 
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
 
-                <div>
+                <div className="flex items-start gap-3">
 
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Batch Code *
-                  </label>
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                    #
+                  </div>
 
-                  <input
-                    type="text"
-                    value={batchCode}
-                    onChange={(event) =>
-                      setBatchCode(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Example: BF-JH-GVVH-001"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-                    required
-                  />
+                  <div>
+
+                    <p className="text-sm font-semibold text-blue-900">
+                      Batch Code
+                    </p>
+
+                    <p className="mt-1 text-sm text-blue-700">
+                      The system will automatically
+                      generate a unique Batch Code after
+                      you save this batch.
+                    </p>
+
+                    <p className="mt-2 text-xs font-medium text-blue-600">
+                      Format: FARMER-ID-001,
+                      FARMER-ID-002,
+                      FARMER-ID-003...
+                    </p>
+
+                  </div>
 
                 </div>
+
+              </div>
+
+              {/* BREED / TYPE */}
+
+              <div className="grid gap-5 md:grid-cols-2">
 
                 <div>
 
@@ -1459,12 +1471,6 @@ export default function BodhiFarmPage() {
 
                 </div>
 
-              </div>
-
-              {/* TYPE / DATE */}
-
-              <div className="grid gap-5 md:grid-cols-2">
-
                 <div>
 
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -1502,25 +1508,27 @@ export default function BodhiFarmPage() {
 
                 </div>
 
-                <div>
+              </div>
 
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Placement Date *
-                  </label>
+              {/* DATE */}
 
-                  <input
-                    type="date"
-                    value={placementDate}
-                    onChange={(event) =>
-                      setPlacementDate(
-                        event.target.value
-                      )
-                    }
-                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-                    required
-                  />
+              <div>
 
-                </div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Placement Date *
+                </label>
+
+                <input
+                  type="date"
+                  value={placementDate}
+                  onChange={(event) =>
+                    setPlacementDate(
+                      event.target.value
+                    )
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600"
+                  required
+                />
 
               </div>
 
@@ -1665,8 +1673,8 @@ export default function BodhiFarmPage() {
                   className="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving
-                    ? 'Saving Batch...'
-                    : 'Save Bird Batch'}
+                    ? 'Creating Batch...'
+                    : 'Create Bird Batch'}
                 </button>
 
               </div>
@@ -1676,6 +1684,8 @@ export default function BodhiFarmPage() {
           </div>
 
         ) : (
+
+          /* READ ONLY */
 
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
 
