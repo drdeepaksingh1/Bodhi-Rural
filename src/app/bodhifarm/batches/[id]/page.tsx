@@ -39,7 +39,6 @@ type Farm = {
 
 type EggRecord = {
   id: string;
-  batch_id: string | null;
   production_date: string | null;
   total_eggs: number | null;
   cracked_eggs: number | null;
@@ -49,7 +48,6 @@ type EggRecord = {
 
 type FeedRecord = {
   id: string;
-  batch_id: string | null;
   record_date: string | null;
   feed_type: string | null;
   quantity_kg: number | null;
@@ -59,7 +57,6 @@ type FeedRecord = {
 
 type VeterinaryRecord = {
   id: string;
-  bird_batch_id: string | null;
   record_date: string | null;
   record_type: string | null;
   mortality_quantity: number | null;
@@ -69,6 +66,31 @@ type VeterinaryRecord = {
   treatment: string | null;
   veterinary_name: string | null;
 };
+
+const breeds = [
+  'Gallus gallus domesticus',
+  'Kadaknath',
+  'Desi / Deshi',
+  'Sonali',
+  'RIR (Rhode Island Red)',
+  'Black Australorp',
+  'Ginni',
+  'Other',
+];
+
+const birdTypes = [
+  'Layer',
+  'Broiler',
+  'Dual Purpose',
+  'Breeder',
+  'Other',
+];
+
+const statuses = [
+  'ACTIVE',
+  'COMPLETED',
+  'CANCELLED',
+];
 
 export default function BirdBatch360Page() {
   const params = useParams();
@@ -82,12 +104,40 @@ export default function BirdBatch360Page() {
   const [batch, setBatch] = useState<Batch | null>(null);
   const [farmer, setFarmer] = useState<Farmer | null>(null);
   const [farm, setFarm] = useState<Farm | null>(null);
+
   const [eggs, setEggs] = useState<EggRecord[]>([]);
   const [feeds, setFeeds] = useState<FeedRecord[]>([]);
   const [veterinary, setVeterinary] = useState<VeterinaryRecord[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+
+  /*
+   * EDIT FORM
+   */
+
+  const [editBreed, setEditBreed] = useState('');
+  const [editBirdType, setEditBirdType] = useState('');
+  const [editPlacementDate, setEditPlacementDate] =
+    useState('');
+  const [editInitialQuantity, setEditInitialQuantity] =
+    useState('');
+  const [editCurrentQuantity, setEditCurrentQuantity] =
+    useState('');
+  const [editMortalityQuantity, setEditMortalityQuantity] =
+    useState('');
+  const [editSource, setEditSource] = useState('');
+  const [editStatus, setEditStatus] = useState('ACTIVE');
+
+  /*
+   * ---------------------------------------------------------
+   * LOAD BATCH 360
+   * ---------------------------------------------------------
+   */
 
   async function loadBatch360() {
     if (!batchId) {
@@ -102,8 +152,7 @@ export default function BirdBatch360Page() {
     const { data: batchData, error: batchError } =
       await supabase
         .from('bird_batches')
-        .select(
-          `
+        .select(`
           id,
           farmer_id,
           farm_id,
@@ -116,8 +165,7 @@ export default function BirdBatch360Page() {
           mortality_quantity,
           source,
           status
-          `
-        )
+        `)
         .eq('id', batchId)
         .single();
 
@@ -132,35 +180,56 @@ export default function BirdBatch360Page() {
 
     setBatch(batchData);
 
+    /*
+     * Populate edit form from database.
+     */
+
+    setEditBreed(batchData.breed || '');
+    setEditBirdType(batchData.bird_type || '');
+    setEditPlacementDate(
+      batchData.placement_date || ''
+    );
+    setEditInitialQuantity(
+      String(batchData.initial_quantity || '')
+    );
+    setEditCurrentQuantity(
+      String(batchData.current_quantity || '')
+    );
+    setEditMortalityQuantity(
+      String(batchData.mortality_quantity || 0)
+    );
+    setEditSource(batchData.source || '');
+    setEditStatus(batchData.status || 'ACTIVE');
+
+    /*
+     * FARMER + FARM
+     */
+
     const [farmerResult, farmResult] =
       await Promise.all([
         supabase
           .from('farmers')
-          .select(
-            `
+          .select(`
             id,
             farmer_id,
             full_name,
             mobile,
             status
-            `
-          )
+          `)
           .eq('id', batchData.farmer_id)
           .maybeSingle(),
 
         batchData.farm_id
           ? supabase
               .from('farms')
-              .select(
-                `
+              .select(`
                 id,
                 farmer_id,
                 farm_name,
                 farm_type,
                 shed_capacity,
                 status
-                `
-              )
+              `)
               .eq('id', batchData.farm_id)
               .maybeSingle()
           : Promise.resolve({
@@ -172,6 +241,10 @@ export default function BirdBatch360Page() {
     setFarmer(farmerResult.data || null);
     setFarm(farmResult.data || null);
 
+    /*
+     * OPERATIONAL RECORDS
+     */
+
     const [
       eggsResult,
       feedsResult,
@@ -179,17 +252,14 @@ export default function BirdBatch360Page() {
     ] = await Promise.all([
       supabase
         .from('egg_production')
-        .select(
-          `
+        .select(`
           id,
-          batch_id,
           production_date,
           total_eggs,
           cracked_eggs,
           damaged_eggs,
           saleable_eggs
-          `
-        )
+        `)
         .eq('batch_id', batchId)
         .order('production_date', {
           ascending: false,
@@ -197,17 +267,14 @@ export default function BirdBatch360Page() {
 
       supabase
         .from('feed_records')
-        .select(
-          `
+        .select(`
           id,
-          batch_id,
           record_date,
           feed_type,
           quantity_kg,
           unit_cost,
           total_cost
-          `
-        )
+        `)
         .eq('batch_id', batchId)
         .order('record_date', {
           ascending: false,
@@ -215,10 +282,8 @@ export default function BirdBatch360Page() {
 
       supabase
         .from('veterinary_records')
-        .select(
-          `
+        .select(`
           id,
-          bird_batch_id,
           record_date,
           record_type,
           mortality_quantity,
@@ -227,13 +292,30 @@ export default function BirdBatch360Page() {
           diagnosis,
           treatment,
           veterinary_name
-          `
-        )
+        `)
         .eq('bird_batch_id', batchId)
         .order('record_date', {
           ascending: false,
         }),
     ]);
+
+    if (eggsResult.error) {
+      setError(
+        `Egg production: ${eggsResult.error.message}`
+      );
+    }
+
+    if (feedsResult.error) {
+      setError(
+        `Feed records: ${feedsResult.error.message}`
+      );
+    }
+
+    if (veterinaryResult.error) {
+      setError(
+        `Veterinary records: ${veterinaryResult.error.message}`
+      );
+    }
 
     setEggs(eggsResult.data || []);
     setFeeds(feedsResult.data || []);
@@ -245,6 +327,175 @@ export default function BirdBatch360Page() {
   useEffect(() => {
     loadBatch360();
   }, [batchId]);
+
+  /*
+   * ---------------------------------------------------------
+   * START EDIT
+   * ---------------------------------------------------------
+   */
+
+  function startEditing() {
+    if (!batch) return;
+
+    setEditBreed(batch.breed || '');
+    setEditBirdType(batch.bird_type || '');
+    setEditPlacementDate(
+      batch.placement_date || ''
+    );
+    setEditInitialQuantity(
+      String(batch.initial_quantity || '')
+    );
+    setEditCurrentQuantity(
+      String(batch.current_quantity || '')
+    );
+    setEditMortalityQuantity(
+      String(batch.mortality_quantity || 0)
+    );
+    setEditSource(batch.source || '');
+    setEditStatus(batch.status || 'ACTIVE');
+
+    setError('');
+    setMessage('');
+    setEditing(true);
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * CANCEL EDIT
+   * ---------------------------------------------------------
+   */
+
+  function cancelEditing() {
+    setEditing(false);
+    setError('');
+    setMessage('');
+
+    if (!batch) return;
+
+    setEditBreed(batch.breed || '');
+    setEditBirdType(batch.bird_type || '');
+    setEditPlacementDate(
+      batch.placement_date || ''
+    );
+    setEditInitialQuantity(
+      String(batch.initial_quantity || '')
+    );
+    setEditCurrentQuantity(
+      String(batch.current_quantity || '')
+    );
+    setEditMortalityQuantity(
+      String(batch.mortality_quantity || 0)
+    );
+    setEditSource(batch.source || '');
+    setEditStatus(batch.status || 'ACTIVE');
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * SAVE EDIT
+   * ---------------------------------------------------------
+   */
+
+  async function saveBatchChanges(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!batch) return;
+
+    setError('');
+    setMessage('');
+
+    if (!editBreed) {
+      setError('Please select a breed.');
+      return;
+    }
+
+    if (!editPlacementDate) {
+      setError('Please select the placement date.');
+      return;
+    }
+
+    const initial = Number(editInitialQuantity);
+    const current = Number(editCurrentQuantity);
+    const mortality = Number(editMortalityQuantity);
+
+    if (!Number.isInteger(initial) || initial <= 0) {
+      setError(
+        'Initial quantity must be a whole number greater than 0.'
+      );
+      return;
+    }
+
+    if (!Number.isInteger(current) || current < 0) {
+      setError(
+        'Current quantity must be a whole number of 0 or greater.'
+      );
+      return;
+    }
+
+    if (!Number.isInteger(mortality) || mortality < 0) {
+      setError(
+        'Mortality must be a whole number of 0 or greater.'
+      );
+      return;
+    }
+
+    if (current + mortality > initial) {
+      setError(
+        'Current quantity plus mortality cannot exceed initial quantity.'
+      );
+      return;
+    }
+
+    setSaving(true);
+
+    /*
+     * IMPORTANT:
+     * batch_code is NOT updated.
+     *
+     * The automatic batch code generated by Supabase
+     * remains unchanged.
+     */
+
+    const { error: updateError } =
+      await supabase
+        .from('bird_batches')
+        .update({
+          breed: editBreed,
+          bird_type: editBirdType || null,
+          placement_date: editPlacementDate,
+          initial_quantity: initial,
+          current_quantity: current,
+          mortality_quantity: mortality,
+          source: editSource.trim() || null,
+          status: editStatus,
+        })
+        .eq('id', batch.id);
+
+    setSaving(false);
+
+    if (updateError) {
+      setError(
+        `Unable to update batch: ${updateError.message}`
+      );
+      return;
+    }
+
+    setMessage(
+      'Bird batch updated successfully.'
+    );
+
+    setEditing(false);
+
+    await loadBatch360();
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * CALCULATIONS
+   * ---------------------------------------------------------
+   */
 
   const initialBirds = Number(
     batch?.initial_quantity || 0
@@ -385,6 +636,12 @@ export default function BirdBatch360Page() {
     });
   }
 
+  /*
+   * ---------------------------------------------------------
+   * LOADING
+   * ---------------------------------------------------------
+   */
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50">
@@ -399,10 +656,17 @@ export default function BirdBatch360Page() {
     );
   }
 
-  if (error || !batch) {
+  /*
+   * ---------------------------------------------------------
+   * ERROR
+   * ---------------------------------------------------------
+   */
+
+  if (error && !batch) {
     return (
       <main className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-3xl px-6 py-10">
+
           <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
 
             <h1 className="text-xl font-bold text-red-800">
@@ -410,8 +674,7 @@ export default function BirdBatch360Page() {
             </h1>
 
             <p className="mt-2 text-sm text-red-700">
-              {error ||
-                'This bird batch does not exist.'}
+              {error}
             </p>
 
             <Link
@@ -422,10 +685,21 @@ export default function BirdBatch360Page() {
             </Link>
 
           </div>
+
         </div>
       </main>
     );
   }
+
+  if (!batch) {
+    return null;
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * PAGE
+   * ---------------------------------------------------------
+   */
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -462,8 +736,7 @@ export default function BirdBatch360Page() {
               <div className="mt-4 flex flex-wrap items-center gap-3">
 
                 <h1 className="text-3xl font-bold text-slate-900">
-                  {batch.batch_code ||
-                    'Bird Batch'}
+                  {batch.batch_code || 'Bird Batch'}
                 </h1>
 
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
@@ -498,6 +771,15 @@ export default function BirdBatch360Page() {
                 </Link>
               )}
 
+              {!editing && (
+                <button
+                  onClick={startEditing}
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                >
+                  Edit Batch
+                </button>
+              )}
+
               <button
                 onClick={loadBatch360}
                 className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
@@ -515,6 +797,331 @@ export default function BirdBatch360Page() {
 
       <div className="mx-auto max-w-7xl px-6 py-6">
 
+        {/* MESSAGES */}
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-700">
+            {message}
+          </div>
+        )}
+
+        {/* EDIT PANEL */}
+
+        {editing && (
+          <section className="mb-6 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
+
+            <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-5">
+
+              <h2 className="text-xl font-bold text-emerald-900">
+                Edit Bird Batch
+              </h2>
+
+              <p className="mt-1 text-sm text-emerald-700">
+                Update operational information for{' '}
+                <strong>
+                  {batch.batch_code}
+                </strong>
+                .
+              </p>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Batch code is protected and cannot be changed here.
+              </p>
+
+            </div>
+
+            <form
+              onSubmit={saveBatchChanges}
+              className="space-y-6 p-6"
+            >
+
+              {/* FARMER / FARM READ ONLY */}
+
+              <div className="grid gap-5 md:grid-cols-2">
+
+                <InfoItem
+                  label="Farmer"
+                  value={
+                    farmer
+                      ? `${farmer.farmer_id || ''} — ${farmer.full_name || ''}`
+                      : '—'
+                  }
+                />
+
+                <InfoItem
+                  label="Farm"
+                  value={
+                    farm?.farm_name ||
+                    'Farm not assigned'
+                  }
+                />
+
+              </div>
+
+              {/* BATCH CODE */}
+
+              <div>
+
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Batch Code
+                </label>
+
+                <input
+                  value={batch.batch_code || ''}
+                  disabled
+                  className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600"
+                />
+
+              </div>
+
+              {/* BREED / TYPE */}
+
+              <div className="grid gap-5 md:grid-cols-2">
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Breed *
+                  </label>
+
+                  <select
+                    value={editBreed}
+                    onChange={(event) =>
+                      setEditBreed(event.target.value)
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-600"
+                  >
+
+                    <option value="">
+                      Select breed
+                    </option>
+
+                    {breeds.map((item) => (
+                      <option
+                        key={item}
+                        value={item}
+                      >
+                        {item}
+                      </option>
+                    ))}
+
+                  </select>
+
+                </div>
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Bird Type
+                  </label>
+
+                  <select
+                    value={editBirdType}
+                    onChange={(event) =>
+                      setEditBirdType(event.target.value)
+                    }
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-600"
+                  >
+
+                    <option value="">
+                      Select bird type
+                    </option>
+
+                    {birdTypes.map((item) => (
+                      <option
+                        key={item}
+                        value={item}
+                      >
+                        {item}
+                      </option>
+                    ))}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+              {/* DATE */}
+
+              <div>
+
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Placement Date *
+                </label>
+
+                <input
+                  type="date"
+                  value={editPlacementDate}
+                  onChange={(event) =>
+                    setEditPlacementDate(
+                      event.target.value
+                    )
+                  }
+                  required
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-600"
+                />
+
+              </div>
+
+              {/* QUANTITIES */}
+
+              <div className="grid gap-5 md:grid-cols-3">
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Initial Quantity *
+                  </label>
+
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={editInitialQuantity}
+                    onChange={(event) =>
+                      setEditInitialQuantity(
+                        event.target.value
+                      )
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-600"
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Current Quantity *
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={editCurrentQuantity}
+                    onChange={(event) =>
+                      setEditCurrentQuantity(
+                        event.target.value
+                      )
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-600"
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Mortality
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={editMortalityQuantity}
+                    onChange={(event) =>
+                      setEditMortalityQuantity(
+                        event.target.value
+                      )
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-600"
+                  />
+
+                </div>
+
+              </div>
+
+              {/* SOURCE / STATUS */}
+
+              <div className="grid gap-5 md:grid-cols-2">
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Source
+                  </label>
+
+                  <input
+                    value={editSource}
+                    onChange={(event) =>
+                      setEditSource(event.target.value)
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-emerald-600"
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Status *
+                  </label>
+
+                  <select
+                    value={editStatus}
+                    onChange={(event) =>
+                      setEditStatus(event.target.value)
+                    }
+                    required
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-600"
+                  >
+
+                    {statuses.map((item) => (
+                      <option
+                        key={item}
+                        value={item}
+                      >
+                        {item}
+                      </option>
+                    ))}
+
+                  </select>
+
+                </div>
+
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="flex flex-wrap justify-end gap-3 border-t pt-6">
+
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  disabled={saving}
+                  className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-emerald-700 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+                >
+                  {saving
+                    ? 'Saving Changes...'
+                    : 'Save Changes'}
+                </button>
+
+              </div>
+
+            </form>
+
+          </section>
+        )}
+
         {/* BATCH PROFILE */}
 
         <section className="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -530,13 +1137,11 @@ export default function BirdBatch360Page() {
                 </p>
 
                 <h2 className="mt-1 text-3xl font-bold">
-                  {batch.batch_code ||
-                    'Bird Batch'}
+                  {batch.batch_code || 'Bird Batch'}
                 </h2>
 
                 <p className="mt-2 text-sm text-green-100">
-                  {batch.breed ||
-                    'Breed not specified'}
+                  {batch.breed || 'Breed not specified'}
                   {' · '}
                   {batch.bird_type ||
                     'Bird type not specified'}
@@ -616,7 +1221,7 @@ export default function BirdBatch360Page() {
 
         </section>
 
-        {/* BATCH + FARMER + FARM */}
+        {/* BATCH / FARMER / FARM */}
 
         <section className="mb-6 grid gap-6 lg:grid-cols-3">
 
@@ -646,9 +1251,7 @@ export default function BirdBatch360Page() {
 
               <InfoItem
                 label="Placement Date"
-                value={formatDate(
-                  batch.placement_date
-                )}
+                value={formatDate(batch.placement_date)}
               />
 
               <InfoItem
@@ -718,8 +1321,7 @@ export default function BirdBatch360Page() {
                 <div className="rounded-xl bg-slate-50 p-5">
 
                   <h3 className="text-xl font-bold text-slate-900">
-                    {farm.farm_name ||
-                      'Unnamed Farm'}
+                    {farm.farm_name || 'Unnamed Farm'}
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
@@ -730,16 +1332,12 @@ export default function BirdBatch360Page() {
 
                     <InfoItem
                       label="Shed Capacity"
-                      value={
-                        farm.shed_capacity || 0
-                      }
+                      value={farm.shed_capacity || 0}
                     />
 
                     <InfoItem
                       label="Status"
-                      value={
-                        farm.status || 'ACTIVE'
-                      }
+                      value={farm.status || 'ACTIVE'}
                     />
 
                   </div>
@@ -761,7 +1359,7 @@ export default function BirdBatch360Page() {
 
         </section>
 
-        {/* FLOCK STATUS */}
+        {/* FLOCK */}
 
         <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
@@ -802,9 +1400,7 @@ export default function BirdBatch360Page() {
 
             <div className="mb-2 flex justify-between text-xs font-semibold text-slate-500">
 
-              <span>
-                Flock survival
-              </span>
+              <span>Flock survival</span>
 
               <span>
                 {survivalRate.toFixed(2)}%
@@ -886,6 +1482,7 @@ export default function BirdBatch360Page() {
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
 
                     <tr>
+
                       <th className="px-4 py-3">
                         Date
                       </th>
@@ -905,6 +1502,7 @@ export default function BirdBatch360Page() {
                       <th className="px-4 py-3">
                         Damaged
                       </th>
+
                     </tr>
 
                   </thead>
@@ -1142,19 +1740,16 @@ export default function BirdBatch360Page() {
                       <div className="flex flex-wrap items-center gap-2">
 
                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                          {record.record_type ||
-                            'HEALTH'}
+                          {record.record_type || 'HEALTH'}
                         </span>
 
                         {Number(
-                          record.mortality_quantity ||
-                            0
+                          record.mortality_quantity || 0
                         ) > 0 && (
                           <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
                             Mortality:{' '}
                             {Number(
-                              record.mortality_quantity ||
-                                0
+                              record.mortality_quantity || 0
                             )}
                           </span>
                         )}
@@ -1195,7 +1790,8 @@ export default function BirdBatch360Page() {
 
                     {record.veterinary_name && (
                       <p className="mt-4 text-xs text-slate-500">
-                        Veterinary: {record.veterinary_name}
+                        Veterinary:{' '}
+                        {record.veterinary_name}
                       </p>
                     )}
 
@@ -1265,9 +1861,16 @@ export default function BirdBatch360Page() {
         </section>
 
       </div>
+
     </main>
   );
 }
+
+/*
+ * ---------------------------------------------------------
+ * REUSABLE COMPONENTS
+ * ---------------------------------------------------------
+ */
 
 function Summary({
   label,
