@@ -84,7 +84,8 @@ export default function Farm360Page() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [eggs, setEggs] = useState<EggRecord[]>([]);
   const [feeds, setFeeds] = useState<FeedRecord[]>([]);
-  const [veterinary, setVeterinary] = useState<VeterinaryRecord[]>([]);
+  const [veterinary, setVeterinary] =
+    useState<VeterinaryRecord[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -101,18 +102,46 @@ export default function Farm360Page() {
     setError('');
 
     try {
-      const { data: farmData, error: farmError } =
-        await supabase
-          .from('farms')
-          .select(
-            'id, farmer_id, farm_name, farm_type, shed_capacity, status'
-          )
-          .eq('id', farmId)
-          .single();
+      /*
+       * IMPORTANT:
+       * Do not use .single() here.
+       *
+       * .single() throws:
+       * "Cannot coerce the result to a single JSON object"
+       * when Supabase returns zero or multiple visible rows.
+       *
+       * limit(1) lets us handle the result safely.
+       */
 
-      if (farmError || !farmData) {
+      const {
+        data: farmRows,
+        error: farmError,
+      } = await supabase
+        .from('farms')
+        .select(
+          `
+          id,
+          farmer_id,
+          farm_name,
+          farm_type,
+          shed_capacity,
+          status
+          `
+        )
+        .eq('id', farmId)
+        .limit(1);
+
+      if (farmError) {
         throw new Error(
-          farmError?.message || 'Farm could not be found.'
+          `Farm lookup failed: ${farmError.message}`
+        );
+      }
+
+      const farmData = farmRows?.[0] || null;
+
+      if (!farmData) {
+        throw new Error(
+          `Farm record is not visible for ID: ${farmId}`
         );
       }
 
@@ -125,7 +154,13 @@ export default function Farm360Page() {
         supabase
           .from('farmers')
           .select(
-            'id, farmer_id, full_name, mobile, status'
+            `
+            id,
+            farmer_id,
+            full_name,
+            mobile,
+            status
+            `
           )
           .eq('id', farmData.farmer_id)
           .maybeSingle(),
@@ -156,13 +191,13 @@ export default function Farm360Page() {
 
       if (farmerResult.error) {
         throw new Error(
-          `Farmer: ${farmerResult.error.message}`
+          `Farmer lookup failed: ${farmerResult.error.message}`
         );
       }
 
       if (batchesResult.error) {
         throw new Error(
-          `Bird batches: ${batchesResult.error.message}`
+          `Bird batch lookup failed: ${batchesResult.error.message}`
         );
       }
 
@@ -225,9 +260,8 @@ export default function Farm360Page() {
           }),
 
         /*
-         * IMPORTANT:
          * veterinary_records uses batch_id.
-         * Do NOT use bird_batch_id.
+         * NOT bird_batch_id.
          */
         supabase
           .from('veterinary_records')
@@ -253,19 +287,19 @@ export default function Farm360Page() {
 
       if (eggsResult.error) {
         throw new Error(
-          `Egg production: ${eggsResult.error.message}`
+          `Egg production lookup failed: ${eggsResult.error.message}`
         );
       }
 
       if (feedsResult.error) {
         throw new Error(
-          `Feed records: ${feedsResult.error.message}`
+          `Feed lookup failed: ${feedsResult.error.message}`
         );
       }
 
       if (veterinaryResult.error) {
         throw new Error(
-          `Veterinary records: ${veterinaryResult.error.message}`
+          `Veterinary lookup failed: ${veterinaryResult.error.message}`
         );
       }
 
@@ -301,7 +335,8 @@ export default function Farm360Page() {
     () =>
       batches.reduce(
         (sum, batch) =>
-          sum + Number(batch.initial_quantity || 0),
+          sum +
+          Number(batch.initial_quantity || 0),
         0
       ),
     [batches]
@@ -311,7 +346,8 @@ export default function Farm360Page() {
     () =>
       batches.reduce(
         (sum, batch) =>
-          sum + Number(batch.current_quantity || 0),
+          sum +
+          Number(batch.current_quantity || 0),
         0
       ),
     [batches]
@@ -321,7 +357,8 @@ export default function Farm360Page() {
     () =>
       batches.reduce(
         (sum, batch) =>
-          sum + Number(batch.mortality_quantity || 0),
+          sum +
+          Number(batch.mortality_quantity || 0),
         0
       ),
     [batches]
@@ -351,7 +388,8 @@ export default function Farm360Page() {
     () =>
       eggs.reduce(
         (sum, item) =>
-          sum + Number(item.saleable_eggs || 0),
+          sum +
+          Number(item.saleable_eggs || 0),
         0
       ),
     [eggs]
@@ -361,7 +399,8 @@ export default function Farm360Page() {
     () =>
       eggs.reduce(
         (sum, item) =>
-          sum + Number(item.cracked_eggs || 0),
+          sum +
+          Number(item.cracked_eggs || 0),
         0
       ),
     [eggs]
@@ -371,7 +410,8 @@ export default function Farm360Page() {
     () =>
       eggs.reduce(
         (sum, item) =>
-          sum + Number(item.damaged_eggs || 0),
+          sum +
+          Number(item.damaged_eggs || 0),
         0
       ),
     [eggs]
@@ -426,7 +466,8 @@ export default function Farm360Page() {
     () =>
       veterinary.reduce(
         (sum, item) =>
-          sum + Number(item.mortality_quantity || 0),
+          sum +
+          Number(item.mortality_quantity || 0),
         0
       ),
     [veterinary]
@@ -488,12 +529,14 @@ export default function Farm360Page() {
       <main className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-3xl px-6 py-10">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-8">
+
             <h1 className="text-xl font-bold text-red-800">
               Farm Not Found
             </h1>
 
-            <p className="mt-2 text-sm text-red-700">
-              {error || 'This farm does not exist.'}
+            <p className="mt-2 break-words text-sm text-red-700">
+              {error ||
+                'This farm does not exist.'}
             </p>
 
             <Link
@@ -502,6 +545,7 @@ export default function Farm360Page() {
             >
               ← Back to Farm Management
             </Link>
+
           </div>
         </div>
       </main>
@@ -510,11 +554,13 @@ export default function Farm360Page() {
 
   return (
     <main className="min-h-screen bg-slate-50">
+
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
         {/* NAVIGATION */}
 
         <div className="mb-5 flex flex-wrap items-center gap-2 text-sm">
+
           <Link
             href="/bodhifarm/farms"
             className="font-semibold text-green-700 hover:underline"
@@ -522,20 +568,26 @@ export default function Farm360Page() {
             ← Farm Management
           </Link>
 
-          <span className="text-slate-400">/</span>
+          <span className="text-slate-400">
+            /
+          </span>
 
           <span className="text-slate-500">
             Farm 360°
           </span>
+
         </div>
 
         {/* HEADER */}
 
         <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
             <div>
+
               <div className="flex flex-wrap items-center gap-2">
+
                 <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
                   FARM 360°
                 </span>
@@ -543,19 +595,23 @@ export default function Farm360Page() {
                 <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                   {farm.status || 'ACTIVE'}
                 </span>
+
               </div>
 
               <h1 className="mt-3 text-3xl font-bold text-slate-900">
-                {farm.farm_name || 'Unnamed Farm'}
+                {farm.farm_name ||
+                  'Unnamed Farm'}
               </h1>
 
               <p className="mt-1 text-sm text-slate-500">
                 {farm.farm_type ||
                   'Farm type not specified'}
               </p>
+
             </div>
 
             <div className="flex flex-wrap gap-2">
+
               {farmer && (
                 <Link
                   href={`/bodhifarm/farmers/${farmer.id}`}
@@ -582,8 +638,11 @@ export default function Farm360Page() {
                   ? 'Refreshing...'
                   : 'Refresh'}
               </button>
+
             </div>
+
           </div>
+
         </section>
 
         {/* PRIMARY KPI */}
@@ -627,12 +686,14 @@ export default function Farm360Page() {
         <section className="mb-6 grid gap-6 lg:grid-cols-2">
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
             <SectionTitle
               title="Farm Information"
               description="Core farm registration details."
             />
 
             <div className="grid grid-cols-2 gap-3">
+
               <InfoItem
                 label="Farm Name"
                 value={farm.farm_name || '—'}
@@ -654,10 +715,13 @@ export default function Farm360Page() {
                 label="Status"
                 value={farm.status || 'ACTIVE'}
               />
+
             </div>
+
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+
             <SectionTitle
               title="Connected Farmer"
               description="Farmer responsible for this farm."
@@ -665,7 +729,9 @@ export default function Farm360Page() {
 
             {farmer ? (
               <>
+
                 <div className="rounded-xl bg-slate-50 p-5">
+
                   <p className="text-sm font-bold text-green-700">
                     {farmer.farmer_id ||
                       'No Farmer ID'}
@@ -683,8 +749,10 @@ export default function Farm360Page() {
 
                   <p className="mt-1 text-xs text-slate-500">
                     Status:{' '}
-                    {farmer.status || 'ACTIVE'}
+                    {farmer.status ||
+                      'ACTIVE'}
                   </p>
+
                 </div>
 
                 <Link
@@ -693,10 +761,12 @@ export default function Farm360Page() {
                 >
                   Open Farmer 360° →
                 </Link>
+
               </>
             ) : (
               <EmptyState message="Connected farmer information is not available." />
             )}
+
           </div>
 
         </section>
@@ -745,9 +815,11 @@ export default function Farm360Page() {
         <section className="mb-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
 
           <div className="border-b border-slate-200 p-6">
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
+
                 <h2 className="text-xl font-bold text-slate-900">
                   Bird Batches
                 </h2>
@@ -755,12 +827,15 @@ export default function Farm360Page() {
                 <p className="mt-1 text-sm text-slate-500">
                   All bird batches currently assigned to this farm.
                 </p>
+
               </div>
 
               <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
                 {activeBatches} Active
               </span>
+
             </div>
+
           </div>
 
           <div className="p-6">
@@ -771,6 +846,7 @@ export default function Farm360Page() {
               <div className="grid gap-4 md:grid-cols-2">
 
                 {batches.map((batch) => {
+
                   const initial =
                     Number(
                       batch.initial_quantity || 0
@@ -800,6 +876,7 @@ export default function Farm360Page() {
                       <div className="flex items-start justify-between gap-3">
 
                         <div>
+
                           <Link
                             href={`/bodhifarm/batches/${batch.id}`}
                             className="text-lg font-bold text-green-700 hover:underline"
@@ -815,6 +892,7 @@ export default function Farm360Page() {
                             {batch.bird_type ||
                               'Bird type not specified'}
                           </p>
+
                         </div>
 
                         <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
@@ -875,6 +953,7 @@ export default function Farm360Page() {
             )}
 
           </div>
+
         </section>
 
         {/* EGG PRODUCTION */}
@@ -918,13 +997,16 @@ export default function Farm360Page() {
             <div className="mt-5 space-y-3">
 
               {eggs.slice(0, 5).map((egg) => (
+
                 <div
                   key={egg.id}
                   className="rounded-xl border border-slate-200 p-4"
                 >
+
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
+
                       <p className="font-semibold text-slate-900">
                         {formatDate(
                           egg.production_date
@@ -933,17 +1015,19 @@ export default function Farm360Page() {
 
                       <p className="text-xs text-slate-500">
                         Batch:{' '}
-                        {egg.batch_id
-                          ? egg.batch_id
-                          : 'Not assigned'}
+                        {egg.batch_id ||
+                          'Not assigned'}
                       </p>
+
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 text-sm">
+
                       <div>
                         <p className="text-xs text-slate-500">
                           Total
                         </p>
+
                         <p className="font-bold">
                           {Number(
                             egg.total_eggs || 0
@@ -955,6 +1039,7 @@ export default function Farm360Page() {
                         <p className="text-xs text-slate-500">
                           Saleable
                         </p>
+
                         <p className="font-bold text-green-700">
                           {Number(
                             egg.saleable_eggs || 0
@@ -966,16 +1051,20 @@ export default function Farm360Page() {
                         <p className="text-xs text-slate-500">
                           Cracked
                         </p>
+
                         <p className="font-bold text-red-600">
                           {Number(
                             egg.cracked_eggs || 0
                           )}
                         </p>
                       </div>
+
                     </div>
 
                   </div>
+
                 </div>
+
               ))}
 
             </div>
@@ -1028,13 +1117,16 @@ export default function Farm360Page() {
             <div className="mt-5 space-y-3">
 
               {feeds.slice(0, 5).map((feed) => (
+
                 <div
                   key={feed.id}
                   className="rounded-xl border border-slate-200 p-4"
                 >
+
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
+
                       <p className="font-semibold text-slate-900">
                         {formatDate(
                           feed.record_date
@@ -1045,9 +1137,11 @@ export default function Farm360Page() {
                         {feed.feed_type ||
                           'Feed'}
                       </p>
+
                     </div>
 
                     <div className="text-right">
+
                       <p className="font-bold text-slate-900">
                         {Number(
                           feed.quantity_kg || 0
@@ -1061,10 +1155,13 @@ export default function Farm360Page() {
                           feed.total_cost || 0
                         ).toFixed(2)}
                       </p>
+
                     </div>
 
                   </div>
+
                 </div>
+
               ))}
 
             </div>
@@ -1081,6 +1178,7 @@ export default function Farm360Page() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
+
                 <h2 className="text-xl font-bold text-slate-900">
                   Veterinary & Health
                 </h2>
@@ -1088,10 +1186,12 @@ export default function Farm360Page() {
                 <p className="mt-1 text-sm text-slate-500">
                   Health, diagnosis, treatment and mortality records.
                 </p>
+
               </div>
 
               <div className="rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
-                Vet Mortality: {veterinaryMortality}
+                Vet Mortality:{' '}
+                {veterinaryMortality}
               </div>
 
             </div>
@@ -1105,83 +1205,85 @@ export default function Farm360Page() {
             ) : (
               <div className="space-y-3">
 
-                {veterinary.slice(0, 10).map((record) => (
+                {veterinary
+                  .slice(0, 10)
+                  .map((record) => (
 
-                  <div
-                    key={record.id}
-                    className="rounded-xl border border-slate-200 p-4"
-                  >
+                    <div
+                      key={record.id}
+                      className="rounded-xl border border-slate-200 p-4"
+                    >
 
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
-                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
 
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                          {record.record_type ||
-                            'HEALTH'}
-                        </span>
-
-                        {Number(
-                          record.mortality_quantity || 0
-                        ) > 0 && (
-                          <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
-                            Mortality:{' '}
-                            {Number(
-                              record.mortality_quantity || 0
-                            )}
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                            {record.record_type ||
+                              'HEALTH'}
                           </span>
-                        )}
+
+                          {Number(
+                            record.mortality_quantity || 0
+                          ) > 0 && (
+                            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+                              Mortality:{' '}
+                              {Number(
+                                record.mortality_quantity || 0
+                              )}
+                            </span>
+                          )}
+
+                        </div>
+
+                        <span className="text-sm text-slate-500">
+                          {formatDate(
+                            record.record_date
+                          )}
+                        </span>
 
                       </div>
 
-                      <span className="text-sm text-slate-500">
-                        {formatDate(
-                          record.record_date
-                        )}
-                      </span>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+                        <InfoItem
+                          label="Cause"
+                          value={record.cause || '—'}
+                        />
+
+                        <InfoItem
+                          label="Symptoms"
+                          value={
+                            record.symptoms || '—'
+                          }
+                        />
+
+                        <InfoItem
+                          label="Diagnosis"
+                          value={
+                            record.diagnosis || '—'
+                          }
+                        />
+
+                        <InfoItem
+                          label="Treatment"
+                          value={
+                            record.treatment || '—'
+                          }
+                        />
+
+                      </div>
+
+                      {record.veterinary_name && (
+                        <p className="mt-3 text-xs text-slate-500">
+                          Veterinary:{' '}
+                          {record.veterinary_name}
+                        </p>
+                      )}
 
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-                      <InfoItem
-                        label="Cause"
-                        value={record.cause || '—'}
-                      />
-
-                      <InfoItem
-                        label="Symptoms"
-                        value={
-                          record.symptoms || '—'
-                        }
-                      />
-
-                      <InfoItem
-                        label="Diagnosis"
-                        value={
-                          record.diagnosis || '—'
-                        }
-                      />
-
-                      <InfoItem
-                        label="Treatment"
-                        value={
-                          record.treatment || '—'
-                        }
-                      />
-
-                    </div>
-
-                    {record.veterinary_name && (
-                      <p className="mt-3 text-xs text-slate-500">
-                        Veterinary:{' '}
-                        {record.veterinary_name}
-                      </p>
-                    )}
-
-                  </div>
-
-                ))}
+                  ))}
 
               </div>
             )}
@@ -1264,6 +1366,7 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+
       <p className="text-sm text-slate-500">
         {label}
       </p>
@@ -1275,6 +1378,7 @@ function MetricCard({
       <p className="mt-1 text-xs text-slate-500">
         {description}
       </p>
+
     </div>
   );
 }
@@ -1288,6 +1392,7 @@ function InfoItem({
 }) {
   return (
     <div className="rounded-lg bg-slate-50 p-3">
+
       <p className="text-xs text-slate-500">
         {label}
       </p>
@@ -1295,6 +1400,7 @@ function InfoItem({
       <p className="mt-1 break-words font-semibold text-slate-900">
         {value}
       </p>
+
     </div>
   );
 }
@@ -1308,6 +1414,7 @@ function SectionTitle({
 }) {
   return (
     <div className="mb-5">
+
       <h2 className="text-xl font-bold text-slate-900">
         {title}
       </h2>
@@ -1315,6 +1422,7 @@ function SectionTitle({
       <p className="mt-1 text-sm text-slate-500">
         {description}
       </p>
+
     </div>
   );
 }
@@ -1326,9 +1434,11 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
+
       <p className="text-sm text-slate-500">
         {message}
       </p>
+
     </div>
   );
 }
