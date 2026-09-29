@@ -492,6 +492,13 @@ export default function BodhiMartProductsPage() {
 
           <div className="flex gap-2">
             <a
+              href="/bodhimart/orders"
+              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+            >
+              My Orders
+            </a>
+
+            <a
               href="/bodhimart/cart"
               className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
             >
