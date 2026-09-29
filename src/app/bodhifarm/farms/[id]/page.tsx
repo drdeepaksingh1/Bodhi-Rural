@@ -59,7 +59,7 @@ type FeedRecord = {
 
 type VeterinaryRecord = {
   id: string;
-  bird_batch_id: string | null;
+  batch_id: string | null;
   record_date: string | null;
   record_type: string | null;
   mortality_quantity: number | null;
@@ -99,20 +99,25 @@ export default function Farm360Page() {
     setLoading(true);
     setError('');
 
-    const { data: farmData, error: farmError } =
+    const { data: farmRows, error: farmError } =
       await supabase
         .from('farms')
         .select(
           'id, farmer_id, farm_name, farm_type, shed_capacity, status'
         )
         .eq('id', farmId)
-        .single();
+        .limit(1);
 
-    if (farmError || !farmData) {
-      setError(
-        farmError?.message ||
-          'Farm could not be found.'
-      );
+    if (farmError) {
+      setError(`Farm lookup failed: ${farmError.message}`);
+      setLoading(false);
+      return;
+    }
+
+    const farmData = farmRows?.[0] || null;
+
+    if (!farmData) {
+      setError(`Farm record is not visible for ID: ${farmId}`);
       setLoading(false);
       return;
     }
@@ -227,7 +232,7 @@ export default function Farm360Page() {
         .select(
           `
           id,
-          bird_batch_id,
+          batch_id,
           record_date,
           record_type,
           mortality_quantity,
@@ -238,7 +243,7 @@ export default function Farm360Page() {
           veterinary_name
           `
         )
-        .in('bird_batch_id', batchIds)
+        .in('batch_id', batchIds)
         .order('record_date', {
           ascending: false,
         }),
