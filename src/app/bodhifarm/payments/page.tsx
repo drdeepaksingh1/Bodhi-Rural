@@ -1,160 +1,96 @@
-      farmerResult.error ||
-      batchResult.error ||
-      procurementResult.error ||
-      expenseResult.error ||
-      paymentResult.error;
+'use client';
 
-    if (firstError) {
-      setError(firstError.message);
-    } else {
-      setFarmers(farmerResult.data || []);
-      setBatches(batchResult.data || []);
-      setProcurements(procurementResult.data || []);
-      setExpenses(expenseResult.data || []);
-      setPayments(paymentResult.data || []);
-    }
+import { useEffect, useMemo, useState } from 'react';
+import { createClient } from '../../../lib/supabase/client';
 
-    setLoading(false);
-  }
+type Farmer = {
+  id: string;
+  farmer_id: string | null;
+  full_name: string | null;
+};
 
-  async function currentUserId() {
-    const { data } = await supabase.auth.getUser();
-    return data.user?.id || null;
-  }
+type Batch = {
+  id: string;
+  farmer_id: string;
+  batch_code: string | null;
+  current_quantity: number | null;
+  status: string | null;
+};
 
-  async function saveProcurement() {
-    setMessage('');
-    setError('');
+type Procurement = {
+  id: string;
+  farmer_id: string;
+  batch_id: string | null;
+  collection_date: string;
+  saleable_eggs: number;
+  rate_per_egg: number;
+  gross_amount: number;
+  quality_deduction: number;
+  other_deduction: number;
+  net_amount: number;
+  status: string;
+};
 
-    const eggs = Number(saleableEggs);
-    const rate = Number(ratePerEgg);
-    const quality = Number(qualityDeduction || 0);
-    const other = Number(otherDeduction || 0);
+type Expense = {
+  id: string;
+  farmer_id: string;
+  expense_date: string;
+  expense_type: string;
+  description: string | null;
+  amount: number;
+  status: string;
+};
 
-    if (!procurementFarmer || !eggs || eggs < 1 || rate < 0) {
-      setError('Select a farmer and enter valid saleable eggs and rate.');
-      return;
-    }
+type Payment = {
+  id: string;
+  farmer_id: string;
+  payment_date: string;
+  amount: number;
+  payment_mode: string;
+  reference_number: string | null;
+  status: string;
+};
 
-    if (procurementNet < 0) {
-      setError('Deductions cannot exceed the gross procurement amount.');
-      return;
-    }
+function getIndiaDate() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date());
+}
 
-    setSaving(true);
+export default function FarmerPaymentsPage() {
+  const supabase = createClient();
 
-    const userId = await currentUserId();
+  const [farmers, setFarmers] = useState<Farmer[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [procurements, setProcurements] = useState<Procurement[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-    const { error: insertError } = await supabase
-      .from('egg_procurement')
-      .insert({
-        farmer_id: procurementFarmer,
-        batch_id: procurementBatch || null,
-        collection_date: collectionDate,
-        saleable_eggs: eggs,
-        rate_per_egg: rate,
-        quality_deduction: quality,
-        other_deduction: other,
-        remarks: procurementRemarks || null,
-        status: 'PENDING',
-        created_by: userId,
-      });
+  const [procurementFarmer, setProcurementFarmer] = useState('');
+  const [procurementBatch, setProcurementBatch] = useState('');
+  const [collectionDate, setCollectionDate] = useState(getIndiaDate());
+  const [saleableEggs, setSaleableEggs] = useState('');
+  const [ratePerEgg, setRatePerEgg] = useState('6.50');
+  const [qualityDeduction, setQualityDeduction] = useState('0');
+  const [otherDeduction, setOtherDeduction] = useState('0');
+  const [procurementRemarks, setProcurementRemarks] = useState('');
 
-    if (insertError) {
-      setError(insertError.message);
-    } else {
-      setMessage('Egg procurement saved as PENDING.');
-      setSaleableEggs('');
-      setQualityDeduction('0');
-      setOtherDeduction('0');
-      setProcurementRemarks('');
-      await loadData();
-    }
+  const [expenseFarmer, setExpenseFarmer] = useState('');
+  const [expenseBatch, setExpenseBatch] = useState('');
+  const [expenseDate, setExpenseDate] = useState(getIndiaDate());
+  const [expenseType, setExpenseType] = useState('FEED');
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
 
-    setSaving(false);
-  }
+  const [paymentFarmer, setPaymentFarmer] = useState('');
+  const [paymentDate, setPaymentDate] = useState(getIndiaDate());
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('BANK');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentLast4, setPaymentLast4] = useState('');
+  const [paymentRemarks, setPaymentRemarks] = useState('');
 
-  async function approveProcurement(id: string) {
-    setMessage('');
-    setError('');
-    const userId = await currentUserId();
-
-    const { error: updateError } = await supabase
-      .from('egg_procurement')
-      .update({
-        status: 'APPROVED',
-        approved_by: userId,
-        approved_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('status', 'PENDING');
-
-    if (updateError) setError(updateError.message);
-    else {
-      setMessage('Procurement approved and posted to farmer ledger.');
-      await loadData();
-    }
-  }
-
-  async function saveExpense() {
-    setMessage('');
-    setError('');
-
-    const amount = Number(expenseAmount);
-
-    if (!expenseFarmer || !amount || amount <= 0) {
-      setError('Select a farmer and enter a valid expense amount.');
-      return;
-    }
-
-    setSaving(true);
-    const userId = await currentUserId();
-
-    const { error: insertError } = await supabase
-      .from('farmer_expenses')
-      .insert({
-        farmer_id: expenseFarmer,
-        batch_id: expenseBatch || null,
-        expense_date: expenseDate,
-        expense_type: expenseType,
-        description: expenseDescription || null,
-        amount,
-        status: 'APPROVED',
-        created_by: userId,
-        approved_by: userId,
-        approved_at: new Date().toISOString(),
-      });
-
-    if (insertError) setError(insertError.message);
-    else {
-      setMessage('Farmer expense saved and posted to ledger.');
-      setExpenseAmount('');
-      setExpenseDescription('');
-      await loadData();
-    }
-
-    setSaving(false);
-  }
-
-  async function savePayment() {
-    setMessage('');
-    setError('');
-
-    const amount = Number(paymentAmount);
-
-    if (!paymentFarmer || !amount || amount <= 0) {
-      setError('Select a farmer and enter a valid payment amount.');
-      return;
-    }
-
-    if ((paymentMode === 'BANK' || paymentMode === 'UPI') && !paymentReference) {
-      setError('Enter the bank/UPI reference number.');
-      return;
-    }
-
-    setSaving(true);
-    const userId = await currentUserId();
-
-    const { error: insertError } = await supabase
-      .from('farmer_payments')
-      .insert({
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
