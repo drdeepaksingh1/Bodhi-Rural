@@ -64,6 +64,7 @@ export default function FinanceDashboardPage() {
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
   const [farmerSearch, setFarmerSearch] = useState('');
+  const [expandedFarmerId, setExpandedFarmerId] = useState<string | null>(null);
 
   async function loadData() {
     setLoading(true);
@@ -224,6 +225,14 @@ export default function FinanceDashboardPage() {
     [summaries]
   );
 
+  const farmerPositionCounts = useMemo(
+    () => ({
+      positivePayable: summaries.filter((row) => Number(row.available_payable || 0) > 0).length,
+      negativeLedger: summaries.filter((row) => Number(row.outstanding_balance || 0) < 0).length,
+    }),
+    [summaries]
+  );
+
   const farmerRows = useMemo(
     () =>
       summaries
@@ -247,6 +256,35 @@ export default function FinanceDashboardPage() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  }
+
+  function exportFarmerStatement() {
+    const headers = [
+      'Farmer Code', 'Farmer Name', 'Egg Earnings', 'Approved Expenses',
+      'Paid Payments', 'Credit Recovered', 'Outstanding Feed Credit',
+      'Available Credit Capacity', 'Available Farmer Payable', 'Ledger Balance',
+    ];
+    const rows = summaries.map((row) => [
+      row.farmer_code || '', row.full_name || '', row.egg_earnings || 0,
+      row.expenses || 0, row.payments || 0, row.total_credit_recovered || 0,
+      row.outstanding_credit || 0, row.available_credit || 0,
+      row.available_payable || 0, row.outstanding_balance || 0,
+    ]);
+    const csvCell = (value: string | number) => {
+      const text = String(value);
+      const safe = /^[=+@-]/.test(text) && typeof value === 'string' ? `'${text}` : text;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\\r\\n');
+    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bodhifarm-farmer-finance-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   function date(value: string) {
@@ -372,6 +410,26 @@ export default function FinanceDashboardPage() {
               </div>
             </section>
 
+            <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <h2 className="text-lg font-bold text-slate-900">Farmer Balance Alerts</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                These are all-time farmer-level indicators. A negative ledger balance means ledger debits exceed credits; available payable is separately calculated after payment reservations.
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-lg bg-white p-4">
+                  <div className="text-xs font-semibold uppercase text-slate-500">Farmers with positive payable</div>
+                  <div className="mt-1 text-2xl font-bold text-green-700">{farmerPositionCounts.positivePayable.toLocaleString('en-IN')}</div>
+                </div>
+                <div className="rounded-lg bg-white p-4">
+                  <div className="text-xs font-semibold uppercase text-slate-500">Farmers with negative ledger balance</div>
+                  <div className="mt-1 text-2xl font-bold text-red-700">{farmerPositionCounts.negativeLedger.toLocaleString('en-IN')}</div>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-slate-600">
+                Feed-credit outstanding is a separate credit account balance. It is not deducted a second time from egg earnings in the farmer ledger.
+              </p>
+            </section>
+
             <section className="mt-6">
               <div className="mb-3">
                 <h2 className="text-xl font-bold text-slate-900">
@@ -425,6 +483,13 @@ export default function FinanceDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">
                   All-time balances from the finance summary; search by farmer code or name.
                 </p>
+                <button
+                  type="button"
+                  onClick={exportFarmerStatement}
+                  className="mt-3 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+                >
+                  Download Farmer-wise CSV
+                </button>
                 <input
                   type="search"
                   value={farmerSearch}
@@ -457,12 +522,17 @@ export default function FinanceDashboardPage() {
                       ) : farmerRows.map((row) => (
                         <tr key={row.farmer_id} className="border-b last:border-0">
                           <td className="px-3 py-3">
-                            <div className="font-semibold text-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedFarmerId(expandedFarmerId === row.farmer_id ? null : row.farmer_id)}
+                              className="text-left font-semibold text-green-800 underline decoration-dotted underline-offset-2"
+                            >
                               {row.farmer_code || '—'}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {row.full_name || '—'}
-                            </div>
+                            </button>
+                            <div className="text-xs text-slate-500">{row.full_name || '—'}</div>
+                            {row.outstanding < 0 && (
+                              <span className="mt-1 inline-block rounded bg-red-50 px-2 py-1 text-[10px] font-bold uppercase text-red-700">Negative ledger</span>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-right text-green-700">
                             {money(row.egg_earnings)}
@@ -486,7 +556,36 @@ export default function FinanceDashboardPage() {
                             {money(row.outstanding)}
                           </td>
                         </tr>
-                      ))}
+                      ).concat(expandedFarmerId === row.farmer_id ? [
+                        <tr key={`${row.farmer_id}-details`} className="bg-slate-50">
+                          <td colSpan={8} className="px-4 py-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                              <div>
+                                <div className="mb-2 text-xs font-bold uppercase text-slate-600">Approved procurement</div>
+                                {procurements.filter((item) => item.farmer_id === row.farmer_id && item.status === 'APPROVED').slice(0, 5).map((item) => (
+                                  <div key={item.id} className="border-b py-1 text-xs text-slate-600">{date(item.collection_date)} · {Number(item.saleable_eggs || 0)} eggs · {money(item.net_amount)}</div>
+                                ))}
+                                {procurements.filter((item) => item.farmer_id === row.farmer_id && item.status === 'APPROVED').length === 0 && <div className="text-xs text-slate-400">No approved procurement</div>}
+                              </div>
+                              <div>
+                                <div className="mb-2 text-xs font-bold uppercase text-slate-600">Approved expenses</div>
+                                {expenses.filter((item) => item.farmer_id === row.farmer_id && item.status === 'APPROVED').slice(0, 5).map((item) => (
+                                  <div key={item.id} className="border-b py-1 text-xs text-slate-600">{date(item.expense_date)} · {item.expense_type} · {money(item.amount)}</div>
+                                ))}
+                                {expenses.filter((item) => item.farmer_id === row.farmer_id && item.status === 'APPROVED').length === 0 && <div className="text-xs text-slate-400">No approved expenses</div>}
+                              </div>
+                              <div>
+                                <div className="mb-2 text-xs font-bold uppercase text-slate-600">Paid payments</div>
+                                {payments.filter((item) => item.farmer_id === row.farmer_id && item.status === 'PAID').slice(0, 5).map((item) => (
+                                  <div key={item.id} className="border-b py-1 text-xs text-slate-600">{date(item.payment_date)} · {item.payment_mode} · {money(item.amount)}</div>
+                                ))}
+                                {payments.filter((item) => item.farmer_id === row.farmer_id && item.status === 'PAID').length === 0 && <div className="text-xs text-slate-400">No paid payments</div>}
+                              </div>
+                            </div>
+                            <p className="mt-3 text-[11px] text-slate-500">Showing up to five records per category. These are existing source transactions; this view does not modify them.</p>
+                          </td>
+                        </tr>,
+                      ] : []) )}
                     </tbody>
                   </table>
                 </div>
