@@ -63,6 +63,7 @@ export default function FinanceDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
+  const [farmerSearch, setFarmerSearch] = useState('');
 
   async function loadData() {
     setLoading(true);
@@ -161,6 +162,21 @@ export default function FinanceDashboardPage() {
     [payments, period, monthStart]
   );
 
+  const pendingPayments = useMemo(
+    () =>
+      payments.filter(
+        (x) =>
+          (x.status === 'PENDING' || x.status === 'APPROVED') &&
+          inPeriod(x.payment_date)
+      ),
+    [payments, period, monthStart]
+  );
+
+  const pendingPaymentTotal = useMemo(
+    () => pendingPayments.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+    [pendingPayments]
+  );
+
   const kpis = useMemo(() => {
     const eggs = approvedProcurements.reduce(
       (sum, x) => sum + Number(x.saleable_eggs || 0),
@@ -215,8 +231,15 @@ export default function FinanceDashboardPage() {
           ...x,
           outstanding: Number(x.outstanding_balance || 0),
         }))
+        .filter((row) => {
+          const query = farmerSearch.trim().toLowerCase();
+          if (!query) return true;
+          return `${row.farmer_code || ''} ${row.full_name || ''}`
+            .toLowerCase()
+            .includes(query);
+        })
         .sort((a, b) => b.outstanding - a.outstanding),
-    [summaries]
+    [summaries, farmerSearch]
   );
 
   function money(value: number | null | undefined) {
@@ -244,7 +267,7 @@ export default function FinanceDashboardPage() {
               Finance Dashboard
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Procurement, recoveries, farmer payments and outstanding liability.
+              Procurement, expenses, credit recovery, farmer payments and outstanding liability.
             </p>
           </div>
 
@@ -290,7 +313,7 @@ export default function FinanceDashboardPage() {
           </div>
         ) : (
           <>
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
                   Saleable Eggs
@@ -311,7 +334,7 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Expenses / Recoveries
+                  Approved Expenses
                 </div>
                 <div className="mt-2 text-2xl font-bold text-red-600">
                   {money(kpis.expense)}
@@ -324,6 +347,18 @@ export default function FinanceDashboardPage() {
                 </div>
                 <div className="mt-2 text-2xl font-bold text-blue-700">
                   {money(kpis.paymentsMade)}
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-white p-5 shadow-sm">
+                <div className="text-xs font-semibold uppercase text-slate-500">
+                  Pending / Approved Settlements
+                </div>
+                <div className="mt-2 text-2xl font-bold text-amber-700">
+                  {money(pendingPaymentTotal)}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {pendingPayments.length.toLocaleString('en-IN')} payment requests awaiting payment
                 </div>
               </div>
 
@@ -388,8 +423,15 @@ export default function FinanceDashboardPage() {
                   Farmer-wise Outstanding
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Current balance from the farmer finance summary.
+                  All-time balances from the finance summary; search by farmer code or name.
                 </p>
+                <input
+                  type="search"
+                  value={farmerSearch}
+                  onChange={(event) => setFarmerSearch(event.target.value)}
+                  placeholder="Search farmer code or name"
+                  className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700"
+                />
 
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-sm">
@@ -406,7 +448,13 @@ export default function FinanceDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {farmerRows.map((row) => (
+                      {farmerRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="px-3 py-8 text-center text-slate-500">
+                            No matching farmer records found.
+                          </td>
+                        </tr>
+                      ) : farmerRows.map((row) => (
                         <tr key={row.farmer_id} className="border-b last:border-0">
                           <td className="px-3 py-3">
                             <div className="font-semibold text-slate-800">
@@ -618,8 +666,8 @@ export default function FinanceDashboardPage() {
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
                 {[
                   ['01', 'Egg Procurement', 'Approved egg collection creates farmer earnings.'],
-                  ['02', 'Recoveries', 'Approved feed and other expenses debit the ledger.'],
-                  ['03', 'Payment', 'Paid farmer settlements debit the ledger.'],
+                  ['02', 'Expenses & Credit Recovery', 'Approved expenses debit the ledger. Feed-credit recovery is recorded separately against outstanding farmer credit.'],
+                  ['03', 'Payment', 'Paid farmer settlements debit the ledger; pending and approved requests remain reserved, not paid.'],
                   ['04', 'Reconciliation', 'Credit minus debit gives outstanding balance.'],
                 ].map(([no, title, text]) => (
                   <div key={no} className="rounded-lg bg-slate-50 p-4">
