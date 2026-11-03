@@ -65,6 +65,7 @@ export default function FinanceDashboardPage() {
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
   const [farmerSearch, setFarmerSearch] = useState('');
   const [expandedFarmerId, setExpandedFarmerId] = useState<string | null>(null);
+  const [printFarmerId, setPrintFarmerId] = useState<string | null>(null);
 
   async function loadData() {
     setLoading(true);
@@ -122,6 +123,17 @@ export default function FinanceDashboardPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!printFarmerId) return;
+    const timer = window.setTimeout(() => window.print(), 300);
+    const clearPrintSelection = () => setPrintFarmerId(null);
+    window.addEventListener('afterprint', clearPrintSelection);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('afterprint', clearPrintSelection);
+    };
+  }, [printFarmerId]);
 
   const farmerMap = useMemo(() => {
     const map = new Map<string, Farmer>();
@@ -287,6 +299,17 @@ export default function FinanceDashboardPage() {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  const printFarmer = summaries.find((row) => row.farmer_id === printFarmerId) || null;
+  const printProcurements = printFarmerId
+    ? procurements.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED')
+    : [];
+  const printExpenses = printFarmerId
+    ? expenses.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED')
+    : [];
+  const printPayments = printFarmerId
+    ? payments.filter((row) => row.farmer_id === printFarmerId && row.status === 'PAID')
+    : [];
+
   function date(value: string) {
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -296,6 +319,74 @@ export default function FinanceDashboardPage() {
   }
 
   return (
+    <>
+    <style jsx global>{`
+      @media print {
+        body * { visibility: hidden !important; }
+        .farmer-print-report, .farmer-print-report * { visibility: visible !important; }
+        .farmer-print-report { display: block !important; position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: #111827; }
+        @page { size: A4; margin: 12mm; }
+        .farmer-print-report table { width: 100%; border-collapse: collapse; }
+        .farmer-print-report th, .farmer-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
+        .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
+        .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
+      }
+      @media screen { .farmer-print-report { display: none; } }
+    `}</style>
+    {printFarmer && (
+      <div className="farmer-print-report">
+        <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHIFARM</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Farmer Financial Statement</h1>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Generated on {new Date().toLocaleDateString('en-IN')} · All-time account summary</div>
+        </header>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Farmer Details</h2>
+          <div className="print-grid">
+            <div className="print-metric"><b>Farmer Code</b><div>{printFarmer.farmer_code || '—'}</div></div>
+            <div className="print-metric"><b>Farmer Name</b><div>{printFarmer.full_name || '—'}</div></div>
+            <div className="print-metric"><b>Farmer ID</b><div>{printFarmer.farmer_id}</div></div>
+          </div>
+        </section>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Financial Summary</h2>
+          <div className="print-grid">
+            {[
+              ['Egg earnings', printFarmer.egg_earnings], ['Approved expenses', printFarmer.expenses],
+              ['Paid payments', printFarmer.payments], ['Credit recovered', printFarmer.total_credit_recovered],
+              ['Outstanding feed credit', printFarmer.outstanding_credit], ['Available credit capacity', printFarmer.available_credit],
+              ['Available farmer payable', printFarmer.available_payable], ['Ledger balance', printFarmer.outstanding_balance],
+            ].map(([label, value]) => (
+              <div className="print-metric" key={String(label)}><b>{label}</b><div>{money(Number(value || 0))}</div></div>
+            ))}
+          </div>
+          <p style={{ fontSize: 10, marginTop: 8 }}>Note: Feed-credit recovery is maintained separately and is not deducted a second time from egg earnings in the farmer ledger. Available farmer payable is shown separately from credit capacity.</p>
+        </section>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Approved Egg Procurement ({printProcurements.length})</h2>
+          <table><thead><tr><th>Date</th><th>Saleable eggs</th><th>Rate / egg</th><th>Net amount</th></tr></thead><tbody>
+            {printProcurements.map((row) => <tr key={row.id}><td>{date(row.collection_date)}</td><td>{row.saleable_eggs}</td><td>{money(row.rate_per_egg)}</td><td>{money(row.net_amount)}</td></tr>)}
+            {printProcurements.length === 0 && <tr><td colSpan={4}>No approved procurement records</td></tr>}
+          </tbody></table>
+        </section>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Approved Expenses ({printExpenses.length})</h2>
+          <table><thead><tr><th>Date</th><th>Expense type</th><th>Description</th><th>Amount</th></tr></thead><tbody>
+            {printExpenses.map((row) => <tr key={row.id}><td>{date(row.expense_date)}</td><td>{row.expense_type}</td><td>{row.description || '—'}</td><td>{money(row.amount)}</td></tr>)}
+            {printExpenses.length === 0 && <tr><td colSpan={4}>No approved expense records</td></tr>}
+          </tbody></table>
+        </section>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Paid Settlements ({printPayments.length})</h2>
+          <table><thead><tr><th>Date</th><th>Payment mode</th><th>Status</th><th>Amount</th></tr></thead><tbody>
+            {printPayments.map((row) => <tr key={row.id}><td>{date(row.payment_date)}</td><td>{row.payment_mode}</td><td>{row.status}</td><td>{money(row.amount)}</td></tr>)}
+            {printPayments.length === 0 && <tr><td colSpan={4}>No paid settlement records</td></tr>}
+          </tbody></table>
+        </section>
+        <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>BodhiFarm · System-generated financial statement · Verify against the official farmer ledger before payment or settlement.</footer>
+      </div>
+    )}
     <main className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -538,6 +629,7 @@ export default function FinanceDashboardPage() {
                               {row.farmer_code || '—'}
                             </button>
                             <div className="text-xs text-slate-500">{row.full_name || '—'}</div>
+                            <button type="button" onClick={() => setPrintFarmerId(row.farmer_id)} className="mt-1 rounded border border-green-700 px-2 py-1 text-[11px] font-semibold text-green-800 hover:bg-green-50">Print / Save PDF</button>
                             {row.outstanding < 0 && (
                               <span className="mt-1 inline-block rounded bg-red-50 px-2 py-1 text-[10px] font-bold uppercase text-red-700">Negative ledger</span>
                             )}
@@ -790,6 +882,7 @@ export default function FinanceDashboardPage() {
         )}
       </div>
     </main>
+    </>
   );
 }
 
