@@ -346,7 +346,7 @@ export default function FinanceDashboardPage() {
           <div className="print-grid">
             <div className="print-metric"><b>Farmer Code</b><div>{printFarmer.farmer_code || '—'}</div></div>
             <div className="print-metric"><b>Farmer Name</b><div>{printFarmer.full_name || '—'}</div></div>
-            <div className="print-metric"><b>Farmer ID</b><div>{printFarmer.farmer_id}</div></div>
+            <div className="print-metric"><b>Farmer ID</b><div>{farmerMap.get(printFarmer.farmer_id)?.farmer_id || printFarmer.farmer_code || '—'}</div></div>
           </div>
         </section>
         <section className="print-section">
