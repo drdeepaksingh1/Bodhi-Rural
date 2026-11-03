@@ -275,8 +275,8 @@ export default function FinanceDashboardPage() {
       const safe = /^[=+@-]/.test(text) && typeof value === 'string' ? `'${text}` : text;
       return `"${safe.replace(/"/g, '""')}"`;
     };
-    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\\r\\n');
-    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -284,7 +284,7 @@ export default function FinanceDashboardPage() {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function date(value: string) {
@@ -335,6 +335,14 @@ export default function FinanceDashboardPage() {
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
             >
               Refresh
+            </button>
+            <button
+              type="button"
+              onClick={exportFarmerStatement}
+              disabled={loading || summaries.length === 0}
+              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Download Farmer Statement
             </button>
           </div>
         </div>
