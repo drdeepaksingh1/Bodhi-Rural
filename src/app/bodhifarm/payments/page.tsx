@@ -313,21 +313,19 @@ export default function FarmerPaymentsPage() {
     }
 
     setSaving(true);
-    const userId = await currentUserId();
 
-    const { error: insertError } = await supabase
-      .from('farmer_payments')
-      .insert({
-        farmer_id: paymentFarmer,
-        payment_date: paymentDate,
-        amount,
-        payment_mode: paymentMode,
-        reference_number: paymentReference || null,
-        bank_account_last4: paymentLast4 || null,
-        remarks: paymentRemarks || null,
-        status: 'PENDING',
-        created_by: userId,
-      });
+    const { error: insertError } = await supabase.rpc(
+      'submit_farmer_payment',
+      {
+        p_farmer_id: paymentFarmer,
+        p_payment_date: paymentDate,
+        p_amount: amount,
+        p_payment_mode: paymentMode,
+        p_reference_number: paymentReference || null,
+        p_bank_account_last4: paymentLast4 || null,
+        p_remarks: paymentRemarks || null,
+      }
+    );
 
     if (insertError) setError(insertError.message);
     else {
