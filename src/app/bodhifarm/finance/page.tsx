@@ -11,6 +11,10 @@ type Summary = {
   expenses: number | null;
   payments: number | null;
   outstanding_balance: number | null;
+  total_credit_recovered: number | null;
+  outstanding_credit: number | null;
+  available_credit: number | null;
+  available_payable: number | null;
 };
 
 type Procurement = {
@@ -178,11 +182,28 @@ export default function FinanceDashboardPage() {
     return { eggs, procurement, expense, paymentsMade };
   }, [approvedProcurements, approvedExpenses, paidPayments]);
 
-  const totalOutstanding = useMemo(
+  const financeTotals = useMemo(
     () =>
       summaries.reduce(
-        (sum, x) => sum + Number(x.outstanding_balance || 0),
-        0
+        (totals, row) => ({
+          ledgerBalance:
+            totals.ledgerBalance + Number(row.outstanding_balance || 0),
+          creditRecovered:
+            totals.creditRecovered + Number(row.total_credit_recovered || 0),
+          outstandingCredit:
+            totals.outstandingCredit + Number(row.outstanding_credit || 0),
+          availableCredit:
+            totals.availableCredit + Number(row.available_credit || 0),
+          availablePayable:
+            totals.availablePayable + Number(row.available_payable || 0),
+        }),
+        {
+          ledgerBalance: 0,
+          creditRecovered: 0,
+          outstandingCredit: 0,
+          availableCredit: 0,
+          availablePayable: 0,
+        }
       ),
     [summaries]
   );
@@ -308,10 +329,55 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Outstanding Farmer Payable
+                  Net Farmer Ledger Balance
                 </div>
                 <div className="mt-2 text-2xl font-bold text-slate-900">
-                  {money(totalOutstanding)}
+                  {money(financeTotals.ledgerBalance)}
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-6">
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-slate-900">
+                  Farmer Credit & Payable Position
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  All-time balances from the finance summary. Credit capacity is separate from farmer payable.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Credit Recovered
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-green-700">
+                    {money(financeTotals.creditRecovered)}
+                  </div>
+                </div>
+                <div className="rounded-xl border bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Outstanding Feed Credit
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-red-600">
+                    {money(financeTotals.outstandingCredit)}
+                  </div>
+                </div>
+                <div className="rounded-xl border bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Available Credit Capacity
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-blue-700">
+                    {money(financeTotals.availableCredit)}
+                  </div>
+                </div>
+                <div className="rounded-xl border bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase text-slate-500">
+                    Available Farmer Payable
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-slate-900">
+                    {money(financeTotals.availablePayable)}
+                  </div>
                 </div>
               </div>
             </section>
@@ -333,7 +399,10 @@ export default function FinanceDashboardPage() {
                         <th className="px-3 py-3 text-right">Earnings</th>
                         <th className="px-3 py-3 text-right">Expenses</th>
                         <th className="px-3 py-3 text-right">Payments</th>
-                        <th className="px-3 py-3 text-right">Balance</th>
+                        <th className="px-3 py-3 text-right">Credit Recovered</th>
+                        <th className="px-3 py-3 text-right">Credit Outstanding</th>
+                        <th className="px-3 py-3 text-right">Available Payable</th>
+                        <th className="px-3 py-3 text-right">Ledger Balance</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -355,6 +424,15 @@ export default function FinanceDashboardPage() {
                           </td>
                           <td className="px-3 py-3 text-right text-blue-700">
                             {money(row.payments)}
+                          </td>
+                          <td className="px-3 py-3 text-right text-green-700">
+                            {money(row.total_credit_recovered)}
+                          </td>
+                          <td className="px-3 py-3 text-right text-red-600">
+                            {money(row.outstanding_credit)}
+                          </td>
+                          <td className="px-3 py-3 text-right font-semibold">
+                            {money(row.available_payable)}
                           </td>
                           <td className="px-3 py-3 text-right font-bold">
                             {money(row.outstanding)}
@@ -383,10 +461,28 @@ export default function FinanceDashboardPage() {
 
                   <div className="flex items-center justify-between rounded-lg bg-red-50 p-4">
                     <span className="font-medium text-red-800">
-                      Expenses recovered
+                      Approved expenses
                     </span>
                     <span className="font-bold text-red-800">
                       {money(kpis.expense)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-green-50 p-4">
+                    <span className="font-medium text-green-800">
+                      Feed credit recovered (all time)
+                    </span>
+                    <span className="font-bold text-green-800">
+                      {money(financeTotals.creditRecovered)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-red-50 p-4">
+                    <span className="font-medium text-red-800">
+                      Outstanding feed credit
+                    </span>
+                    <span className="font-bold text-red-800">
+                      {money(financeTotals.outstandingCredit)}
                     </span>
                   </div>
 
@@ -401,10 +497,10 @@ export default function FinanceDashboardPage() {
 
                   <div className="flex items-center justify-between rounded-lg bg-slate-100 p-4">
                     <span className="font-medium text-slate-700">
-                      Current outstanding
+                      Available farmer payable
                     </span>
                     <span className="font-bold text-slate-900">
-                      {money(totalOutstanding)}
+                      {money(financeTotals.availablePayable)}
                     </span>
                   </div>
                 </div>
