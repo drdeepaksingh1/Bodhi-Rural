@@ -268,32 +268,45 @@ export default function FarmerPaymentsPage() {
     }
 
     setSaving(true);
-    const userId = await currentUserId();
 
-    const { error: insertError } = await supabase
-      .from('farmer_expenses')
-      .insert({
-        farmer_id: expenseFarmer,
-        batch_id: expenseBatch || null,
-        expense_date: expenseDate,
-        expense_type: expenseType,
-        description: expenseDescription || null,
-        amount,
-        status: 'APPROVED',
-        created_by: userId,
-        approved_by: userId,
-        approved_at: new Date().toISOString(),
-      });
+    const { error: insertError } = await supabase.rpc(
+      'submit_farmer_expense',
+      {
+        p_farmer_id: expenseFarmer,
+        p_batch_id: expenseBatch || null,
+        p_expense_date: expenseDate,
+        p_expense_type: expenseType,
+        p_description: expenseDescription || null,
+        p_amount: amount,
+      }
+    );
 
     if (insertError) setError(insertError.message);
     else {
-      setMessage('Farmer expense saved and posted to ledger.');
+      setMessage('Farmer expense submitted as PENDING. Approve it to post it to the farmer ledger.');
       setExpenseAmount('');
       setExpenseDescription('');
       await loadData();
     }
 
     setSaving(false);
+  }
+
+  async function approveExpense(id: string) {
+    setMessage('');
+    setError('');
+
+    const { error: rpcError } = await supabase.rpc(
+      'approve_farmer_expense',
+      { p_expense_id: id }
+    );
+
+    if (rpcError) {
+      setError(rpcError.message);
+    } else {
+      setMessage('Expense approved and posted to farmer ledger.');
+      await loadData();
+    }
   }
 
   async function savePayment() {
@@ -515,6 +528,9 @@ export default function FarmerPaymentsPage() {
 
         <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <h2 className="text-xl font-bold text-slate-900">2. Farmer Expenses / Recoveries</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            New expenses are submitted as PENDING. Finance approval posts the expense to the farmer ledger.
+          </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Select
@@ -558,13 +574,13 @@ export default function FarmerPaymentsPage() {
             onClick={saveExpense}
             className="mt-5 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
           >
-            Save Expense / Recovery
+            {saving ? 'Saving...' : 'Submit Expense / Recovery'}
           </button>
 
           <div className="mt-6 overflow-x-auto">
             <Table>
               <thead>
-                <tr><Th>Date</Th><Th>Farmer</Th><Th>Type</Th><Th>Description</Th><Th>Amount</Th><Th>Status</Th></tr>
+                <tr><Th>Date</Th><Th>Farmer</Th><Th>Type</Th><Th>Description</Th><Th>Amount</Th><Th>Status</Th><Th>Action</Th></tr>
               </thead>
               <tbody>
                 {expenses.map(e => (
@@ -575,6 +591,16 @@ export default function FarmerPaymentsPage() {
                     <Td>{e.description || '—'}</Td>
                     <Td>₹{Number(e.amount).toFixed(2)}</Td>
                     <Td>{e.status}</Td>
+                    <Td>
+                      {e.status === 'PENDING' ? (
+                        <button
+                          onClick={() => approveExpense(e.id)}
+                          className="rounded-md bg-green-700 px-3 py-2 text-xs font-semibold text-white"
+                        >
+                          Approve
+                        </button>
+                      ) : '—'}
+                    </Td>
                   </tr>
                 ))}
               </tbody>
