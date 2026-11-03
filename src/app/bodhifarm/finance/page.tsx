@@ -519,7 +519,7 @@ export default function FinanceDashboardPage() {
                             No matching farmer records found.
                           </td>
                         </tr>
-                      ) : farmerRows.map((row) => (
+                      ) : farmerRows.flatMap((row) => [
                         <tr key={row.farmer_id} className="border-b last:border-0">
                           <td className="px-3 py-3">
                             <button
@@ -584,8 +584,9 @@ export default function FinanceDashboardPage() {
                             </div>
                             <p className="mt-3 text-[11px] text-slate-500">Showing up to five records per category. These are existing source transactions; this view does not modify them.</p>
                           </td>
-                        </tr>,
-                      ] : []) )}
+                        </tr>
+                      ) : null,
+                      ])}
                     </tbody>
                   </table>
                 </div>
