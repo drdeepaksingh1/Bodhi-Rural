@@ -66,6 +66,10 @@ export default function FinanceDashboardPage() {
   const [farmerSearch, setFarmerSearch] = useState('');
   const [expandedFarmerId, setExpandedFarmerId] = useState<string | null>(null);
   const [printFarmerId, setPrintFarmerId] = useState<string | null>(null);
+  const todayISO = new Date().toLocaleDateString('en-CA');
+  const monthISO = `${todayISO.slice(0, 7)}-01`;
+  const [statementFrom, setStatementFrom] = useState(monthISO);
+  const [statementTo, setStatementTo] = useState(todayISO);
 
   async function loadData() {
     setLoading(true);
@@ -300,15 +304,22 @@ export default function FinanceDashboardPage() {
   }
 
   const printFarmer = summaries.find((row) => row.farmer_id === printFarmerId) || null;
+  const withinStatementRange = (value: string) => value >= statementFrom && value <= statementTo;
   const printProcurements = printFarmerId
-    ? procurements.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED')
+    ? procurements.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED' && withinStatementRange(row.collection_date))
     : [];
   const printExpenses = printFarmerId
-    ? expenses.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED')
+    ? expenses.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED' && withinStatementRange(row.expense_date))
     : [];
   const printPayments = printFarmerId
-    ? payments.filter((row) => row.farmer_id === printFarmerId && row.status === 'PAID')
+    ? payments.filter((row) => row.farmer_id === printFarmerId && row.status === 'PAID' && withinStatementRange(row.payment_date))
     : [];
+  const printPeriodTotals = {
+    eggs: printProcurements.reduce((sum, row) => sum + Number(row.saleable_eggs || 0), 0),
+    earnings: printProcurements.reduce((sum, row) => sum + Number(row.net_amount || 0), 0),
+    expenses: printExpenses.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+    payments: printPayments.reduce((sum, row) => sum + Number(row.amount || 0), 0),
+  };
 
   function date(value: string) {
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-IN', {
@@ -339,7 +350,7 @@ export default function FinanceDashboardPage() {
         <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHIFARM</div>
           <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Farmer Financial Statement</h1>
-          <div style={{ fontSize: 11, color: '#4b5563' }}>Generated on {new Date().toLocaleDateString('en-IN')} · All-time account summary</div>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Generated on {new Date().toLocaleDateString('en-IN')} · Statement period: {date(statementFrom)} to {date(statementTo)}</div>
         </header>
         <section className="print-section">
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Farmer Details</h2>
@@ -350,7 +361,16 @@ export default function FinanceDashboardPage() {
           </div>
         </section>
         <section className="print-section">
-          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Financial Summary</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Selected Period Activity</h2>
+          <div className="print-grid">
+            {[
+              ['Saleable eggs', printPeriodTotals.eggs], ['Egg earnings', printPeriodTotals.earnings],
+              ['Approved expenses', printPeriodTotals.expenses], ['Paid payments', printPeriodTotals.payments],
+            ].map(([label, value]) => <div className="print-metric" key={String(label)}><b>{label}</b><div>{typeof value === 'number' && String(label) === 'Saleable eggs' ? value.toLocaleString('en-IN') : money(Number(value || 0))}</div></div>)}
+          </div>
+        </section>
+        <section className="print-section">
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Current All-time Account Position</h2>
           <div className="print-grid">
             {[
               ['Egg earnings', printFarmer.egg_earnings], ['Approved expenses', printFarmer.expenses],
@@ -582,6 +602,15 @@ export default function FinanceDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">
                   All-time balances from the finance summary; search by farmer code or name.
                 </p>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="text-xs font-semibold text-slate-600">Statement from
+                    <input type="date" value={statementFrom} max={statementTo} onChange={(event) => setStatementFrom(event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-600">Statement to
+                    <input type="date" value={statementTo} min={statementFrom} max={todayISO} onChange={(event) => setStatementTo(event.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  </label>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Print / Save PDF uses this date range for procurement, expenses and paid settlements. The account-position figures remain current all-time balances.</p>
                 <button
                   type="button"
                   onClick={exportFarmerStatement}
@@ -629,7 +658,7 @@ export default function FinanceDashboardPage() {
                               {row.farmer_code || '—'}
                             </button>
                             <div className="text-xs text-slate-500">{row.full_name || '—'}</div>
-                            <button type="button" onClick={() => setPrintFarmerId(row.farmer_id)} className="mt-1 rounded border border-green-700 px-2 py-1 text-[11px] font-semibold text-green-800 hover:bg-green-50">Print / Save PDF</button>
+                            <button type="button" onClick={() => setPrintFarmerId(row.farmer_id)} disabled={!statementFrom || !statementTo || statementFrom > statementTo} className="mt-1 rounded border border-green-700 px-2 py-1 text-[11px] font-semibold text-green-800 hover:bg-green-50 disabled:opacity-50">Print / Save PDF</button>
                             {row.outstanding < 0 && (
                               <span className="mt-1 inline-block rounded bg-red-50 px-2 py-1 text-[10px] font-bold uppercase text-red-700">Negative ledger</span>
                             )}
