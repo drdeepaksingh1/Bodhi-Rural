@@ -555,8 +555,8 @@ export default function FinanceDashboardPage() {
                           <td className="px-3 py-3 text-right font-bold">
                             {money(row.outstanding)}
                           </td>
-                        </tr>
-                      ).concat(expandedFarmerId === row.farmer_id ? [
+                        </tr>,
+                      expandedFarmerId === row.farmer_id ? (
                         <tr key={`${row.farmer_id}-details`} className="bg-slate-50">
                           <td colSpan={8} className="px-4 py-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
