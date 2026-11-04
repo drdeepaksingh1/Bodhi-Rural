@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '../../../../lib/supabase/server';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') ?? '/dashboard';
 
-  // Allow only safe internal paths
+  // Allow only safe internal redirect paths
   const safeNext =
     next.startsWith('/') && !next.startsWith('//')
       ? next
@@ -20,9 +20,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(
-        new URL(safeNext, url.origin)
-      );
+      return NextResponse.redirect(new URL(safeNext, url.origin));
     }
   }
 
@@ -30,4 +28,3 @@ export async function GET(request: Request) {
     new URL('/login?error=recovery_failed', url.origin)
   );
 }
-
