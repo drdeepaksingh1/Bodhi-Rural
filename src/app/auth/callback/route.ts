@@ -8,13 +8,12 @@ export async function GET(request: Request) {
   const code = url.searchParams.get('code');
   const next = url.searchParams.get('next') ?? '/dashboard';
 
-  // Allow only safe internal redirect paths
   const safeNext =
     next.startsWith('/') && !next.startsWith('//')
       ? next
       : '/dashboard';
 
-  const supabase = await createClient();
+  const supabase = createClient();
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
