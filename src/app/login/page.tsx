@@ -1,11 +1,11 @@
 
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
 
   const [email, setEmail] = useState('');
@@ -17,9 +17,7 @@ export default function LoginPage() {
   function getSafeRedirectPath() {
     const requestedPath = searchParams.get('redirect');
 
-    if (!requestedPath) {
-      return '/dashboard';
-    }
+    if (!requestedPath) return '/dashboard';
 
     try {
       const parsedUrl = new URL(requestedPath, window.location.origin);
@@ -36,7 +34,6 @@ export default function LoginPage() {
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setLoading(true);
     setMessage('');
 
@@ -56,18 +53,14 @@ export default function LoginPage() {
       window.location.assign(getSafeRedirectPath());
     } catch (error) {
       setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Unable to login. Please try again.'
+        error instanceof Error ? error.message : 'Unable to login.'
       );
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleForgotPassword(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!email.trim()) {
@@ -90,9 +83,7 @@ export default function LoginPage() {
 
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.trim(),
-        {
-          redirectTo: redirectUrl.toString(),
-        }
+        { redirectTo: redirectUrl.toString() }
       );
 
       if (error) {
@@ -101,13 +92,13 @@ export default function LoginPage() {
       }
 
       setMessage(
-        'Password reset email sent. Please check your inbox and open the latest email.'
+        'Password reset email sent. Please check your inbox for the latest email.'
       );
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to send reset email. Please try again.'
+          : 'Unable to send reset email.'
       );
     } finally {
       setLoading(false);
@@ -134,7 +125,6 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-green-800">
             BodhiMart
           </h1>
-
           <p className="mt-2 text-sm text-gray-600">
             {isForgotPassword
               ? 'Reset your account password'
@@ -151,18 +141,14 @@ export default function LoginPage() {
           className="space-y-5"
         >
           <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
               Email Address
             </label>
-
             <input
               id="email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your registered email"
               autoComplete="email"
               required
@@ -173,18 +159,14 @@ export default function LoginPage() {
 
           {!isForgotPassword && (
             <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
                 Password
               </label>
-
               <input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
@@ -210,6 +192,7 @@ export default function LoginPage() {
           {message && (
             <div
               role="status"
+              aria-live="polite"
               className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800"
             >
               {message}
@@ -250,5 +233,19 @@ export default function LoginPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-gray-100">
+          <p className="text-gray-600">Loading login...</p>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
