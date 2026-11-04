@@ -2,220 +2,253 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
 export default function LoginPage() {
-  const supabase = createClient();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [forgotMode, setForgotMode] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
-  function getRedirect() {
-    const params = new URLSearchParams(window.location.search);
-    const path = params.get('redirect') || '/dashboard';
+  function getSafeRedirectPath() {
+    const requestedPath = searchParams.get('redirect');
 
-    return path.startsWith('/') && !path.startsWith('//')
-      ? path
-      : '/dashboard';
+    if (!requestedPath) {
+      return '/dashboard';
+    }
+
+    try {
+      const parsedUrl = new URL(requestedPath, window.location.origin);
+
+      if (parsedUrl.origin !== window.location.origin) {
+        return '/dashboard';
+      }
+
+      return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+    } catch {
+      return '/dashboard';
+    }
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setLoading(true);
-    setError('');
     setMessage('');
 
     try {
+      const supabase = createClient();
+
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
 
-      window.location.assign(getRedirect());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
-      setLoading(false);
-    }
-  }
-
-  async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        {
-          redirectTo: `${window.location.origin}/reset-password`,
-        }
-      );
-
-      if (error) throw error;
-
+      window.location.assign(getSafeRedirectPath());
+    } catch (error) {
       setMessage(
-        'If an account exists for this email, a password reset link has been requested. Check your inbox and spam folder.'
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Unable to send reset email.'
+        error instanceof Error
+          ? error.message
+          : 'Unable to login. Please try again.'
       );
     } finally {
       setLoading(false);
     }
   }
 
+  async function handleForgotPassword(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!email.trim()) {
+      setMessage('Please enter your registered email address.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const supabase = createClient();
+
+      const redirectUrl = new URL(
+        '/auth/callback',
+        window.location.origin
+      );
+
+      redirectUrl.searchParams.set('next', '/reset-password');
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        {
+          redirectTo: redirectUrl.toString(),
+        }
+      );
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage(
+        'Password reset email sent. Please check your inbox and open the latest email.'
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to send reset email. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openForgotPassword() {
+    setIsForgotPassword(true);
+    setPassword('');
+    setMessage('');
+  }
+
+  function openLogin() {
+    setIsForgotPassword(false);
+    setPassword('');
+    setMessage('');
+  }
+
   return (
-    <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1 style={{ color: '#145c2b', marginBottom: 5 }}>BODHI RURAL</h1>
-        <p style={{ color: '#6b7280', marginBottom: 28 }}>
-          Livelihood & Agriculture Platform
-        </p>
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
 
-        <h2>{forgotMode ? 'Reset Your Password' : 'Sign In'}</h2>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-green-800">
+            BodhiMart
+          </h1>
 
-        <form onSubmit={forgotMode ? handleForgotPassword : handleLogin}>
-          <label style={labelStyle}>Registered Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your registered email"
-            required
-            style={inputStyle}
-          />
+          <p className="mt-2 text-sm text-gray-600">
+            {isForgotPassword
+              ? 'Reset your account password'
+              : 'Welcome to BodhiMart'}
+          </p>
+        </div>
 
-          {!forgotMode && (
-            <>
-              <label style={labelStyle}>Password</label>
+        <h2 className="mb-6 text-xl font-semibold text-gray-800">
+          {isForgotPassword ? 'Forgot Password' : 'Login to Your Account'}
+        </h2>
+
+        <form
+          onSubmit={isForgotPassword ? handleForgotPassword : handleLogin}
+          className="space-y-5"
+        >
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Email Address
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Enter your registered email"
+              autoComplete="email"
+              required
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100"
+            />
+          </div>
+
+          {!isForgotPassword && (
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+
               <input
+                id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 required
-                style={inputStyle}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100"
               />
-
-              <div style={{ textAlign: 'right', marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForgotMode(true);
-                    setError('');
-                    setMessage('');
-                  }}
-                  style={textButton}
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            </>
+            </div>
           )}
 
-          {error && <p style={errorStyle}>{error}</p>}
-          {message && <p style={successStyle}>{message}</p>}
+          {!isForgotPassword && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={openForgotPassword}
+                disabled={loading}
+                className="text-sm font-medium text-green-700 hover:text-green-900"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
 
-          <button type="submit" disabled={loading} style={submitStyle}>
+          {message && (
+            <div
+              role="status"
+              className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800"
+            >
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
             {loading
               ? 'Please wait...'
-              : forgotMode
-              ? 'Send Reset Link'
-              : 'Sign In'}
+              : isForgotPassword
+                ? 'Send Reset Password Link'
+                : 'Login'}
           </button>
         </form>
 
-        {forgotMode && (
-          <button
-            type="button"
-            onClick={() => {
-              setForgotMode(false);
-              setError('');
-              setMessage('');
-            }}
-            style={{ ...textButton, marginTop: 18 }}
-          >
-            ← Back to Login
-          </button>
+        {isForgotPassword && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={openLogin}
+              disabled={loading}
+              className="text-sm font-medium text-green-700 hover:text-green-900"
+            >
+              Back to Login
+            </button>
+          </div>
         )}
+
+        <div className="mt-8 border-t border-gray-200 pt-5 text-center">
+          <p className="text-xs text-gray-500">
+            BodhiMart | Bodhi Rural Livelihood & Agri Pvt. Ltd.
+          </p>
+        </div>
+
       </div>
     </main>
   );
 }
-
-const pageStyle: React.CSSProperties = {
-  minHeight: '100vh',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 24,
-  background: '#f5f7f4',
-};
-
-const cardStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: 420,
-  background: '#fff',
-  padding: 32,
-  borderRadius: 16,
-  boxShadow: '0 10px 35px rgba(0,0,0,0.08)',
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontWeight: 600,
-  marginTop: 18,
-  marginBottom: 8,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: 12,
-  border: '1px solid #d1d5db',
-  borderRadius: 8,
-};
-
-const submitStyle: React.CSSProperties = {
-  width: '100%',
-  padding: 13,
-  marginTop: 22,
-  border: 0,
-  borderRadius: 8,
-  background: '#145c2b',
-  color: '#fff',
-  fontWeight: 700,
-  cursor: 'pointer',
-};
-
-const textButton: React.CSSProperties = {
-  background: 'none',
-  border: 0,
-  color: '#145c2b',
-  fontWeight: 600,
-  cursor: 'pointer',
-};
-
-const errorStyle: React.CSSProperties = {
-  color: '#b91c1c',
-  background: '#fef2f2',
-  padding: 10,
-  borderRadius: 8,
-  marginTop: 15,
-};
-
-const successStyle: React.CSSProperties = {
-  color: '#166534',
-  background: '#ecfdf5',
-  padding: 10,
-  borderRadius: 8,
-  marginTop: 15,
-};
