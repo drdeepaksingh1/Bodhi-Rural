@@ -14,26 +14,38 @@ function LoginForm() {
   const [message, setMessage] = useState('');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
+  // Safely determine the page to open after successful login
   function getSafeRedirectPath() {
     const requestedPath = searchParams.get('redirect');
 
-    if (!requestedPath) return '/dashboard';
+    if (!requestedPath) {
+      return '/dashboard';
+    }
 
     try {
-      const parsedUrl = new URL(requestedPath, window.location.origin);
+      const parsedUrl = new URL(
+        requestedPath,
+        window.location.origin
+      );
 
       if (parsedUrl.origin !== window.location.origin) {
         return '/dashboard';
       }
 
-      return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+      return (
+        parsedUrl.pathname +
+        parsedUrl.search +
+        parsedUrl.hash
+      );
     } catch {
       return '/dashboard';
     }
   }
 
+  // Normal login
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setLoading(true);
     setMessage('');
 
@@ -51,16 +63,22 @@ function LoginForm() {
       }
 
       window.location.assign(getSafeRedirectPath());
+
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : 'Unable to login.'
+        error instanceof Error
+          ? error.message
+          : 'Unable to login. Please try again.'
       );
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
+  // Forgot password
+  async function handleForgotPassword(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     if (!email.trim()) {
@@ -74,17 +92,23 @@ function LoginForm() {
     try {
       const supabase = createClient();
 
+      // Always use the canonical production domain
       const redirectUrl = new URL(
-        '/auth/callback',
-        window.location.origin
+        'https://brlps.co.in/auth/callback'
       );
 
-      redirectUrl.searchParams.set('next', '/reset-password');
-
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        { redirectTo: redirectUrl.toString() }
+      redirectUrl.searchParams.set(
+        'next',
+        '/reset-password'
       );
+
+      const { error } =
+        await supabase.auth.resetPasswordForEmail(
+          email.trim(),
+          {
+            redirectTo: redirectUrl.toString(),
+          }
+        );
 
       if (error) {
         setMessage(error.message);
@@ -92,13 +116,14 @@ function LoginForm() {
       }
 
       setMessage(
-        'Password reset email sent. Please check your inbox for the latest email.'
+        'Password reset email sent successfully. Please check your inbox and open the latest email.'
       );
+
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to send reset email.'
+          : 'Unable to send reset email. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -119,12 +144,15 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
+
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
 
+        {/* Branding */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-green-800">
             BodhiMart
           </h1>
+
           <p className="mt-2 text-sm text-gray-600">
             {isForgotPassword
               ? 'Reset your account password'
@@ -132,18 +160,31 @@ function LoginForm() {
           </p>
         </div>
 
+        {/* Form heading */}
         <h2 className="mb-6 text-xl font-semibold text-gray-800">
-          {isForgotPassword ? 'Forgot Password' : 'Login to Your Account'}
+          {isForgotPassword
+            ? 'Forgot Password'
+            : 'Login to Your Account'}
         </h2>
 
         <form
-          onSubmit={isForgotPassword ? handleForgotPassword : handleLogin}
+          onSubmit={
+            isForgotPassword
+              ? handleForgotPassword
+              : handleLogin
+          }
           className="space-y-5"
         >
+
+          {/* Email */}
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Email Address
             </label>
+
             <input
               id="email"
               type="email"
@@ -157,11 +198,16 @@ function LoginForm() {
             />
           </div>
 
+          {/* Password - only during login */}
           {!isForgotPassword && (
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
+
               <input
                 id="password"
                 type="password"
@@ -176,6 +222,7 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Forgot password link */}
           {!isForgotPassword && (
             <div className="flex justify-end">
               <button
@@ -189,6 +236,7 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Status message */}
           {message && (
             <div
               role="status"
@@ -199,6 +247,7 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Submit button */}
           <button
             type="submit"
             disabled={loading}
@@ -210,8 +259,10 @@ function LoginForm() {
                 ? 'Send Reset Password Link'
                 : 'Login'}
           </button>
+
         </form>
 
+        {/* Back to login */}
         {isForgotPassword && (
           <div className="mt-6 text-center">
             <button
@@ -225,6 +276,7 @@ function LoginForm() {
           </div>
         )}
 
+        {/* Footer */}
         <div className="mt-8 border-t border-gray-200 pt-5 text-center">
           <p className="text-xs text-gray-500">
             BodhiMart | Bodhi Rural Livelihood & Agri Pvt. Ltd.
@@ -236,12 +288,15 @@ function LoginForm() {
   );
 }
 
+// Suspense boundary required by Next.js 14
 export default function LoginPage() {
   return (
     <Suspense
       fallback={
         <main className="min-h-screen flex items-center justify-center bg-gray-100">
-          <p className="text-gray-600">Loading login...</p>
+          <p className="text-gray-600">
+            Loading login...
+          </p>
         </main>
       }
     >
