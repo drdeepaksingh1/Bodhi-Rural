@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
-import LogoutButton from '../../../components/LogoutButton';
+import LogoutButton from '../../../../components/LogoutButton';
 
 type Seller = {
   id: string;
