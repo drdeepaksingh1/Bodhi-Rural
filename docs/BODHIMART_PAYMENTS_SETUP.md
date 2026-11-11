@@ -60,8 +60,8 @@ This branch records captured payments and supports customer retries/order histor
 
 - Checkout validates available stock and increases `marketplace_inventory.reserved_quantity`; it does not reduce physical `stock_quantity`.
 - Only a server-verified captured payment converts the reservation into a physical stock deduction and reduces the reserved quantity.
-- A failed payment verification or signed `payment.failed` webhook cancels the unpaid order and releases its reservation. The customer must place a new order to retry after a terminal failure.
-- Unpaid orders that remain in `PLACED` status for 30 minutes are cancelled and their reservations released by the protected Vercel Cron endpoint.
+- A failed payment attempt is recorded but does not immediately cancel the order, because Razorpay permits another attempt against the same checkout order. The customer may retry during the 30-minute payment window.
+- Any unpaid order that remains in `PLACED` status for 30 minutes—including orders with failed or abandoned payment attempts—is cancelled and its reservation released by the protected Vercel Cron endpoint.
 - Seller fulfilment status changes are blocked by a database trigger until the parent marketplace order has `payment_status = 'PAID'`.
 
 The cron endpoint requires `CRON_SECRET`. If the Vercel plan does not support a ten-minute schedule, use a supported schedule or an external scheduler that sends `Authorization: Bearer <CRON_SECRET>`. Do not expose this secret in browser code.
