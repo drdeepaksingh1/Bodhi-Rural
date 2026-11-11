@@ -70,6 +70,7 @@ declare
   v_transaction public.marketplace_payment_transactions%rowtype;
   v_order public.marketplace_orders%rowtype;
   v_expected_amount bigint;
+  v_updated_products integer;
 begin
   if p_provider_payment_id is null or p_provider_payment_id = '' then
     raise exception 'Payment ID is required.';
@@ -123,8 +124,8 @@ begin
   where i.product_id = item_totals.product_id
     and i.stock_quantity >= item_totals.quantity
     and i.reserved_quantity >= item_totals.quantity;
-  get diagnostics v_expected_amount = row_count;
-  if v_expected_amount <> (
+  get diagnostics v_updated_products = row_count;
+  if v_updated_products <> (
     select count(*) from (
       select oi.product_id from public.marketplace_order_items oi
       where oi.order_id = v_order.id group by oi.product_id
