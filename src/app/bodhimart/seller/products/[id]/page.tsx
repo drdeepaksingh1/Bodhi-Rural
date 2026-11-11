@@ -1128,10 +1128,4 @@ const cancelButton: React.CSSProperties = {
   fontWeight: 600,
 };
 
-const statusButton: React.CSSProperties = {
-  border: '1px solid #fed7aa',
-  padding: '11px 18px',
-  borderRadius: 10,
-  fontWeight: 700,
-  cursor: 'pointer',
-};
+
