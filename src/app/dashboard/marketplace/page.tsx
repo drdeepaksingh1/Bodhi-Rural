@@ -78,15 +78,16 @@ const modules = [
   status: 'Available',
   available: true,
 },
-  {
-    number: '04',
-    title: 'Inventory Management',
-    description:
-      'Monitor stock levels, inventory movements, and stock adjustment records.',
-    href: '',
-    status: 'Coming Soon',
-    available: false,
-  },
+  
+{
+  number: '04',
+  title: 'Inventory Management',
+  description:
+    'Monitor stock levels, inventory movements, and stock adjustment records.',
+  href: '/dashboard/marketplace/inventory',
+  status: 'Available',
+  available: true,
+},
   {
     number: '05',
     title: 'Order Management',
