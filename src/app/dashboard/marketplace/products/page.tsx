@@ -626,11 +626,11 @@ export default async function ProductManagementPage({
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            This module is restricted to SUPER_ADMIN. Product records
-            are retrieved using the authenticated Supabase client.
-            Existing seller policies, product ownership, inventory
-            and checkout operations remain unchanged. No product
-            records are modified by this page.
+            This module is restricted to SUPER_ADMIN. Product records are retrieved using the authenticated Supabase client.
+            Visibility changes are performed by a database function that verifies
+            the active SUPER_ADMIN role. Activating or deactivating a listing
+            updates its status and approval metadata; inventory quantities
+            and seller ownership are not changed.
           </p>
         </section>
 
