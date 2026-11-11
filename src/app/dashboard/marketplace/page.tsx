@@ -70,14 +70,14 @@ const modules = [
     available: true,
   },
   {
-    number: '03',
-    title: 'Product Management',
-    description:
-      'Review product listings, manage categories, and control product approval.',
-    href: '',
-    status: 'Coming Soon',
-    available: false,
-  },
+  number: '03',
+  title: 'Product Management',
+  description:
+    'Review product listings, manage categories, and control product approval.',
+  href: '/dashboard/marketplace/products',
+  status: 'Available',
+  available: true,
+},
   {
     number: '04',
     title: 'Inventory Management',
