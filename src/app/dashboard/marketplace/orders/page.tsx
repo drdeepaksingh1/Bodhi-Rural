@@ -718,24 +718,20 @@ export default async function OrderManagementPage({
                       </div>
                     )}
 
-                    
-{order.delivery_address_snapshot !== null &&
- order.delivery_address_snapshot !== undefined && (
-  <details className="mt-5 rounded-lg border border-gray-200 p-4">
-    <summary className="cursor-pointer text-sm font-semibold text-gray-800">
-      View Delivery Address Snapshot
-    </summary>
-
-    <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
-      {JSON.stringify(
-        order.delivery_address_snapshot,
-        null,
-        2
-      )}
-    </pre>
-  </details>
-)}
-
+                    {order.delivery_address_snapshot != null ? (
+                      <details className="mt-5 rounded-lg border border-gray-200 p-4">
+                        <summary className="cursor-pointer text-sm font-semibold text-gray-800">
+                          View Delivery Address Snapshot
+                        </summary>
+                        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
+                          {JSON.stringify(
+                            order.delivery_address_snapshot,
+                            null,
+                            2
+                          )}
+                        </pre>
+                      </details>
+                    ) : null}
 
                     {/* ORDER ITEMS */}
                     <div className="mt-6">
