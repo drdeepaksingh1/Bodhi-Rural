@@ -85,14 +85,9 @@ export async function POST(request: Request) {
       }).eq("id", transaction.id).neq("status", "CAPTURED");
       if (failedUpdateError) throw failedUpdateError;
 
-      const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
-        p_order_id: order.id,
-      });
-      if (releaseError) throw releaseError;
       return jsonNoStore({
-        paymentStatus: "FAILED",
-        orderStatus: "CANCELLED",
-        message: "Payment failed. The order was cancelled and its reserved stock was released. Please place a new order to try again.",
+        paymentStatus: "PENDING",
+        message: "This payment attempt failed. You may retry within 30 minutes; any unpaid order will then be cancelled and its reserved stock released automatically.",
       }, 402);
     }
 
