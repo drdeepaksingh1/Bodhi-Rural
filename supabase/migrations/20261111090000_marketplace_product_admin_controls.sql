@@ -16,11 +16,18 @@ begin
     raise exception 'Authentication is required.';
   end if;
 
-  if not public.is_bodhi_super_admin() then
-    raise exception 'Only a Bodhi super administrator can change marketplace product visibility.';
+  if not exists (
+    select 1
+    from public.profiles p
+    join public.roles r on r.id = p.role_id
+    where p.id = auth.uid()
+      and p.is_active = true
+      and r.code = 'SUPER_ADMIN'
+  ) then
+    raise exception 'Only an active Bodhi super administrator can change marketplace product visibility.';
   end if;
 
-  if p_status not in ('ACTIVE', 'INACTIVE') then
+  if p_status is null or p_status not in ('ACTIVE', 'INACTIVE') then
     raise exception 'Only ACTIVE or INACTIVE status is permitted.';
   end if;
 
