@@ -71,7 +71,6 @@ export default function EditProductPage() {
     minimum_order_quantity: '1',
     maximum_order_quantity: '',
     delivery_available: true,
-    status: 'ACTIVE',
   });
 
   useEffect(() => {
@@ -222,7 +221,6 @@ export default function EditProductPage() {
             : '',
         delivery_available:
           p.delivery_available,
-        status: p.status || 'ACTIVE',
       });
     } catch (err: any) {
       console.error(err);
@@ -372,7 +370,6 @@ export default function EditProductPage() {
                 : null,
             delivery_available:
               form.delivery_available,
-            status: form.status,
             updated_at: new Date().toISOString(),
           })
           .eq('id', product.id)
@@ -399,54 +396,6 @@ export default function EditProductPage() {
     }
   }
 
-  async function toggleStatus() {
-    if (!seller || !product) return;
-
-    const newStatus =
-      product.status === 'ACTIVE'
-        ? 'INACTIVE'
-        : 'ACTIVE';
-
-    setSaving(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const { error: updateError } =
-        await supabase
-          .from('marketplace_products')
-          .update({
-            status: newStatus,
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq('id', product.id)
-          .eq('seller_id', seller.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      setMessage(
-        `Product ${
-          newStatus === 'ACTIVE'
-            ? 'activated'
-            : 'deactivated'
-        } successfully.`
-      );
-
-      await loadProduct();
-    } catch (err: any) {
-      console.error(err);
-
-      setError(
-        err?.message ||
-          'Unable to change product status.'
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -959,30 +908,22 @@ export default function EditProductPage() {
               </span>
             </label>
 
-            <Field label="Product Status">
-              <select
-                value={form.status}
-                onChange={(e) =>
-                  updateField(
-                    'status',
-                    e.target.value
-                  )
-                }
-                style={inputStyle}
-              >
-                <option value="ACTIVE">
-                  ACTIVE
-                </option>
-
-                <option value="INACTIVE">
-                  INACTIVE
-                </option>
-
-                <option value="DRAFT">
-                  DRAFT
-                </option>
-              </select>
-            </Field>
+            <div
+              style={{
+                marginTop: 12,
+                padding: 12,
+                borderRadius: 10,
+                background: '#f8faf8',
+                color: '#4b5563',
+                fontSize: 14,
+              }}
+            >
+              <strong>Listing status:</strong> {product.status}
+              <p style={{ marginTop: 6 }}>
+                Listing status is controlled by the marketplace administrator.
+                Contact support if this product needs review.
+              </p>
+            </div>
           </Section>
 
           {/* Actions */}
@@ -1009,26 +950,7 @@ export default function EditProductPage() {
                 ← My Products
               </Link>
 
-              <button
-                type="button"
-                onClick={toggleStatus}
-                disabled={saving}
-                style={{
-                  ...statusButton,
-                  background:
-                    product.status === 'ACTIVE'
-                      ? '#fff7ed'
-                      : '#ecfdf5',
-                  color:
-                    product.status === 'ACTIVE'
-                      ? '#9a3412'
-                      : '#166534',
-                }}
-              >
-                {product.status === 'ACTIVE'
-                  ? 'Deactivate Product'
-                  : 'Activate Product'}
-              </button>
+
             </div>
 
             <button
