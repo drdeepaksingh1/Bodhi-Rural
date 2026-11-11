@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHash } from "node:crypto";
 import {
   createMarketplaceAdminClient,
   getRazorpayCredentials,
@@ -75,6 +75,11 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         }).eq("provider_order_id", payment.order_id).neq("status", "CAPTURED");
       if (failedError) throw failedError;
+      const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
+        p_order_id: (await admin.from("marketplace_payment_transactions")
+          .select("order_id").eq("provider_order_id", payment.order_id).single()).data?.order_id,
+      });
+      if (releaseError) throw releaseError;
     }
 
     const { error: processedError } = await admin.from("marketplace_payment_webhook_events")
