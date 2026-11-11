@@ -23,6 +23,8 @@ https://brlps.co.in/api/bodhimart/payments/webhook
 
 Subscribe to `payment.captured` and `payment.failed`. Use the exact same webhook secret in Vercel. Enable automatic payment capture in the Razorpay dashboard so successful customer payments reach the captured state. The customer checkout remains disabled until all server credentials and the database migration are present.
 
+Add `CRON_SECRET` as a strong random secret in Vercel Preview and Production. The Vercel Cron job at `/api/cron/expire-marketplace-orders` runs every ten minutes and expires unpaid orders after 30 minutes. Vercel sends this value as a Bearer token to the protected endpoint. Confirm that your Vercel plan supports the configured cron frequency.
+
 ## Database migration
 
 Apply `supabase/migrations/20260927120000_marketplace_online_payments.sql` after the existing marketplace checkout migration, in the existing Supabase project. This creates private payment-attempt/webhook tables, server-only confirmation, and a commercial-settings row. It does not create a Supabase project or store card data.
@@ -52,3 +54,14 @@ Replace those example values with the approved rupee delivery charge, optional f
 6. After merchant onboarding and test sign-off, replace Preview/Test credentials with Live credentials in Vercel Production and redeploy.
 
 This branch records captured payments and supports customer retries/order history. Refund initiation and automated seller payouts/splits are not enabled; refund decisions and seller settlements remain manual until the marketplace's support and settlement policy is finalized.
+
+
+## Stock reservation and unpaid-order expiry
+
+- Checkout validates available stock and increases `marketplace_inventory.reserved_quantity`; it does not reduce physical `stock_quantity`.
+- Only a server-verified captured payment converts the reservation into a physical stock deduction and reduces the reserved quantity.
+- A failed payment verification or signed `payment.failed` webhook cancels the unpaid order and releases its reservation. The customer must place a new order to retry after a terminal failure.
+- Unpaid orders that remain in `PLACED` status for 30 minutes are cancelled and their reservations released by the protected Vercel Cron endpoint.
+- Seller fulfilment status changes are blocked by a database trigger until the parent marketplace order has `payment_status = 'PAID'`.
+
+The cron endpoint requires `CRON_SECRET`. If the Vercel plan does not support a ten-minute schedule, use a supported schedule or an external scheduler that sends `Authorization: Bearer <CRON_SECRET>`. Do not expose this secret in browser code.
