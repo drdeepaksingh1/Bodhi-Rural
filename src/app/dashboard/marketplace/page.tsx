@@ -70,33 +70,32 @@ const modules = [
     available: true,
   },
   {
-  number: '03',
-  title: 'Product Management',
-  description:
-    'Review product listings, manage categories, and control product approval.',
-  href: '/dashboard/marketplace/products',
-  status: 'Available',
-  available: true,
-},
-  
-{
-  number: '04',
-  title: 'Inventory Management',
-  description:
-    'Monitor stock levels, inventory movements, and stock adjustment records.',
-  href: '/dashboard/marketplace/inventory',
-  status: 'Available',
-  available: true,
-},
+    number: '03',
+    title: 'Product Management',
+    description:
+      'Review product listings, manage categories, and control product approval.',
+    href: '/dashboard/marketplace/products',
+    status: 'Available',
+    available: true,
+  },
   {
-  number: '05',
-  title: 'Order Management',
-  description:
-    'Monitor customer orders, seller fulfilment, payment status, order items, and delivery information.',
-  href: '/dashboard/marketplace/orders',
-  status: 'Available',
-  available: true,
-},
+    number: '04',
+    title: 'Inventory Management',
+    description:
+      'Monitor stock levels, inventory movements, and stock adjustment records.',
+    href: '/dashboard/marketplace/inventory',
+    status: 'Available',
+    available: true,
+  },
+  {
+    number: '05',
+    title: 'Order Management',
+    description:
+      'Monitor customer orders, seller fulfilment, payment status, order items, and delivery information.',
+    href: '/dashboard/marketplace/orders',
+    status: 'Available',
+    available: true,
+  },
   {
     number: '06',
     title: 'Marketplace Reports',
