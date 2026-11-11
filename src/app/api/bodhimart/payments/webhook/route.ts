@@ -66,20 +66,27 @@ export async function POST(request: Request) {
       });
       if (confirmError) throw confirmError;
     } else if (eventType === "payment.failed" && payment) {
-      const { error: failedError } = await admin.from("marketplace_payment_transactions")
-        .update({
-          provider_payment_id: payment.id || null,
-          status: "FAILED",
-          failure_code: payment.error_code || null,
-          failure_description: payment.error_description || null,
-          updated_at: new Date().toISOString(),
-        }).eq("provider_order_id", payment.order_id).neq("status", "CAPTURED");
-      if (failedError) throw failedError;
-      const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
-        p_order_id: (await admin.from("marketplace_payment_transactions")
-          .select("order_id").eq("provider_order_id", payment.order_id).single()).data?.order_id,
-      });
-      if (releaseError) throw releaseError;
+      const { data: failedAttempt, error: lookupError } = await admin
+        .from("marketplace_payment_transactions")
+        .select("id, order_id, status")
+        .eq("provider_order_id", payment.order_id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (failedAttempt && failedAttempt.status !== "CAPTURED") {
+        const { error: failedError } = await admin.from("marketplace_payment_transactions")
+          .update({
+            provider_payment_id: payment.id || null,
+            status: "FAILED",
+            failure_code: payment.error_code || null,
+            failure_description: payment.error_description || null,
+            updated_at: new Date().toISOString(),
+          }).eq("id", failedAttempt.id).neq("status", "CAPTURED");
+        if (failedError) throw failedError;
+        const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
+          p_order_id: failedAttempt.order_id,
+        });
+        if (releaseError) throw releaseError;
+      }
     }
 
     const { error: processedError } = await admin.from("marketplace_payment_webhook_events")
