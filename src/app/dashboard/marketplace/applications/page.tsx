@@ -2,8 +2,8 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { createClient } from '../../../../../lib/supabase/server';
-import LogoutButton from '../../../../components/LogoutButton';
+import { createClient } from '../../../../lib/supabase/server';
+import LogoutButton from '../../../components/LogoutButton';
 
 const PAGE_PATH = '/dashboard/marketplace/applications';
 
