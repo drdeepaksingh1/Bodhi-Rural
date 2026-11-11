@@ -89,14 +89,14 @@ const modules = [
   available: true,
 },
   {
-    number: '05',
-    title: 'Order Management',
-    description:
-      'Monitor customer orders, seller orders, payment status, and fulfilment.',
-    href: '',
-    status: 'Coming Soon',
-    available: false,
-  },
+  number: '05',
+  title: 'Order Management',
+  description:
+    'Monitor customer orders, seller fulfilment, payment status, order items, and delivery information.',
+  href: '/dashboard/marketplace/orders',
+  status: 'Available',
+  available: true,
+},
   {
     number: '06',
     title: 'Marketplace Reports',
