@@ -82,10 +82,7 @@ export async function POST(request: Request) {
             updated_at: new Date().toISOString(),
           }).eq("id", failedAttempt.id).neq("status", "CAPTURED");
         if (failedError) throw failedError;
-        const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
-          p_order_id: failedAttempt.order_id,
-        });
-        if (releaseError) throw releaseError;
+        // A failed gateway attempt may be retried; the order expiry job releases stock after 30 minutes.
       }
     }
 
