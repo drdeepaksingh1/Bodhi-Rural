@@ -60,13 +60,15 @@ const modules = [
     available: true,
   },
   {
-    number: '02',
-    title: 'Seller Management',
-    description:
-      'View registered sellers, seller profiles, business information, and account status.',
-    href: '',
-    status: 'Coming Soon',
-    available: false,
+   {
+  number: '02',
+  title: 'Seller Management',
+  description:
+    'View registered sellers, seller profiles, business information, and account status.',
+  href: '/dashboard/marketplace/sellers',
+  status: 'Available',
+  available: true,
+},
   },
   {
     number: '03',
