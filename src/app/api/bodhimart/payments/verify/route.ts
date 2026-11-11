@@ -76,14 +76,24 @@ export async function POST(request: Request) {
     }
 
     if (payment.status === "failed") {
-      await admin.from("marketplace_payment_transactions").update({
+      const { error: failedUpdateError } = await admin.from("marketplace_payment_transactions").update({
         provider_payment_id: payment.id,
         status: "FAILED",
         failure_code: payment.error_code || null,
         failure_description: payment.error_description || null,
         updated_at: new Date().toISOString(),
       }).eq("id", transaction.id).neq("status", "CAPTURED");
-      return jsonNoStore({ paymentStatus: "PENDING", message: "Payment did not complete. You can retry." }, 402);
+      if (failedUpdateError) throw failedUpdateError;
+
+      const { error: releaseError } = await admin.rpc("release_marketplace_order_reservation", {
+        p_order_id: order.id,
+      });
+      if (releaseError) throw releaseError;
+      return jsonNoStore({
+        paymentStatus: "FAILED",
+        orderStatus: "CANCELLED",
+        message: "Payment failed. The order was cancelled and its reserved stock was released. Please place a new order to try again.",
+      }, 402);
     }
 
     if (payment.status === "authorized") {
