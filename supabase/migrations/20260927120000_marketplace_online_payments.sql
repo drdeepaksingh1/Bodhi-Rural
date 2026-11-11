@@ -109,6 +109,30 @@ begin
     raise exception 'This order is not awaiting payment.';
   end if;
 
+  -- Convert this order's reservation into a physical stock deduction atomically.
+  update public.marketplace_inventory i
+    set stock_quantity = i.stock_quantity - item_totals.quantity,
+        reserved_quantity = i.reserved_quantity - item_totals.quantity,
+        updated_at = now()
+  from (
+    select oi.product_id, sum(oi.quantity)::numeric as quantity
+    from public.marketplace_order_items oi
+    where oi.order_id = v_order.id
+    group by oi.product_id
+  ) item_totals
+  where i.product_id = item_totals.product_id
+    and i.stock_quantity >= item_totals.quantity
+    and i.reserved_quantity >= item_totals.quantity;
+  get diagnostics v_expected_amount = row_count;
+  if v_expected_amount <> (
+    select count(*) from (
+      select oi.product_id from public.marketplace_order_items oi
+      where oi.order_id = v_order.id group by oi.product_id
+    ) reserved_products
+  ) then
+    raise exception 'Reserved inventory is inconsistent; payment requires reconciliation.';
+  end if;
+
   update public.marketplace_payment_transactions
     set status = 'CAPTURED', provider_payment_id = p_provider_payment_id,
         captured_at = now(), updated_at = now()
@@ -312,10 +336,13 @@ begin
   where ci.cart_id = v_cart_id
   group by p.seller_id, s.seller_id;
 
+  -- Reserve stock at order placement; do not reduce physical stock until payment is captured.
   update public.marketplace_inventory i
-    set stock_quantity = i.stock_quantity - ci.quantity, updated_at = now()
+    set reserved_quantity = i.reserved_quantity + ci.quantity, updated_at = now()
   from public.marketplace_cart_items ci
-  where ci.cart_id = v_cart_id and ci.product_id = i.product_id;
+  where ci.cart_id = v_cart_id
+    and ci.product_id = i.product_id
+    and i.stock_quantity - i.reserved_quantity >= ci.quantity;
   get diagnostics v_updated_count = row_count;
   if v_updated_count <> v_expected_count then
     raise exception 'Inventory changed while your order was being placed. Please retry.';
@@ -328,3 +355,119 @@ begin
   return next;
 end;
 $function$;
+
+
+-- Release an unpaid order's stock reservation and cancel it atomically.
+create or replace function public.release_marketplace_order_reservation(p_order_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  v_order public.marketplace_orders%rowtype;
+  v_expected_products integer;
+  v_updated_products integer;
+begin
+  select o.* into v_order
+  from public.marketplace_orders o
+  where o.id = p_order_id
+  for update;
+  if not found then raise exception 'Marketplace order was not found.'; end if;
+  if v_order.payment_status = 'PAID' or v_order.order_status = 'CANCELLED' then return; end if;
+
+  select count(*) into v_expected_products
+  from (
+    select oi.product_id
+    from public.marketplace_order_items oi
+    where oi.order_id = v_order.id
+    group by oi.product_id
+  ) products;
+
+  update public.marketplace_inventory i
+    set reserved_quantity = i.reserved_quantity - item_totals.quantity,
+        updated_at = now()
+  from (
+    select oi.product_id, sum(oi.quantity)::numeric as quantity
+    from public.marketplace_order_items oi
+    where oi.order_id = v_order.id
+    group by oi.product_id
+  ) item_totals
+  where i.product_id = item_totals.product_id
+    and i.reserved_quantity >= item_totals.quantity;
+  get diagnostics v_updated_products = row_count;
+  if v_updated_products <> v_expected_products then
+    raise exception 'Reserved inventory could not be released consistently.';
+  end if;
+
+  update public.marketplace_orders
+    set order_status = 'CANCELLED', updated_at = now()
+    where id = v_order.id and payment_status <> 'PAID';
+end;
+$function$;
+
+revoke all on function public.release_marketplace_order_reservation(uuid) from public, anon, authenticated;
+grant execute on function public.release_marketplace_order_reservation(uuid) to service_role;
+
+-- Expire unpaid orders after the retry window; Vercel Cron invokes this every ten minutes.
+create or replace function public.expire_unpaid_marketplace_orders(p_older_than_minutes integer default 30)
+returns integer
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  v_order record;
+  v_expired integer := 0;
+begin
+  if p_older_than_minutes < 10 or p_older_than_minutes > 1440 then
+    raise exception 'Expiry window must be between 10 and 1440 minutes.';
+  end if;
+
+  for v_order in
+    select o.id
+    from public.marketplace_orders o
+    where o.payment_status = 'PENDING'
+      and o.order_status = 'PLACED'
+      and o.created_at <= now() - make_interval(mins => p_older_than_minutes)
+    order by o.created_at
+    for update skip locked
+  loop
+    perform public.release_marketplace_order_reservation(v_order.id);
+    v_expired := v_expired + 1;
+  end loop;
+  return v_expired;
+end;
+$function$;
+
+revoke all on function public.expire_unpaid_marketplace_orders(integer) from public, anon, authenticated;
+grant execute on function public.expire_unpaid_marketplace_orders(integer) to service_role;
+
+-- Seller fulfilment cannot start until the corresponding customer payment is captured.
+create or replace function public.guard_marketplace_seller_order_payment()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  v_payment_status text;
+begin
+  if new.status is distinct from old.status and new.status <> 'PLACED' then
+    select o.payment_status into v_payment_status
+    from public.marketplace_orders o
+    where o.id = new.order_id;
+    if v_payment_status is distinct from 'PAID' then
+      raise exception 'Seller fulfilment is locked until customer payment is captured.';
+    end if;
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists marketplace_seller_order_payment_guard on public.marketplace_seller_orders;
+create trigger marketplace_seller_order_payment_guard
+before update of status on public.marketplace_seller_orders
+for each row execute function public.guard_marketplace_seller_order_payment();
+
+revoke all on function public.guard_marketplace_seller_order_payment() from public, anon, authenticated;
