@@ -261,7 +261,7 @@ export default function AddProductPage() {
                 : null,
             delivery_available:
               form.delivery_available,
-            status: 'ACTIVE',
+            status: 'PENDING',
             created_by: user.id,
           })
           .select(
@@ -777,9 +777,9 @@ export default function AddProductPage() {
                 fontSize: 14,
               }}
             >
-              New products are created as{' '}
-              <strong>ACTIVE</strong> and can
-              appear in the seller catalogue.
+              New products are submitted as{' '}
+              <strong>PENDING</strong> for administrator review.
+              They become visible to customers only after approval.
             </div>
           </Section>
 
