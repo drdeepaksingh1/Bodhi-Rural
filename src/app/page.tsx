@@ -37,7 +37,7 @@ const platforms = [
 export default function Home() {
   return (
     <>
-      <style jsx global>{`
+      <style>{`
         .br-home {
           --br-forest: #123d2b;
           --br-green: #1c6844;
