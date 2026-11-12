@@ -3,6 +3,24 @@ import './globals.css';
 import SiteHeader from '../components/SiteHeader';
 import Footer from '../components/Footer';
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Corporation',
+  '@id': 'https://bodhi-rural.vercel.app/#organization',
+  name: 'Bodhi Rural',
+  legalName: 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED',
+  url: 'https://bodhi-rural.vercel.app',
+  logo: 'https://bodhi-rural.vercel.app/branding/bodhi-rural-logo.png',
+  email: 'ceo@brlps.co.in',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Islampur, Nalanda',
+    addressRegion: 'Bihar',
+    postalCode: '801303',
+    addressCountry: 'IN',
+  },
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://bodhi-rural.vercel.app'),
   title: {
@@ -42,6 +60,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
         <SiteHeader />
         {children}
         <Footer />
