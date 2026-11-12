@@ -142,15 +142,6 @@ export default function Home() {
         .br-platform h3 { color: var(--br-forest); font: 29px/1.1 Georgia, serif; margin: 36px 0 11px; }
         .br-platform p { color: var(--br-muted); font-size: 14px; line-height: 1.7; margin: 0; }
         .br-platform .br-text-link { margin-top: auto; padding-top: 22px; }
-        .br-scale { background: var(--br-forest); padding: 66px 0; color: white; }
-        .br-scale-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
-        .br-scale .br-eyebrow { color: #d9e3d6; }
-        .br-scale h2 { color: white; font: 500 clamp(32px, 3.5vw, 43px)/1.12 Georgia, serif; margin: 18px 0 14px; }
-        .br-scale-copy p { color: #d2ddd5; font-size: 14px; line-height: 1.8; max-width: 510px; margin: 0; }
-        .br-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0 25px; }
-        .br-metric { padding: 20px 0; border-top: 1px solid rgba(255,255,255,.25); }
-        .br-metric strong { display: block; color: #e7c994; font: 34px/1 Georgia, serif; }
-        .br-metric span { display: block; color: #e0e9e1; font-size: 11px; letter-spacing: .05em; margin-top: 9px; }
         .br-cta { padding: 80px 0; background: #edf1e9; }
         .br-cta-row { display: flex; align-items: end; justify-content: space-between; gap: 35px; }
         .br-cta h2 { max-width: 700px; }
@@ -166,7 +157,7 @@ export default function Home() {
         @media (max-width: 700px) {
           .br-wrap { width: min(100% - 36px, 540px); }
           .br-hero { padding: 46px 0 50px; }
-          .br-hero-grid, .br-intro-grid, .br-scale-grid { grid-template-columns: 1fr; }
+          .br-hero-grid, .br-intro-grid { grid-template-columns: 1fr; }
           .br-hero-grid { gap: 30px; }
           .br-hero h1 { font-size: clamp(43px, 12vw, 58px); }
           .br-lead { font-size: 15px; }
@@ -183,8 +174,6 @@ export default function Home() {
           .br-sector h3 { font-size: 19px; margin-top: 17px; }
           .br-platform-grid { grid-template-columns: 1fr; gap: 10px; margin-top: 28px; }
           .br-platform { min-height: 230px; }
-          .br-scale { padding: 54px 0; }
-          .br-scale-grid { gap: 28px; }
           .br-cta { padding: 62px 0; }
         }
         @media (max-width: 420px) {
@@ -217,7 +206,7 @@ export default function Home() {
             </div>
             <div className="br-hero-visual" aria-label="Rural landscape and agriculture">
               <div className="br-hero-photo">
-                <Image src="/branding/bodhi-rural-village-hero.png" alt="A rural landscape reflecting the communities Bodhi Rural works alongside" fill priority sizes="(max-width: 700px) 100vw, 50vw" />
+                <Image src="/branding/bodhi-rural-hero-v2.webp" alt="A rural landscape reflecting the communities Bodhi Rural works alongside" fill priority quality={95} sizes="(max-width: 700px) 100vw, 50vw" />
                 <div className="br-photo-tint" />
                 <span className="br-photo-caption">Rooted in rural India</span>
               </div>
@@ -285,22 +274,6 @@ export default function Home() {
                   <Link href={platform.href} className="br-text-link">{platform.action} <span aria-hidden="true">→</span></Link>
                 </article>
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="br-scale">
-          <div className="br-wrap br-scale-grid">
-            <div className="br-scale-copy">
-              <span className="br-eyebrow">Our ambition</span>
-              <h2>Designed to grow with rural communities.</h2>
-              <p>Our digital and operational ecosystem is being developed to support farmers, rural enterprises and connected market activity at scale.</p>
-            </div>
-            <div className="br-metrics" aria-label="Bodhi Rural planning targets">
-              <div className="br-metric"><strong>1,000</strong><span>Target farmers</span></div>
-              <div className="br-metric"><strong>300,000</strong><span>Target bird capacity</span></div>
-              <div className="br-metric"><strong>15+</strong><span>Initial product categories</span></div>
-              <div className="br-metric"><strong>6+</strong><span>Connected rural sectors</span></div>
             </div>
           </div>
         </section>
