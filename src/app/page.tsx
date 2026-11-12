@@ -163,10 +163,6 @@ export default function Home() {
           .br-lead { font-size: 15px; }
           .br-hero-visual { min-height: min(88vw, 430px); }
           .br-hero-photo { inset: 0 17px 20px 0; }
-          .br-photo-caption {
-            top: 14px; bottom: auto; left: 14px; padding: 7px 9px;
-            background: rgba(18,61,43,.82); font-size: 9px; letter-spacing: .1em;
-          }
           .br-vision { width: 172px; padding: 17px; }
           .br-vision strong { font-size: 21px; }
           .br-intro { padding: 62px 0; }
