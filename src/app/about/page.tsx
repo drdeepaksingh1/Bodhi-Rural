@@ -1,28 +1,23 @@
 export default function Page() {
   return (
-    <main>
+    <>
+      <style>{`
+        .br-about { color: #1c2b23; }
+        .br-about h2 { color: #123d2b; font: 500 clamp(30px, 3.8vw, 42px)/1.12 Georgia, 'Times New Roman', serif; letter-spacing: -.03em; }
+        .br-about-banner { width: 100%; height: 240px; overflow: hidden; background: #f7f7f2; }
+        .br-about-banner-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 52%; }
+        .br-about-profile-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(290px, .6fr); gap: 30px; align-items: start; }
+        @media (max-width: 760px) {
+          .br-about-banner { height: 175px; }
+          .br-about-profile-grid { grid-template-columns: 1fr; gap: 24px; }
+        }
+      `}</style>
+      <main className="br-about">
       {/* =========================================================
           HERO IMAGE
       ========================================================= */}
-      <section
-        style={{
-          width: '100%',
-          background: '#f7faf7',
-          height: '240px',
-          overflow: 'hidden',
-        }}
-      >
-        <img
-          src="/branding/bodhi-rural-village-hero.png"
-          alt="Bodhi Rural village agriculture and rural livelihood activities"
-          style={{
-            width: '100%',
-            height: '240px',
-            objectFit: 'fill',
-            objectPosition: 'center',
-            display: 'block',
-          }}
-        />
+      <section className="br-about-banner">
+        <img className="br-about-banner-image" src="/branding/bodhi-rural-hero-v2.webp" alt="Rural fields and village landscape in India" />
       </section>
 
       {/* =========================================================
@@ -30,15 +25,7 @@ export default function Page() {
       ========================================================= */}
       <section style={{ padding: '45px 20px' }}>
         <div className="container">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'minmax(0, 1.4fr) minmax(290px, 0.6fr)',
-              gap: '30px',
-              alignItems: 'start',
-            }}
-          >
+          <div className="br-about-profile-grid">
             <div>
               <SectionLabel text="ABOUT THE COMPANY" />
 
@@ -380,6 +367,7 @@ export default function Page() {
         </div>
       </section>
     </main>
+    </>
   );
 }
 
