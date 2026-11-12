@@ -14,7 +14,8 @@ const organizationSchema = {
   email: 'ceo@brlps.co.in',
   address: {
     '@type': 'PostalAddress',
-    addressLocality: 'Islampur, Nalanda',
+    streetAddress: 'Islampur',
+    addressLocality: 'Nalanda',
     addressRegion: 'Bihar',
     postalCode: '801303',
     addressCountry: 'IN',
