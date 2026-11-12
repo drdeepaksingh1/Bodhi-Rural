@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Contact',
+  description: 'Contact Bodhi Rural for general enquiries, partnerships and conversations about agriculture and rural enterprise.',
+};
 
 export default function Page() {
   return (

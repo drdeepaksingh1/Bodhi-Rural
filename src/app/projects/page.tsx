@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Projects',
+  description: 'Explore Bodhi Rural\'s areas of activity across rural production, enterprise development, digital services and market access.',
+};
 
 const workAreas = [
   { index: '01', title: 'Farmer and producer livelihoods', body: 'Work across agriculture, horticulture, livestock, poultry, fisheries and allied rural activities.', href: '/farmer-network', link: 'Explore the farmer network' },
