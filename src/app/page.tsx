@@ -1,5 +1,10 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 const sectors = [
   { mark: '01', title: 'Agriculture & horticulture', detail: 'Crop production, horticulture and sustainable farming systems.' },

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'About',
   description: 'Learn about Bodhi Rural\'s work across agriculture, allied sectors, rural enterprises and livelihood development.',
+  alternates: { canonical: '/about' },
 };
 
 export default function Page() {
