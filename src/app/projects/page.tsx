@@ -4,6 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Projects',
   description: 'Explore Bodhi Rural\'s areas of activity across rural production, enterprise development, digital services and market access.',
+  alternates: { canonical: '/projects' },
 };
 
 const workAreas = [
