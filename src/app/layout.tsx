@@ -6,11 +6,11 @@ import Footer from '../components/Footer';
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Corporation',
-  '@id': 'https://bodhi-rural.vercel.app/#organization',
+  '@id': 'https://www.brlps.co.in/#organization',
   name: 'Bodhi Rural',
   legalName: 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED',
-  url: 'https://bodhi-rural.vercel.app',
-  logo: 'https://bodhi-rural.vercel.app/branding/bodhi-rural-logo.png',
+  url: 'https://www.brlps.co.in',
+  logo: 'https://www.brlps.co.in/branding/bodhi-rural-logo.png',
   email: 'ceo@brlps.co.in',
   address: {
     '@type': 'PostalAddress',
@@ -23,7 +23,7 @@ const organizationSchema = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://bodhi-rural.vercel.app'),
+  metadataBase: new URL('https://www.brlps.co.in'),
   title: {
     default: 'Bodhi Rural | Rural Livelihood & Agriculture',
     template: '%s | Bodhi Rural',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     description: 'Bodhi Rural Livelihood & Agri Private Limited connects agriculture, rural livelihoods, farm operations, services and market access across India.',
     images: [
       {
-        url: 'https://bodhi-rural.vercel.app/branding/bodhi-rural-hero-v2.webp',
+        url: 'https://www.brlps.co.in/branding/bodhi-rural-hero-v2.webp',
         width: 1200,
         height: 675,
         alt: 'Rural fields and village landscape in India',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Bodhi Rural | Rural Livelihood & Agriculture',
     description: 'Bodhi Rural Livelihood & Agri Private Limited connects agriculture, rural livelihoods, farm operations, services and market access across India.',
-    images: ['https://bodhi-rural.vercel.app/branding/bodhi-rural-hero-v2.webp'],
+    images: ['https://www.brlps.co.in/branding/bodhi-rural-hero-v2.webp'],
   },
 };
 
