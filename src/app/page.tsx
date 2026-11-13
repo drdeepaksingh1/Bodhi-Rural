@@ -4,7 +4,7 @@ import Link from 'next/link';
 const sectors = [
   { mark: '01', title: 'Agriculture & horticulture', detail: 'Crop production, horticulture and sustainable farming systems.' },
   { mark: '02', title: 'Livestock & dairy', detail: 'Livestock, dairy and allied rural production.' },
-  { mark: '03', title: 'Poultry', detail: 'Layer farming, poultry, hatchery and egg value chains.' },
+  { mark: '03', title: 'Allied production', detail: 'Livestock, aquaculture and other rural production systems.' },
   { mark: '04', title: 'Fisheries', detail: 'Fisheries, aquaculture and aquatic farming activities.' },
   { mark: '05', title: 'Food processing', detail: 'Aggregation, processing, packaging and value addition.' },
   { mark: '06', title: 'Agri-technology', detail: 'Digital tools for farm management and rural services.' },
@@ -14,7 +14,7 @@ const platforms = [
   {
     number: '01',
     name: 'BodhiFarm',
-    description: 'A digital workspace for farm, poultry, egg, feed and veterinary operations.',
+    description: 'A digital workspace for operations, reporting and coordination across rural value chains.',
     href: '/bodhifarm',
     action: 'Explore BodhiFarm',
   },
@@ -27,10 +27,10 @@ const platforms = [
   },
   {
     number: '03',
-    name: 'Farmer Network',
-    description: 'Connections to inputs, services, knowledge and market opportunities.',
+    name: 'Rural Network',
+    description: 'A platform connecting people, services and opportunities across rural value chains.',
     href: '/farmer-network',
-    action: 'Meet the network',
+    action: 'Explore the network',
   },
 ];
 
@@ -289,7 +289,7 @@ export default function Home() {
               <h2>Let’s build meaningful opportunities, together.</h2>
             </div>
             <div className="br-actions">
-              <Link href="/farmer-network" className="br-button">Join the farmer network <span aria-hidden="true">→</span></Link>
+              <Link href="/projects" className="br-button">Explore our projects <span aria-hidden="true">→</span></Link>
               <Link href="/contact" className="br-button secondary">Get in touch <span aria-hidden="true">↗</span></Link>
             </div>
           </div>

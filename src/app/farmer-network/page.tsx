@@ -1,2 +1,8 @@
+import type { Metadata } from 'next';
 
-export default function Page(){return <><main className="section"><div className="container"><h1>Farmer Network</h1><p className="muted">This Bodhi Rural module is part of the integrated platform. The first release provides the working interface; secure database workflows will be connected in Phase 2.</p><div className="grid"><div className="card"><h3>Operations</h3><p className="muted">Track activities, users and records through role-based dashboards.</p></div><div className="card"><h3>Reports</h3><p className="muted">Prepare filtered management information by state, district, block, cluster and farmer.</p></div><div className="card"><h3>Scale</h3><p className="muted">Designed for a 300-farmer pilot and future expansion.</p></div></div></div></main></>}
+export const metadata: Metadata = {
+  title: 'Rural Network',
+  description: 'A digital workspace for rural operations, information and regional programme coordination.',
+};
+
+export default function Page(){return <><main className="section"><div className="container"><h1>Rural Network</h1><p className="muted">An integrated digital workspace for rural operations, information and regional programme coordination.</p><div className="grid"><div className="card"><h3>Operations</h3><p className="muted">Track activities, users and records through role-based dashboards.</p></div><div className="card"><h3>Reports</h3><p className="muted">Prepare filtered management information across state, district, block, cluster and programme.</p></div><div className="card"><h3>Scale</h3><p className="muted">Designed to support phased programmes and future expansion.</p></div></div></div></main></>}
