@@ -176,7 +176,7 @@ export default function Footer() {
                 fontSize: '14px',
               }}
             >
-              Phone: +91 76679 79679
+              Phone: <a href="tel:+917667979679" style={{ color: '#ffffff', textDecoration: 'none' }}>+91 76679 79679</a>
               <br />
               Email:{' '}
               <a
@@ -216,7 +216,8 @@ export default function Footer() {
               }}
             >
               © 2026 BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED. All
-              rights reserved.
+              rights reserved.<br />
+               Designed by: Tattvabodhini Technologies Private Limited
             </small>
 
             <small
