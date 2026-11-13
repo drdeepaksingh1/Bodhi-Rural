@@ -83,16 +83,6 @@ export default function SellerInventoryPage() {
         return;
       }
 
-      // TEMPORARY DIAGNOSTIC LOG
-      console.log('SELLER DIAGNOSTIC - Browser Auth:', {
-        user_id: user.id,
-        email: user.email,
-        expected_user_id:
-          'cfc9ce6b-3344-4378-9f37-8eaadd7517df',
-        user_matches_expected:
-          user.id === 'cfc9ce6b-3344-4378-9f37-8eaadd7517df',
-      });
-
       // STEP 2: FIND SELLER PROFILE
       const {
         data: sellerData,
@@ -102,15 +92,6 @@ export default function SellerInventoryPage() {
         .select('id, seller_id, shop_name, status')
         .eq('user_id', user.id)
         .maybeSingle();
-
-      // TEMPORARY DIAGNOSTIC LOG
-      console.log('SELLER DIAGNOSTIC - Profile:', {
-        sellerData,
-        sellerError,
-        browser_user_id: user.id,
-        expected_user_id:
-          'cfc9ce6b-3344-4378-9f37-8eaadd7517df',
-      });
 
       if (sellerError) {
         throw new Error(
@@ -149,12 +130,6 @@ export default function SellerInventoryPage() {
       }
 
       const products = (productData || []) as Product[];
-
-      console.log('SELLER DIAGNOSTIC - Products:', {
-        seller_database_id: sellerData.id,
-        seller_code: sellerData.seller_id,
-        product_count: products.length,
-      });
 
       if (products.length === 0) {
         setRows([]);
@@ -198,11 +173,6 @@ export default function SellerInventoryPage() {
         if (inventory) {
           combined.push({ product, inventory });
         }
-      });
-
-      console.log('SELLER DIAGNOSTIC - Inventory:', {
-        inventory_records: inventoryData?.length || 0,
-        displayed_records: combined.length,
       });
 
       setRows(combined);
