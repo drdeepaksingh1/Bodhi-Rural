@@ -1,609 +1,201 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Learn about Bodhi Rural\'s work across agriculture, allied sectors, rural enterprises and livelihood development.',
+  description: 'Learn about Bodhi Rural Livelihood & Agri Private Limited, its work across agriculture, rural enterprise and livelihood development.',
   alternates: { canonical: '/about' },
 };
+
+const workAreas = [
+  {
+    number: '01',
+    title: 'Agriculture & natural resources',
+    description: 'Agriculture, horticulture, agroforestry and sustainable approaches to production and resource stewardship.',
+  },
+  {
+    number: '02',
+    title: 'Processing & market linkages',
+    description: 'Aggregation, storage, processing, packaging, distribution and market development for agricultural products.',
+  },
+  {
+    number: '03',
+    title: 'Rural enterprise & technology',
+    description: 'Digital services, agri-technology and enterprise development across connected rural value chains.',
+  },
+  {
+    number: '04',
+    title: 'Skills & livelihood development',
+    description: 'Training, capacity building, research, innovation and support for producer and community organisations.',
+  },
+];
+
+const valueChain = [
+  { number: '01', title: 'Production', detail: 'Support productive activity and responsible practices.' },
+  { number: '02', title: 'Aggregation', detail: 'Connect people, services and supply.' },
+  { number: '03', title: 'Value addition', detail: 'Enable processing, packaging and enterprise.' },
+  { number: '04', title: 'Market access', detail: 'Strengthen distribution and commercial links.' },
+];
+
+const companyDetails = [
+  ['Legal name', 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED'],
+  ['Corporate form', 'Company Limited by Shares'],
+  ['Registered office', 'Islampur, Nalanda, Bihar – 801303'],
+  ['Email', 'ceo@brlps.co.in'],
+];
 
 export default function Page() {
   return (
     <>
       <style>{`
         .br-about { color: #1c2b23; }
-        .br-about h2 { color: #123d2b; font: 500 clamp(30px, 3.8vw, 42px)/1.12 Georgia, 'Times New Roman', serif; letter-spacing: -.03em; }
-        .br-about-banner { width: 100%; height: 240px; overflow: hidden; background: #f7f7f2; }
-        .br-about-banner-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 52%; }
-        .br-about-profile-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(290px, .6fr); gap: 30px; align-items: start; }
-        @media (max-width: 760px) {
-          .br-about-banner { height: 175px; }
-          .br-about-profile-grid { grid-template-columns: 1fr; gap: 24px; }
+        .br-about * { box-sizing: border-box; }
+        .br-about-wrap { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+        .br-about-hero { padding: 84px 0; background: #f7f7f2; }
+        .br-about-hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 56px; align-items: center; }
+        .br-about-eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #1c6844; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        .br-about-eyebrow:before { content: ''; width: 26px; height: 1px; background: #876321; }
+        .br-about h1, .br-about h2 { color: #123d2b; font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-spacing: -.035em; }
+        .br-about h1 { max-width: 680px; margin: 18px 0; font-size: clamp(42px, 5.5vw, 68px); line-height: 1.04; }
+        .br-about-lead { max-width: 630px; margin: 0; color: #526157; font-size: 17px; line-height: 1.8; }
+        .br-about-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+        .br-about-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 14px; padding: 0 20px; background: #123d2b; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
+        .br-about-button.secondary { border: 1px solid #123d2b; background: transparent; color: #123d2b; }
+        .br-about-profile { padding: 30px; background: #123d2b; color: #fff; box-shadow: 0 20px 48px rgba(18,61,43,.12); }
+        .br-about-profile-label { margin: 0 0 24px; color: #d6e1d6; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+        .br-about-profile h2 { margin: 0 0 24px; color: #fff; font-size: 29px; line-height: 1.2; }
+        .br-about-detail { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.22); }
+        .br-about-detail dt { margin-bottom: 5px; color: #d6e1d6; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+        .br-about-detail dd { margin: 0; color: #fff; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+        .br-about-detail a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+        .br-about-section { padding: 82px 0; }
+        .br-about-section.tinted { background: #f7f7f2; }
+        .br-about-section-heading { max-width: 700px; margin-bottom: 36px; }
+        .br-about h2 { margin: 14px 0 0; font-size: clamp(32px, 4vw, 46px); line-height: 1.12; }
+        .br-about-section-heading p { margin: 16px 0 0; color: #617067; font-size: 15px; line-height: 1.8; }
+        .br-about-work-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #d9dfd8; border-left: 1px solid #d9dfd8; }
+        .br-about-work-card { min-height: 190px; padding: 25px; border-right: 1px solid #d9dfd8; border-bottom: 1px solid #d9dfd8; background: #fff; }
+        .br-about-work-number, .br-about-chain-number { color: #70501f; font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+        .br-about-work-card h3 { margin: 21px 0 9px; color: #123d2b; font: 24px/1.2 Georgia, 'Times New Roman', serif; }
+        .br-about-work-card p, .br-about-chain-card p { margin: 0; color: #617067; font-size: 14px; line-height: 1.7; }
+        .br-about-chain-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #d9dfd8; }
+        .br-about-chain-card { padding: 22px 18px 0 0; }
+        .br-about-chain-card h3 { margin: 17px 0 8px; color: #123d2b; font: 22px/1.2 Georgia, 'Times New Roman', serif; }
+        .br-about-cta { padding: 68px 0; background: #123d2b; color: #fff; }
+        .br-about-cta-row { display: flex; align-items: end; justify-content: space-between; gap: 30px; }
+        .br-about-cta .br-about-eyebrow { color: #e4eadf; }
+        .br-about-cta h2 { max-width: 650px; margin: 14px 0 0; color: #fff; font-size: clamp(32px, 4vw, 44px); }
+        .br-about-cta .br-about-button { flex-shrink: 0; background: #fff; color: #123d2b; }
+        @media (max-width: 820px) {
+          .br-about-hero-grid { grid-template-columns: 1fr; gap: 34px; }
+          .br-about-profile { max-width: 620px; }
+          .br-about-chain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 18px; }
+          .br-about-cta-row { display: block; }
+          .br-about-cta .br-about-button { margin-top: 24px; }
+        }
+        @media (max-width: 600px) {
+          .br-about-wrap { width: min(100% - 36px, 540px); }
+          .br-about-hero { padding: 56px 0; }
+          .br-about-section { padding: 60px 0; }
+          .br-about-work-grid { grid-template-columns: 1fr; }
+          .br-about-work-card { min-height: 0; padding: 21px; }
+          .br-about-chain-card { padding-right: 6px; }
+          .br-about-cta { padding: 56px 0; }
+        }
+        @media (max-width: 400px) {
+          .br-about-wrap { width: calc(100% - 30px); }
+          .br-about-links { display: grid; grid-template-columns: 1fr; }
+          .br-about-button { width: 100%; }
+          .br-about-profile { padding: 23px; }
+          .br-about-chain-grid { grid-template-columns: 1fr; gap: 18px; }
         }
       `}</style>
       <main className="br-about">
-      {/* =========================================================
-          HERO IMAGE
-      ========================================================= */}
-      <section className="br-about-banner">
-        <img className="br-about-banner-image" src="/branding/bodhi-rural-hero-v2.webp" alt="Rural fields and village landscape in India" />
-      </section>
-
-      {/* =========================================================
-          COMPANY PROFILE
-      ========================================================= */}
-      <section style={{ padding: '45px 20px' }}>
-        <div className="container">
-          <div className="br-about-profile-grid">
+        <section className="br-about-hero">
+          <div className="br-about-wrap br-about-hero-grid">
             <div>
-              <SectionLabel text="ABOUT THE COMPANY" />
-
-              <h2>Our rural livelihood and agriculture platform</h2>
-
-              <p
-                className="muted"
-                style={{
-                  lineHeight: 1.7,
-                  marginBottom: '12px',
-                }}
-              >
-                BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED is established
-                as a company limited by shares with its registered office in
-                Bihar.
+              <span className="br-about-eyebrow">About the company</span>
+              <h1>Rural enterprise, built through connection.</h1>
+              <p className="br-about-lead">
+                Bodhi Rural Livelihood &amp; Agri Private Limited is a Bihar-based
+                company working across agriculture, rural enterprise and livelihood
+                development. We connect capabilities across the value chain to help
+                create practical, lasting opportunities.
               </p>
+              <div className="br-about-links">
+                <a className="br-about-button" href="#our-work">Explore our areas of work <span aria-hidden="true">↓</span></a>
+                <Link className="br-about-button secondary" href="/contact">Contact Bodhi Rural <span aria-hidden="true">↗</span></Link>
+              </div>
+            </div>
+            <aside className="br-about-profile" aria-labelledby="br-about-profile-title">
+              <p className="br-about-profile-label">Company profile</p>
+              <h2 id="br-about-profile-title">Bodhi Rural Livelihood &amp; Agri Private Limited</h2>
+              <dl>
+                {companyDetails.map(([label, value]) => (
+                  <div className="br-about-detail" key={label}>
+                    <dt>{label}</dt>
+                    <dd>{label === 'Email' ? <a href="mailto:ceo@brlps.co.in">{value}</a> : value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </aside>
+          </div>
+        </section>
 
-              <p
-                className="muted"
-                style={{
-                  lineHeight: 1.7,
-                  marginBottom: '12px',
-                }}
-              >
-                The company operates across a broad range of agriculture and
-                rural development activities, including agriculture,
-                horticulture, floriculture, agroforestry, food processing,
-                livestock, poultry, fisheries, agricultural inputs, feed,
-                agri-technology and rural livelihood promotion.
-              </p>
-
-              <p
-                className="muted"
-                style={{
-                  lineHeight: 1.7,
-                  marginBottom: 0,
-                }}
-              >
-                The company is also structured to support Farmer Producer
-                Organizations, Self Help Groups, cooperatives and rural
-                producer groups, together with training, capacity building,
-                research, innovation and rural enterprise development.
+        <section id="our-work" className="br-about-section">
+          <div className="br-about-wrap">
+            <div className="br-about-section-heading">
+              <span className="br-about-eyebrow">Our areas of work</span>
+              <h2>Experience across connected rural sectors.</h2>
+              <p>
+                Our company scope spans production, services and value addition,
+                bringing together the activities that support a stronger rural economy.
               </p>
             </div>
-
-            <div
-              style={{
-                background: '#f7faf7',
-                border: '1px solid #dfe9e1',
-                borderRadius: '12px',
-                padding: '22px',
-              }}
-            >
-              <h3
-                style={{
-                  color: '#145c2b',
-                  marginTop: 0,
-                  marginBottom: '16px',
-                }}
-              >
-                Company Profile
-              </h3>
-
-              <InfoRow
-                label="Company Name"
-                value="BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED"
-              />
-
-              <InfoRow
-                label="Registered State"
-                value="Bihar"
-              />
-
-              <InfoRow
-                label="Registered Office"
-                value="Islampur, Nalanda, Bihar – 801303"
-              />
-
-              <InfoRow
-                label="Corporate Form"
-                value="Company Limited by Shares"
-              />
-
-              <InfoRow
-                label="Website"
-                value="www.brlps.co.in"
-              />
-
-              <InfoRow
-                label="Email"
-                value="ceo@brlps.co.in"
-                last
-              />
+            <div className="br-about-work-grid">
+              {workAreas.map((area) => (
+                <article className="br-about-work-card" key={area.number}>
+                  <span className="br-about-work-number">{area.number}</span>
+                  <h3>{area.title}</h3>
+                  <p>{area.description}</p>
+                </article>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* =========================================================
-          BUSINESS OBJECTS
-      ========================================================= */}
-      <section
-        style={{
-          background: '#f7f9f7',
-          padding: '45px 20px',
-        }}
-      >
-        <div className="container">
-          <SectionLabel text="BUSINESS ACTIVITIES" />
-
-          <h2>Our areas of activity</h2>
-
-          <p
-            className="muted"
-            style={{
-              maxWidth: '760px',
-              marginBottom: '24px',
-            }}
-          >
-            The company operates across agriculture, allied sectors and
-            rural livelihood activities, creating opportunities for
-            production, value addition, enterprise development and market
-            linkages.
-          </p>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '14px',
-            }}
-          >
-            <ObjectCard
-              icon="🌾"
-              title="Agriculture & Horticulture"
-              text="Agriculture, horticulture, floriculture, agroforestry and cultivation of cereals, pulses, oilseeds, fruits, vegetables, spices and other crops."
-            />
-
-            <ObjectCard
-              icon="♻️"
-              title="Sustainable Agriculture"
-              text="Organic farming, natural farming, regenerative agriculture and sustainable agricultural practices."
-            />
-
-            <ObjectCard
-              icon="🐄"
-              title="Livestock & Dairy"
-              text="Dairy farming, milk production and livestock activities including goat, sheep and other livestock enterprises."
-            />
-
-            <ObjectCard
-              icon="🐔"
-              title="Poultry & Hatchery"
-              text="Poultry farming, hatchery operations, livestock breeding and related rural production systems."
-            />
-
-            <ObjectCard
-              icon="🐟"
-              title="Fisheries & Aquaculture"
-              text="Fisheries, aquaculture, fish farming, shrimp farming and other aquatic farming activities."
-            />
-
-            <ObjectCard
-              icon="🌽"
-              title="Feed & Fodder"
-              text="Cattle feed, poultry feed, fish feed, mineral mixtures, feed supplements, fodder and silage production."
-            />
-
-            <ObjectCard
-              icon="🥬"
-              title="Food Processing"
-              text="Processing, dehydration, cold storage, milling, oil extraction, packaging and value addition of agricultural products."
-            />
-
-            <ObjectCard
-              icon="📱"
-              title="Agri-Technology"
-              text="Digital platforms, mobile applications, farm management systems, IoT solutions and agritech services."
-            />
-
-            <ObjectCard
-              icon="🌱"
-              title="Agricultural Inputs"
-              text="Seeds, bio-fertilizers, organic manure, farm machinery, tools and other agricultural inputs."
-            />
-
-            <ObjectCard
-              icon="🤝"
-              title="FPOs, SHGs & Cooperatives"
-              text="Organization and support for Farmer Producer Organizations, Self Help Groups, cooperatives and rural producer groups."
-            />
-
-            <ObjectCard
-              icon="🎓"
-              title="Training & Capacity Building"
-              text="Skill development, training, capacity building and rural livelihood promotion programmes."
-            />
-
-            <ObjectCard
-              icon="🚀"
-              title="Rural Enterprises"
-              text="Agrientrepreneurship, rural enterprises and livelihood-based micro enterprises."
-            />
+        <section className="br-about-section tinted">
+          <div className="br-about-wrap">
+            <div className="br-about-section-heading">
+              <span className="br-about-eyebrow">Our approach</span>
+              <h2>From production to market access.</h2>
+              <p>
+                We focus on connecting capabilities at each stage, from productive
+                activity and aggregation through value addition and market linkages.
+              </p>
+            </div>
+            <div className="br-about-chain-grid">
+              {valueChain.map((stage) => (
+                <article className="br-about-chain-card" key={stage.number}>
+                  <span className="br-about-chain-number">{stage.number}</span>
+                  <h3>{stage.title}</h3>
+                  <p>{stage.detail}</p>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* =========================================================
-          OUR APPROACH
-      ========================================================= */}
-      <section style={{ padding: '45px 20px' }}>
-        <div className="container">
-          <SectionLabel text="OUR APPROACH" />
-
-          <h2>From production to market</h2>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(240px, 1fr))',
-              gap: '14px',
-              marginTop: '22px',
-            }}
-          >
-            <FeatureCard
-              icon="🌾"
-              title="Production"
-              text="Supporting agricultural, livestock, poultry, fisheries and other rural production activities."
-            />
-
-            <FeatureCard
-              icon="🏭"
-              title="Processing"
-              text="Creating opportunities for aggregation, processing, packaging, preservation and value addition."
-            />
-
-            <FeatureCard
-              icon="📦"
-              title="Supply & Distribution"
-              text="Building systems for agricultural inputs, products, trading, distribution and marketing."
-            />
-
-            <FeatureCard
-              icon="🛒"
-              title="Digital Commerce"
-              text="Using digital platforms and e-commerce systems to connect rural products and services with markets."
-            />
-
-            <FeatureCard
-              icon="🔬"
-              title="Research & Innovation"
-              text="Supporting research, demonstrations and innovation in agriculture, livestock, feed, food and agri-technology."
-            />
-
-            <FeatureCard
-              icon="🌍"
-              title="Market Linkages"
-              text="Developing trading, distribution, marketing and export-import opportunities for eligible products."
-            />
+        <section className="br-about-cta">
+          <div className="br-about-wrap br-about-cta-row">
+            <div>
+              <span className="br-about-eyebrow">Work with us</span>
+              <h2>Let’s build meaningful opportunities, together.</h2>
+            </div>
+            <Link className="br-about-button" href="/contact">Get in touch <span aria-hidden="true">↗</span></Link>
           </div>
-        </div>
-      </section>
-
-      {/* =========================================================
-          RURAL DEVELOPMENT
-      ========================================================= */}
-      <section
-        style={{
-          background: '#145c2b',
-          padding: '50px 20px 55px',
-        }}
-      >
-        <div className="container">
-          <div
-            style={{
-              maxWidth: '800px',
-              marginBottom: '25px',
-            }}
-          >
-            <SectionLabel
-              text="RURAL DEVELOPMENT"
-              light
-            />
-
-            <h2
-              style={{
-                color: '#ffffff',
-                marginBottom: '14px',
-              }}
-            >
-              Building connected rural ecosystems
-            </h2>
-
-            <p
-              style={{
-                color: '#f0f7f2',
-                fontSize: '17px',
-                lineHeight: 1.7,
-                margin: 0,
-              }}
-            >
-              The company focuses on rural livelihood promotion, support to
-              producer organizations, training and capacity building,
-              development initiatives, research and innovation, and the
-              promotion of rural enterprises.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '14px',
-            }}
-          >
-            <DevelopmentCard
-              title="Farmer Networks"
-              text="Connecting producers and rural producer groups."
-            />
-
-            <DevelopmentCard
-              title="Livelihood Promotion"
-              text="Supporting productive rural livelihood opportunities."
-            />
-
-            <DevelopmentCard
-              title="Capacity Building"
-              text="Training, skill development and knowledge systems."
-            />
-
-            <DevelopmentCard
-              title="Rural Enterprises"
-              text="Promoting agriculture-linked entrepreneurship."
-            />
-          </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
     </>
-  );
-}
-
-/* =========================================================
-   SECTION LABEL
-========================================================= */
-
-function SectionLabel({
-  text,
-  light = false,
-}: {
-  text: string;
-  light?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        color: light ? '#cfe8d5' : '#145c2b',
-        fontWeight: 700,
-        fontSize: '12px',
-        letterSpacing: '1px',
-        textTransform: 'uppercase',
-        marginBottom: '7px',
-      }}
-    >
-      {text}
-    </div>
-  );
-}
-
-/* =========================================================
-   COMPANY INFO ROW
-========================================================= */
-
-function InfoRow({
-  label,
-  value,
-  last = false,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        paddingBottom: last ? 0 : '10px',
-        marginBottom: last ? 0 : '10px',
-        borderBottom: last
-          ? 'none'
-          : '1px solid #dfe8e1',
-      }}
-    >
-      <div
-        style={{
-          color: '#6c786f',
-          fontSize: '10px',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          marginBottom: '3px',
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          color: '#1d3324',
-          lineHeight: 1.4,
-          fontSize: '14px',
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   BUSINESS ACTIVITY CARD
-========================================================= */
-
-function ObjectCard({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid #e1e9e3',
-        borderRadius: '10px',
-        padding: '18px',
-        boxShadow:
-          '0 2px 8px rgba(20, 92, 43, 0.05)',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '26px',
-          marginBottom: '6px',
-        }}
-      >
-        {icon}
-      </div>
-
-      <h3
-        style={{
-          margin: '0 0 7px',
-          fontSize: '17px',
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        className="muted"
-        style={{
-          lineHeight: 1.55,
-          margin: 0,
-          fontSize: '14px',
-        }}
-      >
-        {text}
-      </p>
-    </div>
-  );
-}
-
-/* =========================================================
-   APPROACH CARD
-========================================================= */
-
-function FeatureCard({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      style={{
-        border: '1px solid #e1e9e3',
-        borderRadius: '10px',
-        padding: '18px',
-        background: '#ffffff',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '26px',
-          marginBottom: '6px',
-        }}
-      >
-        {icon}
-      </div>
-
-      <h3
-        style={{
-          margin: '0 0 6px',
-          fontSize: '17px',
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        className="muted"
-        style={{
-          lineHeight: 1.55,
-          margin: 0,
-          fontSize: '14px',
-        }}
-      >
-        {text}
-      </p>
-    </div>
-  );
-}
-
-/* =========================================================
-   RURAL DEVELOPMENT CARD
-========================================================= */
-
-function DevelopmentCard({
-  title,
-  text,
-}: {
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      style={{
-        background: '#ffffff',
-        borderRadius: '10px',
-        padding: '20px',
-      }}
-    >
-      <h3
-        style={{
-          color: '#145c2b',
-          margin: '0 0 6px',
-          fontSize: '17px',
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          color: '#526157',
-          lineHeight: 1.55,
-          margin: 0,
-          fontSize: '14px',
-        }}
-      >
-        {text}
-      </p>
-    </div>
   );
 }
