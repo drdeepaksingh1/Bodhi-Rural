@@ -143,6 +143,7 @@ export default function SiteHeader() {
 
           <Link
             href="/login"
+            aria-current={isActive('/login') ? 'page' : undefined}
             style={{
               background: '#ffffff',
               color: '#145c2b',
@@ -245,6 +246,7 @@ export default function SiteHeader() {
           <Link
             href="/login"
             onClick={closeMenu}
+            aria-current={isActive('/login') ? 'page' : undefined}
             style={{
               display: 'block',
               marginTop: '8px',
@@ -272,7 +274,7 @@ export default function SiteHeader() {
           display: none !important;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1080px) {
           .desktopNav {
             display: none !important;
           }
@@ -309,6 +311,7 @@ function NavLink({
   return (
     <Link
       href={href}
+      aria-current={active ? 'page' : undefined}
       style={{
         color: '#ffffff',
         textDecoration: 'none',
@@ -344,6 +347,7 @@ function MobileLink({
     <Link
       href={href}
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       style={{
         display: 'block',
         color: '#ffffff',
