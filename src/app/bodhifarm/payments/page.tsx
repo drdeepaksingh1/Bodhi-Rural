@@ -186,12 +186,28 @@ export default function FarmerPaymentsPage() {
     const quality = Number(qualityDeduction || 0);
     const other = Number(otherDeduction || 0);
 
-    if (!procurementFarmer || !eggs || eggs < 1 || rate < 0) {
-      setError('Select a farmer and enter valid saleable eggs and rate.');
+    if (
+      !procurementFarmer ||
+      !Number.isInteger(eggs) ||
+      eggs < 1 ||
+      !Number.isFinite(rate) ||
+      rate < 0
+    ) {
+      setError('Select a farmer and enter a whole-number egg quantity and a valid non-negative rate.');
       return;
     }
 
-    if (procurementNet < 0) {
+    if (
+      !Number.isFinite(quality) ||
+      !Number.isFinite(other) ||
+      quality < 0 ||
+      other < 0
+    ) {
+      setError('Quality and other deductions must be valid non-negative amounts.');
+      return;
+    }
+
+    if (quality + other > eggs * rate) {
       setError('Deductions cannot exceed the gross procurement amount.');
       return;
     }
