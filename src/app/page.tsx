@@ -4,7 +4,7 @@ import Link from 'next/link';
 const sectors = [
   { mark: '01', title: 'Agriculture & horticulture', detail: 'Crop production, horticulture and sustainable farming systems.' },
   { mark: '02', title: 'Livestock & dairy', detail: 'Livestock, dairy and allied rural production.' },
-  { mark: '03', title: 'Allied production', detail: 'Livestock, aquaculture and other rural production systems.' }
+  { mark: '03', title: 'Allied production', detail: 'Livestock, aquaculture and other rural production systems.' },
   { mark: '04', title: 'Fisheries', detail: 'Fisheries, aquaculture and aquatic farming activities.' },
   { mark: '05', title: 'Food processing', detail: 'Aggregation, processing, packaging and value addition.' },
   { mark: '06', title: 'Agri-technology', detail: 'Digital tools for farm management and rural services.' },
