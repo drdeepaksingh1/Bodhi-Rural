@@ -176,7 +176,7 @@ export default function Footer() {
                 fontSize: '14px',
               }}
             >
-              Phone: +91 76679 79679
+              Phone: <a href="tel:+917667979679" style={linkStyle}>+91 76679 79679</a>
               <br />
               Email:{' '}
               <a
