@@ -216,7 +216,8 @@ export default function Footer() {
               }}
             >
               © 2026 BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED. All
-              rights reserved.
+              rights reserved.<br />
+               Designed by: Tattvabodhini Technologies Private Limited
             </small>
 
             <small
