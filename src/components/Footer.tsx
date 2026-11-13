@@ -117,7 +117,7 @@ export default function Footer() {
               </Link>
 
               <Link href="/farmer-network" style={linkStyle}>
-                Farmer Network
+                Rural Network
               </Link>
 
               <Link href="/projects" style={linkStyle}>
