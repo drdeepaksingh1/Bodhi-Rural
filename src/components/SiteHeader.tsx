@@ -124,7 +124,7 @@ export default function SiteHeader() {
             href="/farmer-network"
             active={isActive('/farmer-network')}
           >
-            Farmers
+            Rural Network
           </NavLink>
 
           <NavLink
@@ -223,7 +223,7 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/farmer-network')}
           >
-            Farmers
+            Rural Network
           </MobileLink>
 
           <MobileLink
