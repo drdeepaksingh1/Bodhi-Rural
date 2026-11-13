@@ -177,11 +177,6 @@ export default function FarmerPaymentsPage() {
     setLoading(false);
   }
 
-  async function currentUserId() {
-    const { data } = await supabase.auth.getUser();
-    return data.user?.id || null;
-  }
-
   async function saveProcurement() {
     setMessage('');
     setError('');
@@ -203,22 +198,19 @@ export default function FarmerPaymentsPage() {
 
     setSaving(true);
 
-    const userId = await currentUserId();
-
-    const { error: insertError } = await supabase
-      .from('egg_procurement')
-      .insert({
-        farmer_id: procurementFarmer,
-        batch_id: procurementBatch || null,
-        collection_date: collectionDate,
-        saleable_eggs: eggs,
-        rate_per_egg: rate,
-        quality_deduction: quality,
-        other_deduction: other,
-        remarks: procurementRemarks || null,
-        status: 'PENDING',
-        created_by: userId,
-      });
+    const { error: insertError } = await supabase.rpc(
+      'submit_egg_procurement',
+      {
+        p_farmer_id: procurementFarmer,
+        p_batch_id: procurementBatch || null,
+        p_collection_date: collectionDate,
+        p_saleable_eggs: eggs,
+        p_rate_per_egg: rate,
+        p_quality_deduction: quality,
+        p_other_deduction: other,
+        p_remarks: procurementRemarks || null,
+      }
+    );
 
     if (insertError) {
       setError(insertError.message);
@@ -237,19 +229,12 @@ export default function FarmerPaymentsPage() {
   async function approveProcurement(id: string) {
     setMessage('');
     setError('');
-    const userId = await currentUserId();
+    const { error: rpcError } = await supabase.rpc(
+      'approve_egg_procurement',
+      { p_procurement_id: id }
+    );
 
-    const { error: updateError } = await supabase
-      .from('egg_procurement')
-      .update({
-        status: 'APPROVED',
-        approved_by: userId,
-        approved_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('status', 'PENDING');
-
-    if (updateError) setError(updateError.message);
+    if (rpcError) setError(rpcError.message);
     else {
       setMessage('Procurement approved and posted to farmer ledger.');
       await loadData();
