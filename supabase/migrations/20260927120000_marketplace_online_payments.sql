@@ -1,6 +1,7 @@
 -- Commercial settings default to zero until the business selects approved rates.
 create table if not exists public.marketplace_commercial_settings (
   id smallint primary key default 1 check (id = 1),
+  online_payments_enabled boolean not null default false,
   delivery_fee numeric(12,2) not null default 0 check (delivery_fee >= 0),
   free_delivery_threshold numeric(12,2) check (free_delivery_threshold is null or free_delivery_threshold >= 0),
   seller_commission_percent numeric(5,2) not null default 0 check (seller_commission_percent between 0 and 100),
@@ -14,7 +15,7 @@ grant all on public.marketplace_commercial_settings to service_role;
 create or replace view public.marketplace_public_checkout_settings
 with (security_barrier = true)
 as
-select delivery_fee, free_delivery_threshold
+select online_payments_enabled, delivery_fee, free_delivery_threshold
 from public.marketplace_commercial_settings where id = 1;
 revoke all on public.marketplace_public_checkout_settings from public;
 grant select on public.marketplace_public_checkout_settings to anon, authenticated;
@@ -164,6 +165,7 @@ set search_path = pg_catalog, public
 as $function$
 declare
   v_user_id uuid;
+  v_online_payments_enabled boolean := false;
   v_cart_id uuid;
   v_expected_count integer;
   v_processed_count integer := 0;
@@ -186,6 +188,13 @@ declare
 begin
   v_user_id := auth.uid();
   if v_user_id is null then raise exception 'Authentication is required to place an order.'; end if;
+
+  select coalesce(s.online_payments_enabled, false) into v_online_payments_enabled
+  from public.marketplace_commercial_settings s where s.id = 1;
+  if not v_online_payments_enabled then
+    raise exception 'Online marketplace checkout is not enabled.';
+  end if;
+
   if p_checkout_request_id is null then raise exception 'A checkout request ID is required.'; end if;
   if p_delivery_method is null or p_delivery_method not in ('STANDARD', 'EXPRESS', 'PICKUP') then
     raise exception 'Select a valid delivery method.';
