@@ -23,7 +23,7 @@ https://brlps.co.in/api/bodhimart/payments/webhook
 
 Subscribe to `payment.captured` and `payment.failed`. Use the exact same webhook secret in Vercel. Enable automatic payment capture in the Razorpay dashboard so successful customer payments reach the captured state. The customer checkout remains disabled until all server credentials and the database migration are present.
 
-Add `CRON_SECRET` as a strong random secret in Vercel Preview and Production. The Vercel Cron job at `/api/cron/expire-marketplace-orders` runs every ten minutes and expires unpaid orders after 30 minutes. Vercel sends this value as a Bearer token to the protected endpoint. Confirm that your Vercel plan supports the configured cron frequency.
+The `/api/cron/expire-marketplace-orders` endpoint requires `CRON_SECRET` and must be called every ten minutes to expire unpaid orders after the 30-minute retry window. This Vercel project is on the Hobby plan, which rejected the ten-minute Vercel Cron schedule. No cron schedule is currently configured. Before enabling online checkout, either upgrade the Vercel plan to one that supports this schedule or configure an external scheduler to call the production endpoint every ten minutes with `Authorization: Bearer <CRON_SECRET>`. Do not expose this secret in browser code. Until a scheduler is configured and verified, unpaid-order expiry is not automated and this payment feature must not be enabled.
 
 ## Database migration
 
@@ -48,20 +48,18 @@ Replace those example values with the approved rupee delivery charge, optional f
 
 1. Apply the database migration.
 2. Add Razorpay test credentials and the Supabase service-role key to Vercel Preview.
-3. Create a test-mode webhook and confirm it points to the endpoint above.
-4. Make a test purchase and confirm the marketplace order changes to PAID only after capture.
-5. Configure the approved delivery and commission values.
-6. After merchant onboarding and test sign-off, replace Preview/Test credentials with Live credentials in Vercel Production and redeploy.
+3. Configure a test-mode webhook and verify it points to the endpoint above.
+4. Configure and verify a scheduler that calls the protected order-expiry endpoint every ten minutes.
+5. Make test purchases and verify payment success, failed-attempt retry, webhook replay, concurrent checkout, unpaid-order expiry and reservation release, and seller fulfilment blocking.
+6. Configure the approved delivery and commission values.
+7. After merchant onboarding and test sign-off, replace Preview/Test credentials with Live credentials in Vercel Production and redeploy.
 
 This branch records captured payments and supports customer retries/order history. Refund initiation and automated seller payouts/splits are not enabled; refund decisions and seller settlements remain manual until the marketplace's support and settlement policy is finalized.
-
 
 ## Stock reservation and unpaid-order expiry
 
 - Checkout validates available stock and increases `marketplace_inventory.reserved_quantity`; it does not reduce physical `stock_quantity`.
 - Only a server-verified captured payment converts the reservation into a physical stock deduction and reduces the reserved quantity.
 - A failed payment attempt is recorded but does not immediately cancel the order, because Razorpay permits another attempt against the same checkout order. The customer may retry during the 30-minute payment window.
-- Any unpaid order that remains in `PLACED` status for 30 minutes—including orders with failed or abandoned payment attempts—is cancelled and its reservation released by the protected Vercel Cron endpoint.
+- Any unpaid order that remains in `PLACED` status for 30 minutes—including orders with failed or abandoned payment attempts—is cancelled and its reservation released by the protected expiry endpoint, when its scheduler is configured.
 - Seller fulfilment status changes are blocked by a database trigger until the parent marketplace order has `payment_status = 'PAID'`.
-
-The cron endpoint requires `CRON_SECRET`. If the Vercel plan does not support a ten-minute schedule, use a supported schedule or an external scheduler that sends `Authorization: Bearer <CRON_SECRET>`. Do not expose this secret in browser code.
