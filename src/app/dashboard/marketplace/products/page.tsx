@@ -1,5 +1,6 @@
 
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
 import LogoutButton from '../../../components/LogoutButton';
@@ -7,6 +8,32 @@ import LogoutButton from '../../../components/LogoutButton';
 const ALLOWED_ROLES = [
   'SUPER_ADMIN',
 ];
+
+const PAGE_PATH = '/dashboard/marketplace/products';
+
+async function setProductStatus(formData: FormData) {
+  'use server';
+
+  const productId = String(formData.get('product_id') || '').trim();
+  const status = String(formData.get('status') || '').trim().toUpperCase();
+
+  if (!productId) throw new Error('Product ID is required.');
+  if (!['ACTIVE', 'INACTIVE'].includes(status)) {
+    throw new Error('Only ACTIVE or INACTIVE status is permitted.');
+  }
+
+  const { supabase } = await getAuthorizedAdmin();
+  const { error } = await supabase.rpc('admin_set_marketplace_product_status', {
+    p_product_id: productId,
+    p_status: status,
+  });
+
+  if (error) throw new Error(`Unable to update product status: ${error.message}`);
+
+  revalidatePath(PAGE_PATH);
+  revalidatePath('/bodhimart/products');
+  redirect(`${PAGE_PATH}?updated=1`);
+}
 
 type Product = {
   id: string;
@@ -125,6 +152,7 @@ export default async function ProductManagementPage({
     q?: string;
     status?: string;
     seller?: string;
+    updated?: string;
   };
 }) {
   const { supabase, user, profile, role } =
@@ -253,6 +281,12 @@ export default async function ProductManagementPage({
             <strong>Role:</strong> {role.name} ({role.code})
           </p>
         </section>
+
+        {searchParams?.updated === '1' && (
+          <section role="status" className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">
+            Product status updated successfully.
+          </section>
+        )}
 
         {/* SUMMARY */}
         <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -393,7 +427,7 @@ export default async function ProductManagementPage({
               </h2>
 
               <p className="mt-1 text-xs text-gray-500">
-                Read-only administrative view
+                Administrative product visibility controls
               </p>
             </div>
 
@@ -553,9 +587,31 @@ export default async function ProductManagementPage({
                       </div>
                     )}
 
-                    <p className="mt-5 border-t border-gray-100 pt-3 text-xs text-gray-500">
-                      Product record is displayed in read-only mode.
-                    </p>
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                      <p className="text-xs text-gray-500">
+                        {product.status === 'ACTIVE'
+                          ? 'This product is visible to customers when its seller is active.'
+                          : 'This product is not visible in the customer catalogue.'}
+                      </p>
+                      <form action={setProductStatus}>
+                        <input type="hidden" name="product_id" value={product.id} />
+                        <input
+                          type="hidden"
+                          name="status"
+                          value={product.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}
+                        />
+                        <button
+                          type="submit"
+                          className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${
+                            product.status === 'ACTIVE'
+                              ? 'bg-red-600 hover:bg-red-700'
+                              : 'bg-green-700 hover:bg-green-800'
+                          }`}
+                        >
+                          {product.status === 'ACTIVE' ? 'Deactivate Product' : 'Activate Product'}
+                        </button>
+                      </form>
+                    </div>
                   </article>
                 );
               })}
@@ -570,11 +626,11 @@ export default async function ProductManagementPage({
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-gray-600">
-            This module is restricted to SUPER_ADMIN. Product records
-            are retrieved using the authenticated Supabase client.
-            Existing seller policies, product ownership, inventory
-            and checkout operations remain unchanged. No product
-            records are modified by this page.
+            This module is restricted to SUPER_ADMIN. Product records are retrieved using the authenticated Supabase client.
+            Visibility changes are performed by a database function that verifies
+            the active SUPER_ADMIN role. Activating or deactivating a listing
+            updates its status and approval metadata; inventory quantities
+            and seller ownership are not changed.
           </p>
         </section>
 
