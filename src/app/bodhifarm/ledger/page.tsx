@@ -17,6 +17,7 @@ type Summary = {
   expenses: number | null;
   payments: number | null;
   outstanding_balance: number | null;
+  farmer_status?: string | null;
 };
 
 type LedgerEntry = {
@@ -56,7 +57,9 @@ export default function FarmerLedgerPage() {
       return;
     }
 
-    const summaryRows = (summaryData || []) as Summary[];
+    const summaryRows = ((summaryData || []) as Summary[]).filter(
+      (row) => row.farmer_status === 'ACTIVE'
+    );
     const farmerRows: Farmer[] = summaryRows.map((row) => ({
       id: row.farmer_id,
       farmer_id: row.farmer_code || '',
