@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
     '/bodhimart/seller/products',
     '/bodhimart/seller/inventory',
     '/bodhimart/seller/orders',
+    '/bodhimart/admin/sellers',
   ];
 
   const isProtectedRoute = protectedRoutes.some(
@@ -79,6 +80,7 @@ export const config = {
     '/bodhimart/seller/products/:path*',
     '/bodhimart/seller/inventory/:path*',
     '/bodhimart/seller/orders/:path*',
+    '/bodhimart/admin/sellers/:path*',
     '/login',
   ],
 };
