@@ -41,6 +41,10 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = [
     '/dashboard',
     '/bodhifarm',
+    '/bodhimart/seller/dashboard',
+    '/bodhimart/seller/products',
+    '/bodhimart/seller/inventory',
+    '/bodhimart/seller/orders',
   ];
 
   const isProtectedRoute = protectedRoutes.some(
@@ -71,6 +75,10 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/bodhifarm/:path*',
+    '/bodhimart/seller/dashboard/:path*',
+    '/bodhimart/seller/products/:path*',
+    '/bodhimart/seller/inventory/:path*',
+    '/bodhimart/seller/orders/:path*',
     '/login',
   ],
 };
