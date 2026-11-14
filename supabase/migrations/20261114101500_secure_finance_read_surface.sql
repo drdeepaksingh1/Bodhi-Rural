@@ -3,7 +3,6 @@
 -- finance users do not need broad SELECT access to the sensitive farmers table.
 -- The WHERE clause is the explicit authorization boundary for every returned row.
 
-BEGIN;
 
 CREATE OR REPLACE VIEW public.farmer_finance_summary
 WITH (security_barrier = true, security_invoker = false)
@@ -89,4 +88,3 @@ USING (
     OR public.farmer_in_user_scope(farmer_id)
 );
 
-COMMIT;
