@@ -101,3 +101,25 @@ The production workflow must not assume who physically delivers the parcel. Conf
 **Recommended default:** central logistics/courier-managed delivery for stronger separation of duties. If BodhiMart currently expects sellers to deliver locally themselves, use seller-managed delivery but require recipient confirmation and private proof capture.
 
 Until the operating model and proof requirements are selected, keep this document as design only. No migration, status mutation, or live order update is included in this change.
+
+## 8. Delivery assignment and existing role integration
+
+A follow-up schema review confirmed that the database already contains a `DELIVERY` role and the main dashboard recognizes that role. There is not yet a delivery assignment table, assigned-job queue, or delivery-specific RPC workflow.
+
+If central logistics/courier-managed delivery is approved, reuse the existing `DELIVERY` role rather than creating a duplicate role. The role's existence alone is not sufficient authorization: each job must be explicitly assigned to an active profile whose current role is `DELIVERY`.
+
+Proposed assignment model:
+- One assignment record per seller-order shipment, with seller-order ID, assigned profile/user ID, assigning user ID, assignment timestamp, and active/revoked state.
+- Reassignment must revoke the previous assignment and create an auditable new assignment; do not overwrite the history.
+- A delivery user may read only the jobs currently assigned to their own authenticated user ID.
+- A delivery user may advance only their own assigned job, and only through the next permitted state transition.
+- An assignment must reference a standard-delivery seller portion in `READY_FOR_DISPATCH` or a later non-terminal delivery state. Pickup orders are never assignable.
+- Assignment and event mutations must be SECURITY DEFINER RPCs with pinned `search_path`, explicit active-profile and role checks, row locks, and revoked direct table writes.
+- The assigned-job read surface should return only the minimum required customer contact, delivery address snapshot, package/order reference, and current delivery stage. It must not expose unrelated seller/customer records, finance data, farmer ledgers, or private proof object paths.
+- Delivery proof remains in a private Storage bucket. A separate bucket and narrowly scoped object policy must be designed before any proof upload is enabled; the existing private farmer document buckets are not to be repurposed.
+
+Administration boundary:
+- The existing BodhiMart order-management page currently allows `SUPER_ADMIN` only. Do not silently grant `MARKETPLACE_ADMIN`, `CEO`, or `CORPORATE_ADMIN` assignment rights based only on their role names.
+- Before implementation, inspect the live role authorization model and explicitly define which management roles may assign/reassign delivery jobs. The assignment RPC must enforce that allowlist independently of page visibility.
+
+This section extends the technical design only. It does not select the operating model, create tables, change role grants, create a Storage bucket, or alter production orders.
