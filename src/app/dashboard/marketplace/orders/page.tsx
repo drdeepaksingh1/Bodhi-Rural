@@ -123,27 +123,29 @@ function formatDate(value: string | null) {
 function statusStyle(status: string) {
   switch (status.toUpperCase()) {
     case 'DELIVERED':
-    case 'COMPLETED':
     case 'PAID':
-    case 'ACCEPTED':
       return 'bg-green-100 text-green-800';
 
     case 'PLACED':
-    case 'PENDING':
+    case 'CONFIRMED':
     case 'PROCESSING':
-    case 'READY':
     case 'PACKED':
+    case 'READY_FOR_DISPATCH':
+    case 'PENDING':
+    case 'AUTHORIZED':
       return 'bg-orange-100 text-orange-800';
 
-    case 'PICKED_UP':
-    case 'SHIPPED':
+    case 'DISPATCHED':
     case 'IN_TRANSIT':
+    case 'OUT_FOR_DELIVERY':
       return 'bg-blue-100 text-blue-800';
 
     case 'CANCELLED':
-    case 'REJECTED':
-    case 'FAILED':
+    case 'RETURN_REQUESTED':
+    case 'RETURNED':
     case 'REFUNDED':
+    case 'PARTIALLY_REFUNDED':
+    case 'FAILED':
       return 'bg-red-100 text-red-800';
 
     default:
@@ -205,25 +207,33 @@ export default async function OrderManagementPage({
 
   const search = (searchParams?.q || '').trim().slice(0, 80);
 
+  // Keep these filters aligned with marketplace_orders database constraints.
+  // Seller fulfilment statuses belong to marketplace_seller_orders instead.
   const validOrderStatuses = [
     'ALL',
     'PLACED',
+    'CONFIRMED',
     'PROCESSING',
-    'READY',
     'PACKED',
-    'PICKED_UP',
-    'SHIPPED',
+    'READY_FOR_DISPATCH',
+    'DISPATCHED',
+    'IN_TRANSIT',
+    'OUT_FOR_DELIVERY',
     'DELIVERED',
-    'COMPLETED',
     'CANCELLED',
+    'RETURN_REQUESTED',
+    'RETURNED',
+    'REFUNDED',
   ];
 
   const validPaymentStatuses = [
     'ALL',
     'PENDING',
+    'AUTHORIZED',
     'PAID',
     'FAILED',
     'REFUNDED',
+    'PARTIALLY_REFUNDED',
   ];
 
   const requestedStatus = (
