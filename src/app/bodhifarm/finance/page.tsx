@@ -75,16 +75,12 @@ export default function FinanceDashboardPage() {
     setLoading(true);
     setError('');
 
-    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes] =
+    const [summaryRes, procurementRes, expenseRes, paymentRes] =
       await Promise.all([
         supabase
           .from('farmer_finance_summary')
           .select('*')
           .order('farmer_code'),
-        supabase
-          .from('farmers')
-          .select('id, farmer_id, full_name')
-          .order('farmer_id'),
         supabase
           .from('egg_procurement')
           .select(
@@ -105,7 +101,6 @@ export default function FinanceDashboardPage() {
 
     const firstError =
       summaryRes.error ||
-      farmersRes.error ||
       procurementRes.error ||
       expenseRes.error ||
       paymentRes.error;
@@ -116,8 +111,15 @@ export default function FinanceDashboardPage() {
       return;
     }
 
-    setSummaries((summaryRes.data || []) as Summary[]);
-    setFarmers((farmersRes.data || []) as Farmer[]);
+    const summaryRows = (summaryRes.data || []) as Summary[];
+    setSummaries(summaryRows);
+    setFarmers(
+      summaryRows.map((row) => ({
+        id: row.farmer_id,
+        farmer_id: row.farmer_code || '',
+        full_name: row.full_name || '',
+      }))
+    );
     setProcurements((procurementRes.data || []) as Procurement[]);
     setExpenses((expenseRes.data || []) as Expense[]);
     setPayments((paymentRes.data || []) as Payment[]);

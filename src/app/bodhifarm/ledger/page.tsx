@@ -7,7 +7,6 @@ type Farmer = {
   id: string;
   farmer_id: string;
   full_name: string;
-  mobile?: string | null;
 };
 
 type Summary = {
@@ -18,6 +17,7 @@ type Summary = {
   expenses: number | null;
   payments: number | null;
   outstanding_balance: number | null;
+  farmer_status?: string | null;
 };
 
 type LedgerEntry = {
@@ -46,35 +46,31 @@ export default function FarmerLedgerPage() {
     setLoading(true);
     setError('');
 
-    const [farmersRes, summaryRes] = await Promise.all([
-      supabase
-        .from('farmers')
-        .select('id, farmer_id, full_name, mobile')
-        .eq('status', 'ACTIVE')
-        .order('farmer_id'),
-      supabase
-        .from('farmer_finance_summary')
-        .select('*')
-        .order('farmer_code'),
-    ]);
+    const { data: summaryData, error: summaryError } = await supabase
+      .from('farmer_finance_summary')
+      .select('*')
+      .order('farmer_code');
 
-    if (farmersRes.error) {
-      setError(farmersRes.error.message);
+    if (summaryError) {
+      setError(summaryError.message);
       setLoading(false);
       return;
     }
 
-    if (summaryRes.error) {
-      setError(summaryRes.error.message);
-      setLoading(false);
-      return;
-    }
+    const summaryRows = ((summaryData || []) as Summary[]).filter(
+      (row) => row.farmer_status === 'ACTIVE'
+    );
+    const farmerRows: Farmer[] = summaryRows.map((row) => ({
+      id: row.farmer_id,
+      farmer_id: row.farmer_code || '',
+      full_name: row.full_name || '',
+    }));
 
-    setFarmers(farmersRes.data || []);
-    setSummaries((summaryRes.data || []) as Summary[]);
+    setFarmers(farmerRows);
+    setSummaries(summaryRows);
 
-    if (!selectedFarmer && farmersRes.data?.length) {
-      setSelectedFarmer(farmersRes.data[0].id);
+    if (!selectedFarmer && farmerRows.length) {
+      setSelectedFarmer(farmerRows[0].id);
     }
 
     setLoading(false);
@@ -275,9 +271,6 @@ export default function FarmerLedgerPage() {
                   </h2>
                   <p className="text-sm text-slate-600">
                     {selectedFarmerData?.farmer_id} — {selectedFarmerData?.full_name}
-                    {selectedFarmerData?.mobile
-                      ? ` — ${selectedFarmerData.mobile}`
-                      : ''}
                   </p>
                 </div>
                 <div className="text-sm text-slate-500">
