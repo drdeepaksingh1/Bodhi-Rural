@@ -39,6 +39,7 @@ export default function SellerApplicationsPage() {
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [canManageApplications, setCanManageApplications] = useState(false);
   const [selected, setSelected] =
     useState<SellerApplication | null>(null);
 
@@ -49,6 +50,14 @@ export default function SellerApplicationsPage() {
   async function loadApplications() {
     setLoading(true);
     setError('');
+
+    const { data: roleCode } = await supabase.rpc(
+      'current_user_role_code'
+    );
+    setCanManageApplications(
+      typeof roleCode === 'string' &&
+      ['SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN'].includes(roleCode)
+    );
 
     const { data, error } = await supabase
       .from('marketplace_seller_applications')
@@ -854,8 +863,24 @@ export default function SellerApplicationsPage() {
 
             {/* ACTION AREA */}
 
+            {selected.status === 'SUBMITTED' && !canManageApplications && (
+              <div
+                role="status"
+                style={{
+                  marginTop: 25,
+                  padding: 16,
+                  background: '#f5f5f5',
+                  color: '#555',
+                  borderRadius: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                This application is available for review only. Approval and rejection are restricted to BodhiMart corporate management.
+              </div>
+            )}
+
             {selected.status ===
-              'SUBMITTED' && (
+              'SUBMITTED' && canManageApplications && (
               <div
                 style={{
                   marginTop: 25,
