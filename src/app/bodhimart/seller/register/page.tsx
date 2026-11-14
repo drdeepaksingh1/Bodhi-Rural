@@ -52,10 +52,21 @@ export default function SellerRegistrationPage() {
         );
       }
 
-      const { data: userData } =
+      const { data: userData, error: authError } =
         await supabase.auth.getUser();
 
-      const userId = userData.user?.id || null;
+      if (authError) {
+        throw authError;
+      }
+
+      if (!userData.user) {
+        window.location.assign(
+          '/login?redirect=%2Fbodhimart%2Fseller%2Fregister'
+        );
+        return;
+      }
+
+      const userId = userData.user.id;
 
       const { data, error } = await supabase
         .from('marketplace_seller_applications')
@@ -163,7 +174,7 @@ export default function SellerRegistrationPage() {
             }}
           >
             Register your shop or business to sell
-            products through BodhiMart.
+            products through BodhiMart. Please sign in first so your seller account can be securely linked to your application.
           </p>
         </div>
 
