@@ -55,6 +55,7 @@ export default function SellerApplicationsPage() {
       'current_user_role_code'
     );
     setCanManageApplications(
+      typeof roleCode === 'string' &&
       ['SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN'].includes(roleCode)
     );
 
