@@ -33,30 +33,3 @@ comment on view public.marketplace_public_products is
 revoke all on public.marketplace_public_products from public;
 grant select on public.marketplace_public_products to anon, authenticated;
 
--- Anonymous shoppers must use the limited public view, not the underlying table.
-revoke all on public.marketplace_products from anon;
-revoke select (
-  id,
-  product_id,
-  sku,
-  seller_id,
-  category_id,
-  name,
-  slug,
-  description,
-  brand,
-  unit,
-  weight,
-  mrp,
-  selling_price,
-  tax_percent,
-  minimum_order_quantity,
-  maximum_order_quantity,
-  delivery_available,
-  status,
-  created_by,
-  approved_by,
-  approved_at,
-  created_at,
-  updated_at
-) on public.marketplace_products from anon;
