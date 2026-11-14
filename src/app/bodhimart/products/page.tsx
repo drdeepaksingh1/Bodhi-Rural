@@ -7,7 +7,6 @@ type Product = {
   id: string;
   product_id: string;
   sku: string | null;
-  seller_id: string;
   category_id: string | null;
   name: string;
   slug: string | null;
@@ -57,8 +56,8 @@ export default function BodhiMartProductsPage() {
       const [productsResult, inventoryResult, categoriesResult] =
         await Promise.all([
           supabase
-            .from("marketplace_products")
-            .select("*")
+            .from("marketplace_public_products")
+            .select("id, product_id, sku, category_id, name, slug, description, brand, unit, weight, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, delivery_available, status, created_at")
             .eq("status", "ACTIVE")
             .order("created_at", { ascending: false }),
 
