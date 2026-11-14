@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
 
   const protectedRoutes = [
     '/dashboard',
+    '/db-test',
     '/bodhifarm',
     '/bodhimart/seller/dashboard',
     '/bodhimart/seller/products',
@@ -96,6 +97,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/db-test/:path*',
     '/bodhifarm/:path*',
     '/bodhimart/seller/dashboard/:path*',
     '/bodhimart/seller/products/:path*',
