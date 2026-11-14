@@ -47,7 +47,8 @@ SELECT
         COALESCE(l.outstanding_balance, 0::numeric)
         - COALESCE(pr.reserved_payments, 0::numeric),
         0::numeric
-    ) AS available_payable
+    ) AS available_payable,
+    f.status AS farmer_status
 FROM public.farmers f
 LEFT JOIN ledger_totals l ON l.farmer_id = f.id
 LEFT JOIN recovery_totals r ON r.farmer_id = f.id
