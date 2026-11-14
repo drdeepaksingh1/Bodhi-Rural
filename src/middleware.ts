@@ -64,9 +64,30 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/login' && user) {
-    return NextResponse.redirect(
-      new URL('/dashboard', request.url)
-    );
+    const requestedRedirect = request.nextUrl.searchParams.get('redirect');
+    let destination = new URL('/dashboard', request.url);
+
+    // Accept only same-origin, root-relative paths to prevent open redirects.
+    if (
+      requestedRedirect &&
+      requestedRedirect.startsWith('/') &&
+      !requestedRedirect.startsWith('//')
+    ) {
+      try {
+        const parsedRedirect = new URL(requestedRedirect, request.url);
+
+        if (
+          parsedRedirect.origin === request.nextUrl.origin &&
+          parsedRedirect.pathname !== '/login'
+        ) {
+          destination = parsedRedirect;
+        }
+      } catch {
+        // Fall back to the dashboard when the redirect is malformed.
+      }
+    }
+
+    return NextResponse.redirect(destination);
   }
 
   return response;
