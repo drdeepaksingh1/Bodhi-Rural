@@ -467,9 +467,6 @@ export default function StaffRegistrationPage() {
           proposed_panchayat_id:
             proposedPanchayatId || null,
 
-          status: 'SUBMITTED',
-          current_stage: 'HR',
-          submitted_at: new Date().toISOString(),
         })
         .select('id, application_number')
         .single();
@@ -478,8 +475,16 @@ export default function StaffRegistrationPage() {
         throw new Error(error.message);
       }
 
-      setApplicationId(data.id);
-      setApplicationNumber(data.application_number);
+      const { data: submitted, error: submitError } = await supabase
+        .rpc('submit_staff_application', { p_application_id: data.id })
+        .single();
+
+      if (submitError) {
+        throw new Error(submitError.message);
+      }
+
+      setApplicationId(submitted.application_id);
+      setApplicationNumber(submitted.application_number);
 
       setMessage(
         `Application submitted successfully. Application Number: ${data.application_number}`
