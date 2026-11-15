@@ -153,6 +153,21 @@ export default function BodhiMartCheckoutPage() {
       let selectedAddress: string | null = null;
       if (deliveryMethod !== "PICKUP") {
         selectedAddress = addressId;
+        if (addressId !== "NEW") {
+          const savedAddress = addresses.find((address) => address.id === addressId);
+          if (!savedAddress) throw new Error("Select a valid delivery address or add a new one.");
+          const savedMobile = savedAddress.mobile.replace(/[\\s-]/g, "");
+          const savedPincode = (savedAddress.pincode || "").trim();
+          if (!savedAddress.recipient_name.trim() || !savedAddress.address_line1.trim()) {
+            throw new Error("The selected saved address is incomplete. Add a new delivery address.");
+          }
+          if (!/^(?:\\+91)?[6-9]\\d{9}$/.test(savedMobile)) {
+            throw new Error("The selected saved address has an invalid mobile number. Add a new delivery address.");
+          }
+          if (!/^[1-9]\\d{5}$/.test(savedPincode)) {
+            throw new Error("The selected saved address has an invalid PIN code. Add a new delivery address.");
+          }
+        }
         if (addressId === "NEW") {
           const mobile = addressForm.mobile.replace(/[\s-]/g, "");
           const pincode = addressForm.pincode.trim();
