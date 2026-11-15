@@ -19,6 +19,42 @@ begin
     raise exception 'Authenticated users still have direct UPDATE on farmer_applications';
   end if;
 
+  -- Applicants may create only their application details; workflow state is
+  -- changed exclusively by the authenticated submission/review RPCs.
+  if has_table_privilege('authenticated', 'public.staff_applications', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.staff_applications', 'INSERT') then
+    raise exception 'Direct table-level staff application INSERT/UPDATE remains enabled';
+  end if;
+
+  if not has_column_privilege('authenticated', 'public.staff_applications', 'full_name', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_applications', 'status', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_applications', 'current_stage', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_applications', 'approved_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_applications', 'staff_id', 'INSERT') then
+    raise exception 'Staff application column-level INSERT grants are not safely scoped';
+  end if;
+
+  if exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'staff_applications'
+      and cmd = 'UPDATE'
+      and 'authenticated' = any(roles)
+  ) then
+    raise exception 'Applicants retain a direct UPDATE policy on staff_applications';
+  end if;
+
+  if not has_function_privilege('authenticated', 'public.submit_staff_application(uuid)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.submit_staff_application(uuid)', 'EXECUTE') then
+    raise exception 'Staff application submission RPC grants are incorrect';
+  end if;
+
+  if position('a.user_id = auth.uid()' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
+     or position('a.status = ''DRAFT''' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
+     or position('current_stage = ''HR''' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0 then
+    raise exception 'Staff application submission ownership or workflow transition guards are missing';
+  end if;
+
   if has_function_privilege('anon', 'public.review_farmer_application(uuid,text,text)', 'EXECUTE') then
     raise exception 'anon can execute review_farmer_application';
   end if;
