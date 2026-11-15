@@ -138,7 +138,7 @@ export default function StaffApplicationsPage() {
       }
 
       const [ar, rr] = await Promise.all([
-        supabase.from('staff_applications').select('*').order('created_at', { ascending: false }),
+        supabase.from('staff_applications').select('id, application_number, full_name, mobile, email, alternate_mobile, father_husband_name, date_of_birth, gender, blood_group, address, state_id, district_id, block_id, panchayat_id, village_id, highest_qualification, course, institution, passing_year, previous_organization, previous_designation, total_experience_years, proposed_department, proposed_designation, proposed_role_id, proposed_state_id, proposed_district_id, proposed_block_id, proposed_panchayat_id, status, current_stage, submitted_at, created_at, staff_id').order('created_at', { ascending: false }),
         supabase.from('roles').select('id, code, name').order('name')
       ]);
 
