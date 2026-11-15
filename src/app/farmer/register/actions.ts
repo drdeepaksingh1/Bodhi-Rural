@@ -85,7 +85,7 @@ export async function createFarmerApplicationDocumentUpload(
     return { error: 'Unsupported file format for this document category.' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -132,7 +132,7 @@ export async function verifyFarmerApplicationDocument(
     return { error: 'Unsupported file format for this document category.' };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
@@ -177,7 +177,7 @@ export async function verifyFarmerApplicationDocument(
 export async function cleanupUnlinkedFarmerApplicationDocuments(
   documents: { bucket: string; path: string }[]
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error: authError,
