@@ -319,6 +319,19 @@ BEGIN
                 'A Staff record already exists for this application';
         END IF;
 
+        if v_application.proposed_role_id is null then
+            raise exception 'A proposed staff role is required before final approval';
+        end if;
+
+        if exists (
+            select 1
+            from public.roles proposed_role
+            where proposed_role.id = v_application.proposed_role_id
+              and proposed_role.code in ('SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN')
+        ) then
+            raise exception 'Applicants cannot be assigned privileged administrator roles through staff recruitment';
+        end if;
+
         -- Create permanent Staff record.
         -- staff_id is generated automatically by the
         -- existing staff trigger.
