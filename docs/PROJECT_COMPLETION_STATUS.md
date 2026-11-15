@@ -17,7 +17,7 @@ This document records verified work and remaining gates. A successful TypeScript
 | 3. Frontend | Farmer registration, dashboards, admin, supervisor and management panels | Build verified; functional testing pending | Current application passes TypeScript and Next.js production build on commit `bd3b6d6...` in GitHub Actions after the Next.js 15 async cookies/searchParams updates. Role-by-role route and workflow testing requires signed-in test accounts. |
 | 4. Business modules | Farmer management, livestock, feed, inventory, orders and marketplace | In progress | Existing modules and workflows are present. Verify complete CRUD, authorization, stock movements, financial calculations, order state transitions and edge cases using non-production test accounts/data. |
 | 5. User experience | Hindi/English, mobile responsiveness, navigation and validation | In progress | Root document currently declares English. Verify translation coverage and mobile layouts across every role/module; no full bilingual acceptance test is recorded. |
-| 6. Testing | TypeScript, CI, database checks, security review and deployment checks | Partial | TypeScript and production build passed on commit `7bb6820...`. `npm audit` reported zero vulnerabilities after upgrading to Next.js 15.5.29 and overriding nested PostCSS to 8.5.23. CI now enforces `npm audit --audit-level=high`. A generated lockfile is used within CI; a committed package lock is still recommended for reproducible installs. Supabase health advisor returned no findings. SQL configuration checks passed for the farmer security change. Signed-in end-to-end tests remain outstanding. |
+| 6. Testing | TypeScript, CI, database checks, security review and deployment checks | Partial | TypeScript and production build passed on commit `bd3b6d6...`. `npm audit` reported zero vulnerabilities after upgrading to Next.js 15.5.29 and overriding nested PostCSS to 8.5.23. CI now enforces `npm audit --audit-level=high`. A generated lockfile is used within CI; a committed package lock is still recommended for reproducible installs. Supabase health advisor returned no findings. SQL configuration checks passed for the farmer security change. Signed-in end-to-end tests remain outstanding. |
 | 7. Deployment | GitHub integration, Vercel and production verification | Partial | Vercel reports the latest PR preview deployment Ready at `https://bodhi-rural-git-security-issues-64-65-farm-fc55ef-deepak-singh2.vercel.app`. The preview URL could not be opened through the available browser source, so authenticated UI smoke testing is still outstanding. This does not establish that the production domain is running the approved release. Production environment variables and production smoke tests remain to be checked. |
 | 8. Final launch | Final checklist, unresolved issues and handover | Not ready | Keep PR #72 in draft until the outstanding release gates pass. Merge and production release require owner review and account-level access. |
 
@@ -117,10 +117,11 @@ The live Supabase registry currently reports 31 migration entries. The repositor
 4. Test farm/batch/egg/feed/veterinary, procurement, expenses, payments and finance summaries.
 5. Test seller onboarding, product listing and approval, stock reservation, customer checkout, seller fulfilment and order status transitions.
 6. Reconcile migration history and run all migrations against a non-production environment before production rollout.
-7. Resolve marketplace public-view SECURITY DEFINER findings without breaking anonymous catalogue browsing; test the view as anon and authenticated users.
+7. Complete browser-level catalogue and inventory smoke tests for anonymous and authenticated users; the SECURITY INVOKER database views and anonymous SELECT queries have already passed SQL verification.
 8. Enable leaked-password protection where supported by the Supabase plan and dashboard.
 9. Confirm Vercel production environment variables, production deployment, custom domain, auth redirects and live smoke tests.
-10. Merge and release only after all required checks are green and a project owner approves.
+10. Commit a package-lock.json for reproducible dependency installation; CI currently generates a temporary lockfile for each run.
+11. Merge and release only after all required checks are green and a project owner approves.
 
 ## Safety note
 
