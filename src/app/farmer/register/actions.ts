@@ -28,13 +28,13 @@ function hasSignature(bytes: Uint8Array, mimeType: string) {
 
   if (mimeType === 'image/webp') {
     return bytes.length >= 12 &&
-      String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
-      String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+      String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) === 'RIFF' &&
+      String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) === 'WEBP';
   }
 
   if (mimeType === 'application/pdf') {
     return bytes.length >= 5 &&
-      String.fromCharCode(...bytes.slice(0, 5)) === '%PDF-';
+      String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]) === '%PDF-';
   }
 
   return false;
