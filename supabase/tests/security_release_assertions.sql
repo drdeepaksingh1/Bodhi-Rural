@@ -150,6 +150,55 @@ begin
     raise exception 'Anonymous users cannot read public available stock';
   end if;
 
+  -- All SECURITY DEFINER functions in the exposed public schema must pin
+  -- search_path. The remaining anonymous-executable functions are an explicit
+  -- allowlist of stable, read-only public geography lookups only.
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prosecdef
+      and not exists (
+        select 1
+        from unnest(coalesce(p.proconfig, array[]::text[])) setting
+        where setting like 'search_path=%'
+      )
+  ) then
+    raise exception 'A public SECURITY DEFINER function does not pin search_path';
+  end if;
+
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'EXECUTE')
+      and p.proname not in (
+        'get_blocks', 'get_districts', 'get_location_names',
+        'get_panchayats', 'get_staff_panchayats',
+        'get_staff_villages', 'get_states', 'get_villages'
+      )
+  ) then
+    raise exception 'An unexpected SECURITY DEFINER function is executable by anon';
+  end if;
+
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'EXECUTE')
+      and (
+        p.provolatile <> 's'
+        or pg_get_functiondef(p.oid) not like '%FROM public.locations%'
+      )
+  ) then
+    raise exception 'An anonymous geography lookup is not stable/read-only over public locations';
+  end if;
+
   if exists (
     select 1
     from information_schema.role_table_grants
