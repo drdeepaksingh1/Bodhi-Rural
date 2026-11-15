@@ -49,6 +49,16 @@ begin
     raise exception 'Staff application submission RPC grants are incorrect';
   end if;
 
+  if has_column_privilege('authenticated', 'public.staff_applications', 'otp_verified_at', 'INSERT') then
+    raise exception 'Applicants can still forge staff email verification timestamps';
+  end if;
+
+  if position('FROM auth.users' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
+     or position('email_confirmed_at' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
+     or position('lower(trim(a.email)) = lower(trim(v_auth_email))' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0 then
+    raise exception 'Staff application submission does not verify the authenticated Supabase email server-side';
+  end if;
+
   if has_table_privilege('authenticated', 'public.staff_application_approvals', 'INSERT')
      or has_table_privilege('authenticated', 'public.staff_application_approvals', 'UPDATE')
      or has_table_privilege('authenticated', 'public.staff_application_approvals', 'DELETE')
