@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
+import { updateManagedUserRole } from './actions';
 
 type Role = {
   id: string;
@@ -432,18 +433,15 @@ export default function UserRoleManagementPage() {
 
       const locationId = getLocationForRole();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role_id: selectedRoleId,
-          location_id: locationId,
-          is_active: isActive,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedUser.id);
+      const result = await updateManagedUserRole({
+        userId: selectedUser.id,
+        roleId: selectedRoleId,
+        locationId,
+        isActive,
+      });
 
-      if (error) {
-        throw new Error(error.message);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       setProfiles((current) =>
