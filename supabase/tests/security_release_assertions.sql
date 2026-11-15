@@ -505,6 +505,16 @@ begin
     raise exception 'Staff document applicant INSERT columns are not safely restricted';
   end if;
 
+  -- Finance summary is an aggregate read-only view; expose SELECT only.
+  if not has_table_privilege('authenticated', 'public.farmer_finance_summary', 'SELECT')
+     or has_table_privilege('authenticated', 'public.farmer_finance_summary', 'INSERT')
+     or has_table_privilege('authenticated', 'public.farmer_finance_summary', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.farmer_finance_summary', 'DELETE')
+     or has_table_privilege('authenticated', 'public.farmer_finance_summary', 'TRUNCATE')
+     or has_table_privilege('anon', 'public.farmer_finance_summary', 'SELECT') then
+    raise exception 'Farmer finance summary must be authenticated SELECT-only';
+  end if;
+
 end;
 $bodhi_assertions$;
 
