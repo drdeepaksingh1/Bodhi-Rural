@@ -25,7 +25,7 @@ type Seller = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -87,18 +87,19 @@ function statusStyle(status: string) {
 export default async function SellerManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
-  };
+  }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
+  const search = (resolvedSearchParams?.q || '').trim().slice(0, 80);
 
   const requestedStatus = (
-    searchParams?.status || 'ALL'
+    resolvedSearchParams?.status || 'ALL'
   ).toUpperCase();
 
   const validStatuses = [

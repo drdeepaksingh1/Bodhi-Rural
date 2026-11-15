@@ -68,7 +68,7 @@ type Seller = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -148,19 +148,20 @@ function statusStyle(status: string) {
 export default async function ProductManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     seller?: string;
     updated?: string;
-  };
+  }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
-  const selectedStatus = (searchParams?.status || 'ALL').toUpperCase();
-  const selectedSeller = searchParams?.seller || 'ALL';
+  const search = (resolvedSearchParams?.q || '').trim().slice(0, 80);
+  const selectedStatus = (resolvedSearchParams?.status || 'ALL').toUpperCase();
+  const selectedSeller = resolvedSearchParams?.seller || 'ALL';
 
   const validStatuses = [
     'ALL',
@@ -282,7 +283,7 @@ export default async function ProductManagementPage({
           </p>
         </section>
 
-        {searchParams?.updated === '1' && (
+        {resolvedSearchParams?.updated === '1' && (
           <section role="status" className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">
             Product status updated successfully.
           </section>

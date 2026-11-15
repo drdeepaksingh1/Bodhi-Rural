@@ -60,7 +60,7 @@ type Seller = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -195,17 +195,18 @@ function InfoItem({
 export default async function OrderManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     payment?: string;
     date?: string;
-  };
+  }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
+  const search = (resolvedSearchParams?.q || '').trim().slice(0, 80);
 
   // Keep these filters aligned with marketplace_orders database constraints.
   // Seller fulfilment statuses belong to marketplace_seller_orders instead.
@@ -237,11 +238,11 @@ export default async function OrderManagementPage({
   ];
 
   const requestedStatus = (
-    searchParams?.status || 'ALL'
+    resolvedSearchParams?.status || 'ALL'
   ).toUpperCase();
 
   const requestedPayment = (
-    searchParams?.payment || 'ALL'
+    resolvedSearchParams?.payment || 'ALL'
   ).toUpperCase();
 
   const selectedStatus = validOrderStatuses.includes(requestedStatus)
@@ -252,7 +253,7 @@ export default async function OrderManagementPage({
     ? requestedPayment
     : 'ALL';
 
-  const selectedDate = searchParams?.date || '';
+  const selectedDate = resolvedSearchParams?.date || '';
 
   // Load master customer orders.
   let orderQuery = supabase

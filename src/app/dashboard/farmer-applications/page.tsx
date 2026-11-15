@@ -2,10 +2,10 @@ import { redirect } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/server';
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     status?: string;
     search?: string;
-  };
+  }>;
 };
 
 const MANAGEMENT_ROLES = [
@@ -27,7 +27,7 @@ async function approveApplication(formData: FormData) {
     throw new Error('Application ID is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -37,13 +37,11 @@ async function approveApplication(formData: FormData) {
     redirect('/login');
   }
 
-  const { error } = await supabase
-    .from('farmer_applications')
-    .update({
-      status: 'APPROVED',
-    })
-    .eq('id', applicationId)
-    .eq('status', 'PENDING');
+  const { error } = await supabase.rpc('review_farmer_application', {
+      p_application_id: applicationId,
+      p_decision: 'APPROVE',
+      p_rejection_reason: null,
+    });
 
   if (error) {
     throw new Error(error.message);
@@ -68,7 +66,7 @@ async function rejectApplication(formData: FormData) {
     throw new Error('Rejection reason is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -78,14 +76,11 @@ async function rejectApplication(formData: FormData) {
     redirect('/login');
   }
 
-  const { error } = await supabase
-    .from('farmer_applications')
-    .update({
-      status: 'REJECTED',
-      rejection_reason: rejectionReason,
-    })
-    .eq('id', applicationId)
-    .eq('status', 'PENDING');
+  const { error } = await supabase.rpc('review_farmer_application', {
+      p_application_id: applicationId,
+      p_decision: 'REJECT',
+      p_rejection_reason: rejectionReason,
+    });
 
   if (error) {
     throw new Error(error.message);
@@ -97,7 +92,8 @@ async function rejectApplication(formData: FormData) {
 export default async function FarmerApplicationsPage({
   searchParams,
 }: PageProps) {
-  const supabase = createClient();
+  const resolvedSearchParams = await searchParams;
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -135,12 +131,12 @@ export default async function FarmerApplicationsPage({
   }
 
   const selectedStatus =
-    searchParams?.status &&
-    ['PENDING', 'APPROVED', 'REJECTED'].includes(searchParams.status)
-      ? searchParams.status
+    resolvedSearchParams?.status &&
+    ['PENDING', 'APPROVED', 'REJECTED'].includes(resolvedSearchParams.status)
+      ? resolvedSearchParams.status
       : 'PENDING';
 
-  const search = (searchParams?.search || '').trim();
+  const search = (resolvedSearchParams?.search || '').trim().slice(0, 80).replace(/[,%()]/g, ' ');
 
   let query = supabase
     .from('farmer_applications')
@@ -163,11 +159,6 @@ export default async function FarmerApplicationsPage({
       land_area,
       shed_available,
       shed_capacity,
-      bank_name,
-      bank_branch,
-      bank_account_name,
-      bank_account_number,
-      ifsc_code,
       farmer_photo_url,
       aadhaar_document_url,
       bank_passbook_url,
@@ -229,6 +220,34 @@ export default async function FarmerApplicationsPage({
       ])
     );
   }
+
+  async function getSignedDocumentUrl(bucket: string, path: string | null) {
+    if (!path) return null;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, 300);
+
+    return error ? null : data?.signedUrl || null;
+  }
+
+  const applicationsWithDocuments = await Promise.all(
+    (applications || []).map(async (application) => {
+      const [farmerPhotoSignedUrl, aadhaarSignedUrl, bankPassbookSignedUrl] =
+        await Promise.all([
+          getSignedDocumentUrl('farmer-photos', application.farmer_photo_url),
+          getSignedDocumentUrl('farmer-aadhaar', application.aadhaar_document_url),
+          getSignedDocumentUrl('farmer-bank-documents', application.bank_passbook_url),
+        ]);
+
+      return {
+        ...application,
+        farmerPhotoSignedUrl,
+        aadhaarSignedUrl,
+        bankPassbookSignedUrl,
+      };
+    })
+  );
 
   // Counts
   const [
@@ -384,7 +403,7 @@ export default async function FarmerApplicationsPage({
             </div>
           ) : (
             <div className="divide-y divide-slate-200">
-              {(applications || []).map((application) => {
+              {applicationsWithDocuments.map((application) => {
                 const state = locations[application.state_id];
                 const district = locations[application.district_id];
                 const block = locations[application.block_id];
@@ -517,6 +536,35 @@ export default async function FarmerApplicationsPage({
                               {application.shed_capacity ?? '—'}
                             </div>
                           </div>
+                        </div>
+
+                        <div className="mt-4 rounded-lg border border-slate-200 p-4">
+                          <div className="mb-3 text-sm font-semibold text-slate-800">
+                            Private Application Documents
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-sm">
+                            {application.farmerPhotoSignedUrl && (
+                              <a href={application.farmerPhotoSignedUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
+                                Open farmer photo
+                              </a>
+                            )}
+                            {application.aadhaarSignedUrl && (
+                              <a href={application.aadhaarSignedUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
+                                Open Aadhaar document
+                              </a>
+                            )}
+                            {application.bankPassbookSignedUrl && (
+                              <a href={application.bankPassbookSignedUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
+                                Open bank passbook
+                              </a>
+                            )}
+                            {!application.farmerPhotoSignedUrl && !application.aadhaarSignedUrl && !application.bankPassbookSignedUrl && (
+                              <span className="text-slate-500">No documents available.</span>
+                            )}
+                          </div>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Links expire after five minutes. Documents remain in private storage.
+                          </p>
                         </div>
 
                         {application.status === 'APPROVED' && (

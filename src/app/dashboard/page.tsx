@@ -253,7 +253,7 @@ function getNavigation(
 }
 
 export default async function Dashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   /*
    * AUTH

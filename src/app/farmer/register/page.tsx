@@ -2,6 +2,11 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
+import {
+  cleanupUnlinkedFarmerApplicationDocuments,
+  createFarmerApplicationDocumentUpload,
+  verifyFarmerApplicationDocument,
+} from './actions';
 
 type Location = {
   id: string;
@@ -220,28 +225,41 @@ export default function FarmerRegisterPage() {
   // ---------------------------------------------------------
 
   async function uploadFile(
-    bucket: string,
-    file: File,
-    userId: string
+    bucket: 'farmer-photos' | 'farmer-aadhaar' | 'farmer-bank-documents',
+    file: File
   ) {
-    const extension = file.name.split('.').pop() || 'file';
+    const authorization = await createFarmerApplicationDocumentUpload(
+      bucket,
+      file.size,
+      file.type
+    );
 
-    const path =
-      `${userId}/` +
-      `${crypto.randomUUID()}.${extension}`;
-
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (error) {
-      throw new Error(`${bucket}: ${error.message}`);
+    if ('error' in authorization) {
+      throw new Error(authorization.error);
     }
 
-    return path;
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .uploadToSignedUrl(authorization.path, authorization.token, file, {
+        contentType: file.type,
+        cacheControl: '3600',
+      });
+
+    if (uploadError) {
+      throw new Error(`Unable to upload document: ${uploadError.message}`);
+    }
+
+    const verification = await verifyFarmerApplicationDocument(
+      bucket,
+      authorization.path,
+      file.type
+    );
+
+    if ('error' in verification) {
+      throw new Error(verification.error);
+    }
+
+    return verification.path;
   }
 
   // ---------------------------------------------------------
@@ -254,6 +272,8 @@ export default function FarmerRegisterPage() {
     setLoading(true);
     setMessage('');
     setError('');
+
+    const uploadedDocuments: { bucket: string; path: string }[] = [];
 
     try {
       const {
@@ -305,21 +325,21 @@ export default function FarmerRegisterPage() {
       // Upload documents
       const farmerPhotoUrl = await uploadFile(
         'farmer-photos',
-        farmerPhoto,
-        user.id
+        farmerPhoto
       );
+      uploadedDocuments.push({ bucket: 'farmer-photos', path: farmerPhotoUrl });
 
       const aadhaarDocumentUrl = await uploadFile(
         'farmer-aadhaar',
-        aadhaarDocument,
-        user.id
+        aadhaarDocument
       );
+      uploadedDocuments.push({ bucket: 'farmer-aadhaar', path: aadhaarDocumentUrl });
 
       const bankPassbookUrl = await uploadFile(
         'farmer-bank-documents',
-        bankPassbook,
-        user.id
+        bankPassbook
       );
+      uploadedDocuments.push({ bucket: 'farmer-bank-documents', path: bankPassbookUrl });
 
       // Insert application
       const { error: applicationError } = await supabase
@@ -400,6 +420,10 @@ export default function FarmerRegisterPage() {
       setBankPassbook(null);
 
     } catch (err) {
+      if (uploadedDocuments.length > 0) {
+        await cleanupUnlinkedFarmerApplicationDocuments(uploadedDocuments);
+      }
+
       setError(
         err instanceof Error
           ? err.message
@@ -686,7 +710,7 @@ export default function FarmerRegisterPage() {
 
           <input
             type="file"
-            accept="image/*,.pdf"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
             onChange={handleAadhaarChange}
             required
           />
@@ -746,7 +770,7 @@ export default function FarmerRegisterPage() {
 
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={handlePhotoChange}
             required
           />

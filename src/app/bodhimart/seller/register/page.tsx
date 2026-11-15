@@ -85,7 +85,6 @@ export default function SellerRegistrationPage() {
             form.upi_id.trim() || null,
           business_type:
             form.business_type.trim() || null,
-          status: 'SUBMITTED',
         })
         .select('id, application_number')
         .single();

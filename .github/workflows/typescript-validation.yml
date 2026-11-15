@@ -1,4 +1,4 @@
-name: TypeScript validation
+name: Application validation
 
 on:
   pull_request:
@@ -12,10 +12,15 @@ permissions:
   contents: read
 
 jobs:
-  typecheck:
-    name: TypeScript typecheck
+  validate:
+    name: TypeScript and production build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      # Non-secret placeholders allow Next.js to compile during CI.
+      # Runtime deployments must use the real Supabase project values.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -23,7 +28,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Generate temporary dependency lock
+        run: npm install --package-lock-only
       - name: Install dependencies
-        run: npm install --no-package-lock
+        run: npm ci
+      - name: Report dependency advisories
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e "const a=require('/tmp/npm-audit.json'); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(JSON.stringify({name,severity:v.severity,isDirect:v.isDirect,range:v.range,fixAvailable:v.fixAvailable,via:v.via.map(x=>typeof x==='string'?x:{name:x.name,title:x.title,url:x.url,range:x.range})}))"
+      - name: Enforce dependency security threshold
+        run: npm audit --audit-level=high
       - name: Run TypeScript compiler
         run: npx tsc --noEmit
+      - name: Build production application
+        run: npm run build

@@ -33,6 +33,7 @@ const GEOGRAPHIC_ROLES = [
   'STATE_MANAGER',
   'DISTRICT_MANAGER',
   'BLOCK_MANAGER',
+  'CLUSTER_SUPERVISOR',
 ];
 
 const CORPORATE_ROLES = [
@@ -121,12 +122,7 @@ export default function UserRoleManagementPage() {
         { data: profileData, error: profileError },
         { data: roleData, error: roleError },
       ] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select(
-            'id, full_name, email, phone, role_id, location_id, employee_code, is_active'
-          )
-          .order('full_name', { ascending: true }),
+        supabase.rpc('get_user_role_directory'),
 
         supabase
           .from('roles')
@@ -376,7 +372,10 @@ export default function UserRoleManagementPage() {
       return selectedDistrictId || null;
     }
 
-    if (selectedRole.code === 'BLOCK_MANAGER') {
+    if (
+      selectedRole.code === 'BLOCK_MANAGER' ||
+      selectedRole.code === 'CLUSTER_SUPERVISOR'
+    ) {
       return selectedBlockId || null;
     }
 
@@ -421,26 +420,24 @@ export default function UserRoleManagementPage() {
         }
 
         if (
-          selectedRole?.code === 'BLOCK_MANAGER' &&
+          (selectedRole?.code === 'BLOCK_MANAGER' ||
+            selectedRole?.code === 'CLUSTER_SUPERVISOR') &&
           !selectedBlockId
         ) {
           throw new Error(
-            'Please select a Block for the Block Manager.'
+            `Please select a Block for the ${selectedRole.code === 'CLUSTER_SUPERVISOR' ? 'Cluster Supervisor' : 'Block Manager'}.`
           );
         }
       }
 
       const locationId = getLocationForRole();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role_id: selectedRoleId,
-          location_id: locationId,
-          is_active: isActive,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedUser.id);
+      const { error } = await supabase.rpc('update_managed_user_role', {
+        p_user_id: selectedUser.id,
+        p_role_id: selectedRoleId,
+        p_location_id: locationId,
+        p_is_active: isActive,
+      });
 
       if (error) {
         throw new Error(error.message);
@@ -511,7 +508,10 @@ export default function UserRoleManagementPage() {
       );
     }
 
-    if (roleCode === 'BLOCK_MANAGER') {
+    if (
+      roleCode === 'BLOCK_MANAGER' ||
+      roleCode === 'CLUSTER_SUPERVISOR'
+    ) {
       return (
         blocks.find(
           (block) => block.id === profile.location_id
@@ -814,7 +814,7 @@ export default function UserRoleManagementPage() {
 
                         <p className="mt-1 text-xs text-green-700">
                           Select the geographic area this
-                          manager is responsible for.
+                          manager or cluster supervisor is responsible for.
                         </p>
                       </div>
 
@@ -855,7 +855,9 @@ export default function UserRoleManagementPage() {
                       {(selectedRole.code ===
                         'DISTRICT_MANAGER' ||
                         selectedRole.code ===
-                          'BLOCK_MANAGER') && (
+                          'BLOCK_MANAGER' ||
+                        selectedRole.code ===
+                          'CLUSTER_SUPERVISOR') && (
                         <div className="mt-4">
 
                           <label className="block text-sm font-medium text-slate-800">
@@ -901,8 +903,10 @@ export default function UserRoleManagementPage() {
                       )}
 
                       {/* BLOCK */}
-                      {selectedRole.code ===
-                        'BLOCK_MANAGER' && (
+                      {(selectedRole.code ===
+                        'BLOCK_MANAGER' ||
+                        selectedRole.code ===
+                          'CLUSTER_SUPERVISOR') && (
                         <div className="mt-4">
 
                           <label className="block text-sm font-medium text-slate-800">
@@ -929,7 +933,9 @@ export default function UserRoleManagementPage() {
                                 ? 'Loading blocks...'
                                 : !selectedDistrictId
                                 ? 'Select District first'
-                                : 'Select Block'}
+                                : selectedRole.code === 'CLUSTER_SUPERVISOR'
+                              ? 'Select Supervising Block'
+                              : 'Select Block'}
                             </option>
 
                             {blocks.map((block) => (
