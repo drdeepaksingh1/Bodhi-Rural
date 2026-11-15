@@ -199,7 +199,7 @@ export async function cleanupUnlinkedFarmerApplicationDocuments(
         typeof item.path === 'string' &&
         item.path.startsWith(`${user.id}/`) &&
         !item.path.includes('..') &&
-        !item.path.includes('\\\\')
+        !item.path.includes('\\')
       )
       .map((item) => item.path);
 
