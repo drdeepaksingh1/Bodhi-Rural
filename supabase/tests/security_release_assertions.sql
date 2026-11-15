@@ -255,6 +255,35 @@ begin
     raise exception 'An authenticated user is missing a required finance or stock RPC grant';
   end if;
 
+  -- Staff directory and user-role administration stay behind scoped/authenticated RPCs.
+  if not has_function_privilege('authenticated', 'public.get_staff_directory()', 'EXECUTE')
+     or has_function_privilege('anon', 'public.get_staff_directory()', 'EXECUTE') then
+    raise exception 'Staff directory RPC grants are incorrect';
+  end if;
+
+  if not has_function_privilege('authenticated', 'public.get_user_role_directory()', 'EXECUTE')
+     or has_function_privilege('anon', 'public.get_user_role_directory()', 'EXECUTE') then
+    raise exception 'User role directory RPC grants are incorrect';
+  end if;
+
+  if not has_function_privilege('authenticated', 'public.update_managed_user_role(uuid,uuid,uuid,boolean)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.update_managed_user_role(uuid,uuid,uuid,boolean)', 'EXECUTE') then
+    raise exception 'Managed user role update RPC grants are incorrect';
+  end if;
+
+  if position('CLUSTER_SUPERVISOR' in pg_get_functiondef('public.get_staff_directory()'::regprocedure)) = 0
+     or position('panchayat_id' in pg_get_functiondef('public.get_staff_directory()'::regprocedure)) = 0
+     or position('block_id' in pg_get_functiondef('public.get_staff_directory()'::regprocedure)) = 0 then
+    raise exception 'Staff directory geographic scoping is missing';
+  end if;
+
+  if position('Only SUPER_ADMIN can manage SUPER_ADMIN or CEO assignments'
+      in pg_get_functiondef('public.update_managed_user_role(uuid,uuid,uuid,boolean)'::regprocedure)) = 0
+     or position('You cannot change your own role or active status here'
+      in pg_get_functiondef('public.update_managed_user_role(uuid,uuid,uuid,boolean)'::regprocedure)) = 0 then
+    raise exception 'Managed role update guardrails are missing';
+  end if;
+
   -- Internal counters, audit and operational tables intentionally have RLS
   -- enabled with no client policies and no client-facing table grants.
   if exists (
