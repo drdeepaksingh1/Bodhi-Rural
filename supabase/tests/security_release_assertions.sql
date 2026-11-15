@@ -114,6 +114,19 @@ begin
   if v_policy_count <> 1 then
     raise exception 'Safe cleanup policy for unlinked applicant documents is missing';
   end if;
+
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'farmer_in_user_scope'
+      and pg_get_functiondef(p.oid) like '%v_location_type%'
+      and pg_get_functiondef(p.oid) like '%PANCHAYAT%'
+      and pg_get_functiondef(p.oid) like '%BLOCK%'
+  ) then
+    raise exception 'Cluster supervisor farm scope does not match PANCHAYAT/BLOCK location assignments';
+  end if;
 end;
 $;
 
