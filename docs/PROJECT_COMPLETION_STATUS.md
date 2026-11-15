@@ -12,7 +12,7 @@ This document records verified work and remaining gates. A successful TypeScript
 
 | Phase | Scope | Current status | Evidence / remaining work |
 |---|---|---|---|
-| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115090000_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115091000_scope_marketplace_seller_application_reads`. Aligned cluster-supervisor farm-data scope with the actual PANCHAYAT/BLOCK location model in migration `20261115093000_align_cluster_supervisor_farm_scope`. Both public marketplace views have been converted to SECURITY INVOKER and their anonymous base-table grants are column-limited; the SECURITY DEFINER view error is resolved. The remaining SECURITY DEFINER findings are eight public geography lookup functions and 43 authenticated functions; all inspected function definitions have pinned search paths. Review role checks and use cases individually. |
+| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115005837_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115010003_scope_marketplace_seller_application_reads`. Aligned cluster-supervisor farm-data scope with the actual PANCHAYAT/BLOCK location model in migration `20261115010346_align_cluster_supervisor_farm_scope`. Both public marketplace views have been converted to SECURITY INVOKER and their anonymous base-table grants are column-limited; the SECURITY DEFINER view error is resolved. The remaining SECURITY DEFINER findings are eight public geography lookup functions and 43 authenticated functions; all inspected function definitions have pinned search paths. Review role checks and use cases individually. |
 | 2. Backend | Schema, migrations, functions, workflows and integrity | In progress | Live migration registry currently has 30 entries. Repository history is not fully reconciled; do not replay or fabricate historical migrations. Continue validating finance, procurement, inventory and marketplace RPC invariants. |
 | 3. Frontend | Farmer registration, dashboards, admin, supervisor and management panels | Build verified; functional testing pending | Current application passes TypeScript and Next.js production build on commit `7bb6820...` in GitHub Actions after the Next.js 15 async cookies/searchParams updates. Role-by-role route and workflow testing requires signed-in test accounts. |
 | 4. Business modules | Farmer management, livestock, feed, inventory, orders and marketplace | In progress | Existing modules and workflows are present. Verify complete CRUD, authorization, stock movements, financial calculations, order state transitions and edge cases using non-production test accounts/data. |
@@ -37,7 +37,7 @@ This document records verified work and remaining gates. A successful TypeScript
 
 A legacy permissive SELECT policy on `public.farmers` allowed all active state, district, block and cluster managers to read farmer records without applying geographic scope. Because permissive RLS policies are combined with OR, this undermined the newer scoped policy.
 
-Migration `20261115090000_scope_legacy_farmer_management_policy`:
+Migration `20261115005837_scope_legacy_farmer_management_policy`:
 - drops the legacy `Management can view farmer records` policy;
 - retains `RBAC management can view farmers`, which calls `farmer_in_user_scope(id)`;
 - revokes all table privileges from `anon` on `farmers`, `farms`, `bird_batches`, `egg_production`, `feed_records`, and `veterinary_records`.
@@ -49,7 +49,7 @@ Post-migration verification:
 
 ### Public marketplace catalogue views
 
-Migration `20261115100000_make_public_marketplace_views_security_invoker`:
+Migration `20261115010622_make_public_marketplace_views_security_invoker`:
 - converts both public catalogue views to `security_invoker=true` while retaining `security_barrier=true`;
 - adds a private boolean helper to enforce active product and active seller visibility;
 - adds a generated `available_quantity` column so public users do not receive raw stock/reserved values;
@@ -61,7 +61,7 @@ Post-migration checks confirm both views are security invoker, anonymous users c
 
 The locations table has STATE, DISTRICT, BLOCK, PANCHAYAT and VILLAGE types, but no CLUSTER type. The previous `farmer_in_user_scope` implementation compared a cluster supervisor's assigned location to `farmers.cluster_id`, which could deny access when the supervisor is assigned to a panchayat or block.
 
-Migration `20261115093000_align_cluster_supervisor_farm_scope` now maps a CLUSTER_SUPERVISOR assigned to a PANCHAYAT to `farmers.panchayat_id`, or assigned to a BLOCK to `farmers.block_id`; other location types fail closed. The security assertion checks that this mapping is present. No active production CLUSTER_SUPERVISOR profiles were found, so real-role testing remains necessary.
+Migration `20261115010346_align_cluster_supervisor_farm_scope` now maps a CLUSTER_SUPERVISOR assigned to a PANCHAYAT to `farmers.panchayat_id`, or assigned to a BLOCK to `farmers.block_id`; other location types fail closed. The security assertion checks that this mapping is present. No active production CLUSTER_SUPERVISOR profiles were found, so real-role testing remains necessary.
 
 ### Registration upload reliability and orphan cleanup
 
@@ -74,7 +74,7 @@ Migration `20261115093000_align_cluster_supervisor_farm_scope` now maps a CLUSTE
 
 A broad seller-application SELECT policy allowed all state, district, block and cluster managers to read seller application records, while the approval/rejection RPCs and UI authorize only corporate management.
 
-Migration `20261115091000_scope_marketplace_seller_application_reads`:
+Migration `20261115010003_scope_marketplace_seller_application_reads`:
 - replaces the broad management SELECT policy with `is_bodhi_corporate_management()`;
 - preserves applicants' own-row SELECT and authenticated INSERT policies;
 - revokes anonymous table privileges.
@@ -83,7 +83,7 @@ Migration `20261115091000_scope_marketplace_seller_application_reads`:
 
 A broad seller-application SELECT policy allowed all state, district, block and cluster managers to read seller application records, while the approval/rejection RPCs and UI authorize only corporate management.
 
-Migration `20261115091000_scope_marketplace_seller_application_reads`:
+Migration `20261115010003_scope_marketplace_seller_application_reads`:
 - replaces the broad management SELECT policy with `is_bodhi_corporate_management()`;
 - preserves applicants' own-row SELECT and authenticated INSERT policies;
 - revokes anonymous table privileges.
@@ -92,10 +92,14 @@ Migration `20261115091000_scope_marketplace_seller_application_reads`:
 
 Added `supabase/tests/security_release_assertions.sql`. It checks farmer review grants, scoped farmer and seller-application policies, anonymous grants on protected operational tables, KYC bucket privacy/size limits and the reviewer storage policy. The assertion block was executed against the connected production database and returned PASS; it makes no application-data changes. It also checks the cleanup policy for unlinked applicant uploads, cluster-supervisor geography mapping, SECURITY INVOKER marketplace views and limited anonymous column grants.
 
+### Anonymous database grants
+
+Migration `20261115011539_revoke_unnecessary_anonymous_operational_grants` removes anonymous privileges from locations, roles, carts, customer addresses, notifications, orders, staff applications/documents/approvals and vaccination records. The four public catalogue tables retain SELECT only; public marketplace views retain SELECT only. A fresh grant audit shows no other anonymous public-table grants.
+
 ## Current Supabase advisor findings
 
 - Health advisor: no findings.
-- Security advisor: the two SECURITY DEFINER view findings have been resolved by migration `20261115100000_make_public_marketplace_views_security_invoker`.
+- Security advisor: the two SECURITY DEFINER view findings have been resolved by migration `20261115010622_make_public_marketplace_views_security_invoker`.
 - Security advisor: 8 anonymous-executable SECURITY DEFINER location lookup functions remain. They support public registration location selectors; retain only after confirming their bodies return public geography data and have pinned search paths.
 - Security advisor: 43 authenticated-executable SECURITY DEFINER functions remain. Review each function's authorization checks; do not revoke them in bulk.
 - 14 RLS-enabled tables have no policies. These include internal counters, audit, inventory and internal staff/warehouse tables. A grant audit returned no `anon` or `authenticated` table privileges for those 14 tables, so no permissive policies were added.
