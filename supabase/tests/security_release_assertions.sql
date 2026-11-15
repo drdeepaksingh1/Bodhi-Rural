@@ -232,6 +232,24 @@ begin
     raise exception 'Anonymous grants remain on private operational tables';
   end if;
 
+  -- Internal counters, audit and operational tables intentionally have RLS
+  -- enabled with no client policies and no client-facing table grants.
+  if exists (
+    select 1
+    from information_schema.role_table_grants
+    where table_schema = 'public'
+      and grantee in ('anon', 'authenticated', 'PUBLIC')
+      and table_name in (
+        'audit_logs', 'farmer_credit_recoveries', 'farmer_id_counters',
+        'inventory', 'marketplace_order_counters', 'marketplace_price_history',
+        'marketplace_product_counters', 'marketplace_seller_application_counters',
+        'marketplace_seller_counters', 'order_items', 'staff',
+        'staff_application_counters', 'staff_id_counters', 'warehouses'
+      )
+  ) then
+    raise exception 'An internal no-policy table has a client-facing table grant';
+  end if;
+
   if has_table_privilege('anon', 'public.marketplace_categories', 'INSERT')
      or has_table_privilege('anon', 'public.marketplace_categories', 'UPDATE')
      or has_table_privilege('anon', 'public.marketplace_categories', 'DELETE')
