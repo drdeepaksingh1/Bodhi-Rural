@@ -296,6 +296,30 @@ begin
     raise exception 'Authenticated seller application SELECT privilege is missing';
   end if;
 
+  -- Marketplace product sellers may edit catalogue fields only; approval
+  -- metadata and product identity remain database/admin controlled.
+  if has_table_privilege('authenticated', 'public.marketplace_products', 'INSERT')
+     or has_table_privilege('authenticated', 'public.marketplace_products', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.marketplace_products', 'DELETE') then
+    raise exception 'Authenticated users retain table-level marketplace product write privileges';
+  end if;
+
+  if not has_column_privilege('authenticated', 'public.marketplace_products', 'name', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.marketplace_products', 'name', 'UPDATE')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'status', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'status', 'UPDATE')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'approved_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'approved_by', 'UPDATE')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'seller_id', 'UPDATE')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'created_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_products', 'created_by', 'UPDATE') then
+    raise exception 'Marketplace product column-level write privileges are not safely scoped';
+  end if;
+
+  if not has_table_privilege('authenticated', 'public.marketplace_products', 'SELECT') then
+    raise exception 'Authenticated marketplace product SELECT privilege is missing';
+  end if;
+
   -- Critical finance and stock RPCs must be authenticated-only.
   if has_function_privilege('anon', 'public.approve_farmer_payment(uuid)', 'EXECUTE')
      or has_function_privilege('anon', 'public.mark_farmer_payment_paid(uuid)', 'EXECUTE')
