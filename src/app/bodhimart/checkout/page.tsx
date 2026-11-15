@@ -110,7 +110,9 @@ export default function BodhiMartCheckoutPage() {
   ), [items]);
   const tax = useMemo(() => items.reduce((sum, item) => {
     const base = Number(item.product?.selling_price || 0) * Number(item.quantity);
-    return sum + Math.round(base * Number(item.product?.tax_percent || 0)) / 100;
+    const rate = Number(item.product?.tax_percent || 0);
+    const lineTax = Math.round((base * rate / 100) * 100) / 100;
+    return sum + lineTax;
   }, 0), [items]);
   const total = subtotal + tax;
   const invalidItems = items.some((item) => {
@@ -121,7 +123,9 @@ export default function BodhiMartCheckoutPage() {
       ? Math.min(item.availableStock, Number(product.maximum_order_quantity))
       : item.availableStock;
     return item.quantity < minimum || item.quantity > maximum || item.availableStock < item.quantity
-      || Number(item.price_snapshot) !== Number(product.selling_price);
+      || Number(item.price_snapshot) !== Number(product.selling_price)
+      || !Number.isFinite(Number(product.selling_price)) || Number(product.selling_price) < 0
+      || !Number.isFinite(Number(product.tax_percent)) || Number(product.tax_percent) < 0;
   });
 
   function money(value: number) {
