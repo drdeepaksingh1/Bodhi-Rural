@@ -150,6 +150,6 @@ begin
     raise exception 'Anonymous users cannot read public available stock';
   end if;
 end;
-$;
+$$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
