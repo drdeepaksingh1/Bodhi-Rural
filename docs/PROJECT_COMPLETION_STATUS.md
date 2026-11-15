@@ -12,8 +12,8 @@ This document records verified work and remaining gates. A successful TypeScript
 
 | Phase | Scope | Current status | Evidence / remaining work |
 |---|---|---|---|
-| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115090000_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115091000_scope_marketplace_seller_application_reads`. Aligned cluster-supervisor farm-data scope with the actual PANCHAYAT/BLOCK location model in migration `20261115093000_align_cluster_supervisor_farm_scope`. Two public marketplace views still trigger SECURITY DEFINER findings; review 43 authenticated SECURITY DEFINER functions individually. |
-| 2. Backend | Schema, migrations, functions, workflows and integrity | In progress | Live migration registry currently has 29 entries. Repository history is not fully reconciled; do not replay or fabricate historical migrations. Continue validating finance, procurement, inventory and marketplace RPC invariants. |
+| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115090000_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115091000_scope_marketplace_seller_application_reads`. Aligned cluster-supervisor farm-data scope with the actual PANCHAYAT/BLOCK location model in migration `20261115093000_align_cluster_supervisor_farm_scope`. Both public marketplace views have been converted to SECURITY INVOKER and their anonymous base-table grants are column-limited; the SECURITY DEFINER view error is resolved. Review 43 authenticated SECURITY DEFINER functions individually. |
+| 2. Backend | Schema, migrations, functions, workflows and integrity | In progress | Live migration registry currently has 30 entries. Repository history is not fully reconciled; do not replay or fabricate historical migrations. Continue validating finance, procurement, inventory and marketplace RPC invariants. |
 | 3. Frontend | Farmer registration, dashboards, admin, supervisor and management panels | Build verified; functional testing pending | Current application passes TypeScript and Next.js production build in GitHub Actions. Role-by-role route and workflow testing requires signed-in test accounts. |
 | 4. Business modules | Farmer management, livestock, feed, inventory, orders and marketplace | In progress | Existing modules and workflows are present. Verify complete CRUD, authorization, stock movements, financial calculations, order state transitions and edge cases using non-production test accounts/data. |
 | 5. User experience | Hindi/English, mobile responsiveness, navigation and validation | In progress | Root document currently declares English. Verify translation coverage and mobile layouts across every role/module; no full bilingual acceptance test is recorded. |
@@ -46,6 +46,16 @@ Post-migration verification:
 - the legacy broad policy is absent;
 - the remaining management SELECT policy calls `farmer_in_user_scope(id)`;
 - no anonymous table grants remain on those six tables.
+
+### Public marketplace catalogue views
+
+Migration `20261115100000_make_public_marketplace_views_security_invoker`:
+- converts both public catalogue views to `security_invoker=true` while retaining `security_barrier=true`;
+- adds a private boolean helper to enforce active product and active seller visibility;
+- adds a generated `available_quantity` column so public users do not receive raw stock/reserved values;
+- grants anonymous users only catalogue columns and the calculated available stock, not seller IDs, approval metadata or raw stock fields.
+
+Post-migration checks confirm both views are security invoker, anonymous users cannot read seller/approval metadata or raw stock fields, and anonymous SELECT queries return the same two active public products and two corresponding inventory rows.
 
 ### Cluster-supervisor farm-data scope
 
@@ -80,12 +90,12 @@ Migration `20261115091000_scope_marketplace_seller_application_reads`:
 
 ### Security release assertions
 
-Added `supabase/tests/security_release_assertions.sql`. It checks farmer review grants, scoped farmer and seller-application policies, anonymous grants on protected operational tables, KYC bucket privacy/size limits and the reviewer storage policy. The assertion block was executed against the connected production database and returned PASS; it makes no application-data changes. It also checks the cleanup policy for unlinked applicant uploads.
+Added `supabase/tests/security_release_assertions.sql`. It checks farmer review grants, scoped farmer and seller-application policies, anonymous grants on protected operational tables, KYC bucket privacy/size limits and the reviewer storage policy. The assertion block was executed against the connected production database and returned PASS; it makes no application-data changes. It also checks the cleanup policy for unlinked applicant uploads, cluster-supervisor geography mapping, SECURITY INVOKER marketplace views and limited anonymous column grants.
 
 ## Current Supabase advisor findings
 
 - Health advisor: no findings.
-- Security advisor: 2 SECURITY DEFINER views remain (`marketplace_public_inventory`, `marketplace_public_products`).
+- Security advisor: the two SECURITY DEFINER view findings have been resolved by migration `20261115100000_make_public_marketplace_views_security_invoker`.
 - Security advisor: 8 anonymous-executable SECURITY DEFINER location lookup functions remain. They support public registration location selectors; retain only after confirming their bodies return public geography data and have pinned search paths.
 - Security advisor: 43 authenticated-executable SECURITY DEFINER functions remain. Review each function's authorization checks; do not revoke them in bulk.
 - 14 RLS-enabled tables have no policies. These include internal counters, audit, inventory and internal staff/warehouse tables. Confirm their API grants remain revoked rather than adding permissive policies.
@@ -93,7 +103,7 @@ Added `supabase/tests/security_release_assertions.sql`. It checks farmer review 
 
 ## Migration history
 
-The live Supabase registry currently reports 29 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. Historical migration reconciliation remains separate from applying new migrations. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
+The live Supabase registry currently reports 30 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. Historical migration reconciliation remains separate from applying new migrations. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
 
 ## Required owner/manual release gates
 
