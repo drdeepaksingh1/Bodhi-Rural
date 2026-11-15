@@ -43,9 +43,14 @@ function hasSignature(bytes: Uint8Array, mimeType: string) {
   }
 
   if (mimeType === 'image/webp') {
+    // Decode only the four-byte RIFF/WEBP signatures. Using subarray keeps
+    // the operation typed-array-safe and avoids spreading Uint8Array values.
+    const riffSignature = new TextDecoder().decode(bytes.subarray(0, 4));
+    const webpSignature = new TextDecoder().decode(bytes.subarray(8, 12));
+
     return bytes.length >= 12 &&
-      String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) === 'RIFF' &&
-      String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) === 'WEBP';
+      riffSignature === 'RIFF' &&
+      webpSignature === 'WEBP';
   }
 
   if (mimeType === 'application/pdf') {
