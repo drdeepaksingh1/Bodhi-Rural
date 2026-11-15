@@ -27,7 +27,7 @@ async function approveApplication(formData: FormData) {
     throw new Error('Application ID is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -66,7 +66,7 @@ async function rejectApplication(formData: FormData) {
     throw new Error('Rejection reason is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -92,7 +92,7 @@ async function rejectApplication(formData: FormData) {
 export default async function FarmerApplicationsPage({
   searchParams,
 }: PageProps) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
