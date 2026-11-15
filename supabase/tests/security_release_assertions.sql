@@ -450,7 +450,49 @@ begin
   ) then
     raise exception 'Unexpected anonymous public-table grant exists';
   end if;
+
+  -- Authenticated users must not retain DML grants where no matching RLS
+  -- policy exists; RLS alone is not a reason to leave unnecessary grants.
+  if has_table_privilege('authenticated', 'public.locations', 'INSERT')
+     or has_table_privilege('authenticated', 'public.locations', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.locations', 'DELETE')
+     or has_table_privilege('authenticated', 'public.marketplace_categories', 'INSERT')
+     or has_table_privilege('authenticated', 'public.marketplace_categories', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.marketplace_categories', 'DELETE')
+     or has_table_privilege('authenticated', 'public.marketplace_product_images', 'INSERT')
+     or has_table_privilege('authenticated', 'public.marketplace_product_images', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.marketplace_product_images', 'DELETE')
+     or has_table_privilege('authenticated', 'public.notifications', 'INSERT')
+     or has_table_privilege('authenticated', 'public.notifications', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.notifications', 'DELETE')
+     or has_table_privilege('authenticated', 'public.orders', 'INSERT')
+     or has_table_privilege('authenticated', 'public.orders', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.orders', 'DELETE')
+     or has_table_privilege('authenticated', 'public.product_categories', 'INSERT')
+     or has_table_privilege('authenticated', 'public.product_categories', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.product_categories', 'DELETE')
+     or has_table_privilege('authenticated', 'public.products', 'INSERT')
+     or has_table_privilege('authenticated', 'public.products', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.products', 'DELETE')
+     or has_table_privilege('authenticated', 'public.roles', 'INSERT')
+     or has_table_privilege('authenticated', 'public.roles', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.roles', 'DELETE')
+     or has_table_privilege('authenticated', 'public.vaccinations', 'INSERT')
+     or has_table_privilege('authenticated', 'public.vaccinations', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.vaccinations', 'DELETE') then
+    raise exception 'Authenticated DML grants remain on tables without matching RLS policies';
+  end if;
+
+  if has_table_privilege('authenticated', 'public.staff_application_documents', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.staff_application_documents', 'DELETE')
+     or has_table_privilege('authenticated', 'public.staff_applications', 'DELETE')
+     or has_table_privilege('authenticated', 'public.egg_production', 'DELETE')
+     or has_table_privilege('authenticated', 'public.feed_records', 'DELETE')
+     or has_table_privilege('authenticated', 'public.veterinary_records', 'DELETE') then
+    raise exception 'Authenticated DELETE/UPDATE grants remain without matching workflow policies';
+  end if;
+
 end;
-$$;
+$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
