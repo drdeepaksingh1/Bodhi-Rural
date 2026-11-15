@@ -149,7 +149,37 @@ begin
   if not has_column_privilege('anon', 'public.marketplace_inventory', 'available_quantity', 'SELECT') then
     raise exception 'Anonymous users cannot read public available stock';
   end if;
+
+  if exists (
+    select 1
+    from information_schema.role_table_grants
+    where table_schema = 'public'
+      and grantee = 'anon'
+      and table_name in (
+        'locations', 'roles', 'marketplace_cart_items', 'marketplace_carts',
+        'marketplace_customer_addresses', 'notifications', 'orders',
+        'staff_application_approvals', 'staff_application_documents',
+        'staff_applications', 'vaccinations'
+      )
+  ) then
+    raise exception 'Anonymous grants remain on private operational tables';
+  end if;
+
+  if has_table_privilege('anon', 'public.marketplace_categories', 'INSERT')
+     or has_table_privilege('anon', 'public.marketplace_categories', 'UPDATE')
+     or has_table_privilege('anon', 'public.marketplace_categories', 'DELETE')
+     or has_table_privilege('anon', 'public.marketplace_product_images', 'INSERT')
+     or has_table_privilege('anon', 'public.marketplace_product_images', 'UPDATE')
+     or has_table_privilege('anon', 'public.marketplace_product_images', 'DELETE')
+     or has_table_privilege('anon', 'public.product_categories', 'INSERT')
+     or has_table_privilege('anon', 'public.product_categories', 'UPDATE')
+     or has_table_privilege('anon', 'public.product_categories', 'DELETE')
+     or has_table_privilege('anon', 'public.products', 'INSERT')
+     or has_table_privilege('anon', 'public.products', 'UPDATE')
+     or has_table_privilege('anon', 'public.products', 'DELETE') then
+    raise exception 'Anonymous DML privileges remain on public catalogue tables';
+  end if;
 end;
-$$;
+$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
