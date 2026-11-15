@@ -248,7 +248,7 @@ begin
      or not has_function_privilege('authenticated', 'public.mark_farmer_payment_paid(uuid)', 'EXECUTE')
      or not has_function_privilege('authenticated', 'public.submit_farmer_payment(uuid,date,numeric,text,text,text,text)', 'EXECUTE')
      or not has_function_privilege('authenticated', 'public.submit_egg_procurement(uuid,uuid,date,integer,numeric,numeric,numeric,text)', 'EXECUTE')
-     or not has_function_privilege('authenticated', 'public.bodhi_adjust_seller_listing_stock(uuid,numeric,text,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.bodhi_adjust_seller_listing_stock(uuid,numeric,text,text,text)', 'EXECUTE')
      or not has_function_privilege('authenticated', 'public.bodhi_approve_product_lot(uuid,text)', 'EXECUTE')
      or not has_function_privilege('authenticated', 'public.bodhi_issue_lot_stock(uuid,uuid,uuid,numeric,text)', 'EXECUTE')
      or not has_function_privilege('authenticated', 'public.bodhi_transfer_lot_stock(uuid,uuid,uuid,uuid,numeric,text)', 'EXECUTE') then
