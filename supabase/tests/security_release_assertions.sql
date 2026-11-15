@@ -127,7 +127,29 @@ begin
   ) then
     raise exception 'Cluster supervisor farm scope does not match PANCHAYAT/BLOCK location assignments';
   end if;
+
+  if (
+    select count(*)
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname in ('marketplace_public_products', 'marketplace_public_inventory')
+      and coalesce(c.reloptions, array[]::text[]) @> array['security_invoker=true']
+  ) <> 2 then
+    raise exception 'Both public marketplace views must use security_invoker';
+  end if;
+
+  if has_column_privilege('anon', 'public.marketplace_products', 'seller_id', 'SELECT')
+     or has_column_privilege('anon', 'public.marketplace_products', 'approved_by', 'SELECT')
+     or has_column_privilege('anon', 'public.marketplace_inventory', 'stock_quantity', 'SELECT')
+     or has_column_privilege('anon', 'public.marketplace_inventory', 'reserved_quantity', 'SELECT') then
+    raise exception 'Anonymous users have access to protected seller metadata or raw stock fields';
+  end if;
+
+  if not has_column_privilege('anon', 'public.marketplace_inventory', 'available_quantity', 'SELECT') then
+    raise exception 'Anonymous users cannot read public available stock';
+  end if;
 end;
-$$;
+$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
