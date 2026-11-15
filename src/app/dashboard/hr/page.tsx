@@ -8,7 +8,7 @@ function formatNumber(value: number) {
 }
 
 export default async function HRDashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // --------------------------------------------------
   // AUTHENTICATION
