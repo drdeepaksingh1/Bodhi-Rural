@@ -28,14 +28,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Generate temporary dependency lock
+        run: npm install --package-lock-only
       - name: Install dependencies
-        run: npm install --no-package-lock
-      - name: Generate temporary dependency lock for audit
-        run: npm install --package-lock-only --ignore-scripts
+        run: npm ci
       - name: Report dependency advisories
         run: |
           npm audit --json > /tmp/npm-audit.json || true
           node -e "const a=require('/tmp/npm-audit.json'); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(JSON.stringify({name,severity:v.severity,isDirect:v.isDirect,range:v.range,fixAvailable:v.fixAvailable,via:v.via.map(x=>typeof x==='string'?x:{name:x.name,title:x.title,url:x.url,range:x.range})}))"
+      - name: Enforce dependency security threshold
+        run: npm audit --audit-level=high
       - name: Run TypeScript compiler
         run: npx tsc --noEmit
       - name: Build production application
