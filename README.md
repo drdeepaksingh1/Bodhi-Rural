@@ -15,8 +15,8 @@ The repository is an actively integrated application, not the original static pr
 
 ## Technology
 
-- Next.js 14
-- React 18
+- Next.js 15.5.29
+- React 18.3.1
 - Supabase Auth and PostgreSQL
 - Vercel deployment
 
