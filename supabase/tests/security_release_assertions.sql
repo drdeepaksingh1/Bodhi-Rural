@@ -232,6 +232,29 @@ begin
     raise exception 'Anonymous grants remain on private operational tables';
   end if;
 
+  -- Critical finance and stock RPCs must be authenticated-only.
+  if has_function_privilege('anon', 'public.approve_farmer_payment(uuid)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.mark_farmer_payment_paid(uuid)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.submit_farmer_payment(uuid,date,numeric,text,text,text,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.submit_egg_procurement(uuid,uuid,date,integer,numeric,numeric,numeric,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.bodhi_adjust_seller_listing_stock(uuid,numeric,text,text,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.bodhi_approve_product_lot(uuid,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.bodhi_issue_lot_stock(uuid,uuid,uuid,numeric,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.bodhi_transfer_lot_stock(uuid,uuid,uuid,uuid,numeric,text)', 'EXECUTE') then
+    raise exception 'An anonymous user can execute a protected finance or stock RPC';
+  end if;
+
+  if not has_function_privilege('authenticated', 'public.approve_farmer_payment(uuid)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.mark_farmer_payment_paid(uuid)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.submit_farmer_payment(uuid,date,numeric,text,text,text,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.submit_egg_procurement(uuid,uuid,date,integer,numeric,numeric,numeric,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.bodhi_adjust_seller_listing_stock(uuid,numeric,text,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.bodhi_approve_product_lot(uuid,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.bodhi_issue_lot_stock(uuid,uuid,uuid,numeric,text)', 'EXECUTE')
+     or not has_function_privilege('authenticated', 'public.bodhi_transfer_lot_stock(uuid,uuid,uuid,uuid,numeric,text)', 'EXECUTE') then
+    raise exception 'An authenticated user is missing a required finance or stock RPC grant';
+  end if;
+
   -- Internal counters, audit and operational tables intentionally have RLS
   -- enabled with no client policies and no client-facing table grants.
   if exists (
