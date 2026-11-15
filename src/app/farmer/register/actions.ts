@@ -107,7 +107,7 @@ export async function uploadFarmerApplicationDocument(
 
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(path, file, {
+    .upload(path, uploadedFile, {
       cacheControl: '3600',
       contentType: uploadedFile.type,
       upsert: false,
