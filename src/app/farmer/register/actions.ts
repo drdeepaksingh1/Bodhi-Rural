@@ -57,7 +57,7 @@ function hasSignature(bytes: Uint8Array, mimeType: string) {
 }
 
 /**
- * Creates a short-lived signed upload authorization. The browser uploads
+ * Creates a time-limited signed upload authorization. The browser uploads
  * directly to Supabase Storage, avoiding Vercel Server Action body limits.
  * The authenticated storage INSERT policy still restricts the object path
  * to the current user's folder.
