@@ -234,6 +234,7 @@ export default function Mart() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '16px' }}>
               <Link href="/bodhimart/products" className="btn" style={{ background: '#ffffff', color: '#145c2b', textDecoration: 'none' }}>Shop Products</Link>
               <Link href="/bodhimart/cart" className="btn alt" style={{ textDecoration: 'none' }}>View Cart</Link>
+              <Link href="/bodhimart/my-orders" className="btn alt" style={{ textDecoration: 'none' }}>My Orders</Link>
             </div>
           </div>
         </div>
