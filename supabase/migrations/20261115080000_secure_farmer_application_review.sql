@@ -70,6 +70,30 @@ create policy "Scoped management can view farmer applications"
   to authenticated
   using (public.can_review_farmer_application(id));
 
+-- Reviewers may resolve names for locations referenced by applications in
+-- their own authorized scope; this does not expose the full location directory.
+drop policy if exists "Reviewers can view locations for scoped farmer applications"
+  on public.locations;
+
+create policy "Reviewers can view locations for scoped farmer applications"
+  on public.locations
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.farmer_applications fa
+      where (
+        fa.state_id = locations.id
+        or fa.district_id = locations.id
+        or fa.block_id = locations.id
+        or fa.panchayat_id = locations.id
+        or fa.village_id = locations.id
+      )
+      and public.can_review_farmer_application(fa.id)
+    )
+  );
+
 -- All reviewer writes go through the scope-checked RPC below. The applicant's
 -- existing INSERT and own-row SELECT policies remain in place.
 revoke update on table public.farmer_applications from authenticated;
