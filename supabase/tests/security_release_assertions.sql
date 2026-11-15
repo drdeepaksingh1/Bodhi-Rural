@@ -372,6 +372,16 @@ begin
     raise exception 'Managed role update guardrails are missing';
   end if;
 
+  if position(
+       "v_new_role IN ('BLOCK_MANAGER', 'CLUSTER_SUPERVISOR')"
+       in pg_get_functiondef('public.update_managed_user_role(uuid,uuid,uuid,boolean)'::regprocedure)
+     ) = 0
+     or position("v_location_type IS DISTINCT FROM 'BLOCK'"
+       in pg_get_functiondef('public.update_managed_user_role(uuid,uuid,uuid,boolean)'::regprocedure)
+     ) = 0 then
+    raise exception 'Cluster supervisors must be assigned to an active block';
+  end if;
+
   -- Internal counters, audit and operational tables intentionally have RLS
   -- enabled with no client policies and no client-facing table grants.
   if exists (
