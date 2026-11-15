@@ -96,7 +96,7 @@ begin
     raise exception 'Application ID is required.';
   end if;
 
-  if p_decision not in ('APPROVE', 'REJECT') then
+  if p_decision is null or p_decision not in ('APPROVE', 'REJECT') then
     raise exception 'Decision must be APPROVE or REJECT.';
   end if;
 
