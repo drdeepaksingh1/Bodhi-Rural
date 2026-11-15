@@ -6,7 +6,7 @@ import { createClient } from "../../../lib/supabase/client";
 
 type Product = {
   id: string; product_id: string; name: string; sku: string | null; unit: string | null;
-  mrp: number; selling_price: number; tax_percent: number;
+  mrp: number; selling_price: number; tax_percent: number; delivery_available: boolean;
   minimum_order_quantity: number; maximum_order_quantity: number | null; status: string;
 };
 type CartItem = { id: string; product_id: string; quantity: number; price_snapshot: number };
@@ -75,7 +75,7 @@ export default function BodhiMartCheckoutPage() {
       const [{ data: productRows, error: productError }, { data: stocks, error: stockError }] =
         await Promise.all([
           supabase.from("marketplace_public_products")
-            .select("id, product_id, name, sku, unit, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, status")
+            .select("id, product_id, name, sku, unit, mrp, selling_price, tax_percent, delivery_available, minimum_order_quantity, maximum_order_quantity, status")
             .in("id", ids),
           supabase.from("marketplace_public_inventory").select("product_id, available_quantity").in("product_id", ids),
         ]);
@@ -123,9 +123,14 @@ export default function BodhiMartCheckoutPage() {
       ? Math.min(item.availableStock, Number(product.maximum_order_quantity))
       : item.availableStock;
     return item.quantity < minimum || item.quantity > maximum || item.availableStock < item.quantity
+      || (deliveryMethod !== "PICKUP" && !product.delivery_available)
       || Number(item.price_snapshot) !== Number(product.selling_price)
       || !Number.isFinite(Number(product.selling_price)) || Number(product.selling_price) < 0
-      || !Number.isFinite(Number(product.tax_percent)) || Number(product.tax_percent) < 0;
+      || !Number.isFinite(Number(product.mrp)) || Number(product.mrp) < 0
+      || !Number.isFinite(Number(product.tax_percent)) || Number(product.tax_percent) < 0
+      || Number(product.tax_percent) > 100
+      || (product.maximum_order_quantity !== null
+        && Number(product.maximum_order_quantity) < minimum);
   });
 
   function money(value: number) {
@@ -216,7 +221,7 @@ export default function BodhiMartCheckoutPage() {
         <h1 className="mt-4 text-3xl font-bold text-gray-900">Checkout</h1>
         <p className="mt-2 text-gray-600">Confirm delivery details and current prices.</p>
         {error && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
-        {invalidItems && <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Some items no longer meet the seller’s quantity, stock, or price requirements. Review your cart before ordering.</div>}
+        {invalidItems && <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Some items no longer meet the seller’s quantity, stock, price, tax, or delivery requirements. Choose pickup where delivery is unavailable, or review your cart before ordering.</div>}
 
         <form onSubmit={(event) => void placeOrder(event)} className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <section className="space-y-6">
@@ -224,7 +229,7 @@ export default function BodhiMartCheckoutPage() {
               <h2 className="text-lg font-bold">Delivery method</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
-                  <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
+                  <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} disabled={items.some((item) => !item.product?.delivery_available)} onChange={() => setDeliveryMethod("STANDARD")} />
                   <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Current delivery charge: ₹0.</small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
