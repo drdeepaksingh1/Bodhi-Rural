@@ -275,6 +275,27 @@ begin
     raise exception 'Anonymous grants remain on private operational tables';
   end if;
 
+  -- Seller applications are insert-only for applicants and read-only for
+  -- authorized owners/corporate reviewers. Approval state stays RPC-managed.
+  if has_table_privilege('authenticated', 'public.marketplace_seller_applications', 'INSERT')
+     or has_table_privilege('authenticated', 'public.marketplace_seller_applications', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.marketplace_seller_applications', 'DELETE') then
+    raise exception 'Authenticated users retain table-level write privileges on seller applications';
+  end if;
+
+  if not has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'shop_name', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'user_id', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'status', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'approved_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'approved_at', 'INSERT')
+     or has_column_privilege('authenticated', 'public.marketplace_seller_applications', 'rejection_reason', 'INSERT') then
+    raise exception 'Seller application column-level INSERT privileges are not safely scoped';
+  end if;
+
+  if not has_table_privilege('authenticated', 'public.marketplace_seller_applications', 'SELECT') then
+    raise exception 'Authenticated seller application SELECT privilege is missing';
+  end if;
+
   -- Critical finance and stock RPCs must be authenticated-only.
   if has_function_privilege('anon', 'public.approve_farmer_payment(uuid)', 'EXECUTE')
      or has_function_privilege('anon', 'public.mark_farmer_payment_paid(uuid)', 'EXECUTE')
