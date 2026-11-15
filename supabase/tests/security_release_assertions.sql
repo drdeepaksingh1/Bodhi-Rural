@@ -128,6 +128,6 @@ begin
     raise exception 'Cluster supervisor farm scope does not match PANCHAYAT/BLOCK location assignments';
   end if;
 end;
-$;
+$$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
