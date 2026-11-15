@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 import {
+  cleanupUnlinkedFarmerApplicationDocuments,
   createFarmerApplicationDocumentUpload,
   verifyFarmerApplicationDocument,
 } from './actions';
@@ -272,6 +273,8 @@ export default function FarmerRegisterPage() {
     setMessage('');
     setError('');
 
+    const uploadedDocuments: { bucket: string; path: string }[] = [];
+
     try {
       const {
         data: { user },
@@ -324,16 +327,19 @@ export default function FarmerRegisterPage() {
         'farmer-photos',
         farmerPhoto
       );
+      uploadedDocuments.push({ bucket: 'farmer-photos', path: farmerPhotoUrl });
 
       const aadhaarDocumentUrl = await uploadFile(
         'farmer-aadhaar',
         aadhaarDocument
       );
+      uploadedDocuments.push({ bucket: 'farmer-aadhaar', path: aadhaarDocumentUrl });
 
       const bankPassbookUrl = await uploadFile(
         'farmer-bank-documents',
         bankPassbook
       );
+      uploadedDocuments.push({ bucket: 'farmer-bank-documents', path: bankPassbookUrl });
 
       // Insert application
       const { error: applicationError } = await supabase
@@ -414,6 +420,10 @@ export default function FarmerRegisterPage() {
       setBankPassbook(null);
 
     } catch (err) {
+      if (uploadedDocuments.length > 0) {
+        await cleanupUnlinkedFarmerApplicationDocuments(uploadedDocuments);
+      }
+
       setError(
         err instanceof Error
           ? err.message
