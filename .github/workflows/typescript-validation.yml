@@ -1,4 +1,4 @@
-name: TypeScript validation
+name: Application validation
 
 on:
   pull_request:
@@ -12,10 +12,15 @@ permissions:
   contents: read
 
 jobs:
-  typecheck:
-    name: TypeScript typecheck
+  validate:
+    name: TypeScript and production build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      # Non-secret placeholders allow Next.js to compile during CI.
+      # Runtime deployments must use the real Supabase project values.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -27,3 +32,5 @@ jobs:
         run: npm install --no-package-lock
       - name: Run TypeScript compiler
         run: npx tsc --noEmit
+      - name: Build production application
+        run: npm run build
