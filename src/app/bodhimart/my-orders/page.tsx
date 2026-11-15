@@ -95,7 +95,7 @@ export default async function BodhiMartMyOrdersPage() {
         {error ? (
           <section role="alert" className="mt-8 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950">
             <h2 className="font-bold">Order history is not available</h2>
-            <p className="mt-2">The existing database permissions did not allow this order-history request. No permissions were changed.</p>
+            <p className="mt-2">Please try again. Your order data and account permissions have not been changed.</p>
           </section>
         ) : itemError ? (
           <section role="alert" className="mt-8 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950">
@@ -105,7 +105,7 @@ export default async function BodhiMartMyOrdersPage() {
           <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-10 text-center">
             <div className="text-4xl">📦</div>
             <h2 className="mt-4 text-xl font-bold text-gray-900">No orders yet</h2>
-            <p className="mt-2 text-gray-600">Your confirmed BodhiMart purchases will appear here.</p>
+            <p className="mt-2 text-gray-600">Your BodhiMart orders will appear here.</p>
             <Link href="/bodhimart/products" className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">Explore products</Link>
           </section>
         ) : (
