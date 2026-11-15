@@ -154,15 +154,15 @@ export default function BodhiMartCheckoutPage() {
       if (deliveryMethod !== "PICKUP") {
         selectedAddress = addressId;
         if (addressId === "NEW") {
-          const mobile = addressForm.mobile.replace(/[\\s-]/g, "");
+          const mobile = addressForm.mobile.replace(/[\s-]/g, "");
           const pincode = addressForm.pincode.trim();
           if (!addressForm.recipient_name.trim() || !addressForm.address_line1.trim()) {
             throw new Error("Enter the recipient name and complete delivery address.");
           }
-          if (!/^(?:\\+91)?[6-9]\\d{9}$/.test(mobile)) {
+          if (!/^(?:\+91)?[6-9]\d{9}$/.test(mobile)) {
             throw new Error("Enter a valid 10-digit Indian mobile number.");
           }
-          if (!/^[1-9]\\d{5}$/.test(pincode)) {
+          if (!/^[1-9]\d{5}$/.test(pincode)) {
             throw new Error("Enter a valid 6-digit PIN code.");
           }
           const { data, error: addressError } = await supabase.from("marketplace_customer_addresses")
@@ -261,7 +261,7 @@ export default function BodhiMartCheckoutPage() {
               </label>}
               {addressId === "NEW" ? <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-medium">Recipient name<input required value={addressForm.recipient_name} onChange={(e) => setAddress("recipient_name", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">Mobile number<input required inputMode="tel" autoComplete="tel" pattern="(?:\\+91)?[6-9][0-9]{9}" title="Enter a valid 10-digit Indian mobile number." value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium">Mobile number<input required inputMode="tel" autoComplete="tel" pattern="(?:\+91)?[6-9][0-9]{9}" title="Enter a valid 10-digit Indian mobile number." value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium sm:col-span-2">Address line 1<input required value={addressForm.address_line1} onChange={(e) => setAddress("address_line1", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium">Address line 2<input value={addressForm.address_line2} onChange={(e) => setAddress("address_line2", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium">Landmark<input value={addressForm.landmark} onChange={(e) => setAddress("landmark", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
