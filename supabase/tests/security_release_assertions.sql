@@ -180,6 +180,6 @@ begin
     raise exception 'Anonymous DML privileges remain on public catalogue tables';
   end if;
 end;
-$;
+$$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
