@@ -74,7 +74,7 @@ export default function BodhiMartCheckoutPage() {
       const ids = cartItems.map((item) => item.product_id);
       const [{ data: productRows, error: productError }, { data: stocks, error: stockError }] =
         await Promise.all([
-          supabase.from("marketplace_products")
+          supabase.from("marketplace_public_products")
             .select("id, product_id, name, sku, unit, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, status")
             .in("id", ids),
           supabase.from("marketplace_public_inventory").select("product_id, available_quantity").in("product_id", ids),
