@@ -38,6 +38,7 @@ begin
     raise exception 'A staff application must belong to the authenticated applicant.';
   end if;
 
+  new.application_number := null;
   new.status := 'SUBMITTED';
   new.current_stage := 'HR';
   new.rejection_reason := null;
