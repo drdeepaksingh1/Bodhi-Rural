@@ -169,3 +169,44 @@ export async function verifyFarmerApplicationDocument(
 
   return { path };
 }
+
+/**
+ * Remove only the current applicant's uploaded objects that are not linked
+ * to an application. Storage RLS enforces this condition as a second layer.
+ */
+export async function cleanupUnlinkedFarmerApplicationDocuments(
+  documents: { bucket: string; path: string }[]
+): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user || !Array.isArray(documents)) return;
+
+  const allowedBuckets: FarmerDocumentBucket[] = [
+    'farmer-photos',
+    'farmer-aadhaar',
+    'farmer-bank-documents',
+  ];
+
+  for (const bucket of allowedBuckets) {
+    const paths = documents
+      .filter((item) =>
+        item &&
+        item.bucket === bucket &&
+        typeof item.path === 'string' &&
+        item.path.startsWith(`${user.id}/`) &&
+        !item.path.includes('..') &&
+        !item.path.includes('\\\\')
+      )
+      .map((item) => item.path);
+
+    if (paths.length > 0) {
+      // The storage DELETE policy allows only unlinked files in this user's
+      // folder; linked application documents are intentionally immutable here.
+      await supabase.storage.from(bucket).remove(paths);
+    }
+  }
+}
