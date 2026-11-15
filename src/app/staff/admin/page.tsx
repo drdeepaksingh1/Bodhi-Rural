@@ -123,10 +123,7 @@ export default function StaffAdminPage() {
       }
 
       const [staffResult, roleResult] = await Promise.all([
-        supabase
-          .from('staff')
-          .select('*')
-          .order('created_at', { ascending: false }),
+        supabase.rpc('get_staff_directory'),
 
         supabase
           .from('roles')
