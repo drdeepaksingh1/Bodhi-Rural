@@ -53,7 +53,7 @@ begin
       and grantee = 'anon'
       and table_name in (
         'farmers', 'farms', 'bird_batches', 'egg_production',
-        'feed_records', 'veterinary_records',
+        'feed_records', 'veterinary_records', 'locations', 'roles',
         'marketplace_seller_applications'
       )
   ) then
@@ -227,6 +227,20 @@ begin
      or has_table_privilege('anon', 'public.products', 'UPDATE')
      or has_table_privilege('anon', 'public.products', 'DELETE') then
     raise exception 'Anonymous DML privileges remain on public catalogue tables';
+  end if;
+
+  if exists (
+    select 1
+    from information_schema.role_table_grants
+    where table_schema = 'public'
+      and grantee = 'anon'
+      and table_name not in (
+        'marketplace_categories', 'marketplace_product_images',
+        'marketplace_public_inventory', 'marketplace_public_products',
+        'product_categories', 'products'
+      )
+  ) then
+    raise exception 'Unexpected anonymous public-table grant exists';
   end if;
 end;
 $$;
