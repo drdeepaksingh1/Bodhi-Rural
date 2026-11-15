@@ -341,6 +341,20 @@ export default function BodhiMartCartPage() {
 
   const savings = Math.max(0, mrpTotal - subtotal);
 
+  const hasCheckoutBlockingItems = items.some((item) => {
+    const product = item.product;
+    if (!product || product.status !== "ACTIVE" || item.availableStock < 1) {
+      return true;
+    }
+
+    const minimum = Math.max(1, Number(product.minimum_order_quantity) || 1);
+    const maximum = product.maximum_order_quantity
+      ? Math.min(item.availableStock, Number(product.maximum_order_quantity))
+      : item.availableStock;
+
+    return item.quantity < minimum || item.quantity > maximum;
+  });
+
   function formatPrice(value: number) {
     return `₹${Number(value || 0).toLocaleString(
       "en-IN",
@@ -417,6 +431,12 @@ export default function BodhiMartCartPage() {
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {items.length > 0 && hasCheckoutBlockingItems && (
+          <div role="alert" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            One or more products are unavailable or exceed current stock or order limits. Remove unavailable products or adjust quantities before checkout.
           </div>
         )}
 
@@ -664,12 +684,23 @@ export default function BodhiMartCartPage() {
                 </div>
               </div>
 
-              <a
-                href="/bodhimart/checkout"
-                className="mt-7 block w-full rounded-xl bg-green-700 px-5 py-3 text-center font-bold text-white hover:bg-green-800"
-              >
-                Proceed to Checkout
-              </a>
+              {hasCheckoutBlockingItems ? (
+                <button
+                  type="button"
+                  disabled
+                  className="mt-7 block w-full cursor-not-allowed rounded-xl bg-gray-300 px-5 py-3 text-center font-bold text-gray-600"
+                  title="Resolve unavailable products or quantity limits before checkout."
+                >
+                  Resolve Cart Issues
+                </button>
+              ) : (
+                <a
+                  href="/bodhimart/checkout"
+                  className="mt-7 block w-full rounded-xl bg-green-700 px-5 py-3 text-center font-bold text-white hover:bg-green-800"
+                >
+                  Proceed to Checkout
+                </a>
+              )}
 
               <p className="mt-3 text-center text-xs text-gray-500">
                 Online payment is not configured. Orders are submitted with payment pending.
