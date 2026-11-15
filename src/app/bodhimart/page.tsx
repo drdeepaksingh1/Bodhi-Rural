@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 
 const products = [
@@ -74,7 +73,6 @@ const categories = [
 ];
 
 export default function Mart() {
-  const [count, setCount] = useState(0);
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filteredProducts =
@@ -84,9 +82,6 @@ export default function Mart() {
           (product) => product.category === activeCategory
         );
 
-  function addToCart() {
-    setCount((current) => current + 1);
-  }
 
   return (
     <main>
@@ -155,16 +150,16 @@ export default function Mart() {
                 gap: '10px',
               }}
             >
-              <a
-                href="#products"
+              <Link
+                href="/bodhimart/products"
                 className="btn"
                 style={{
                   textDecoration: 'none',
                   display: 'inline-block',
                 }}
               >
-                Browse Products
-              </a>
+                Browse Live Catalogue
+              </Link>
 
               <Link
                 href="/farmer-network"
@@ -179,7 +174,7 @@ export default function Mart() {
             </div>
           </div>
 
-          {/* CART PANEL */}
+          {/* SHOPPING SHORTCUTS */}
           <div
             style={{
               background: '#145c2b',
@@ -200,7 +195,7 @@ export default function Mart() {
                 marginBottom: '8px',
               }}
             >
-              YOUR CART
+              SHOP BODHIMART
             </div>
 
             <div
@@ -211,7 +206,7 @@ export default function Mart() {
                 marginBottom: '8px',
               }}
             >
-              {count}
+              Farm & Rural Essentials
             </div>
 
             <div
@@ -221,7 +216,7 @@ export default function Mart() {
                 marginBottom: '18px',
               }}
             >
-              Items added to cart
+              Browse approved products with live prices and stock availability.
             </div>
 
             <div
@@ -233,7 +228,11 @@ export default function Mart() {
                 lineHeight: 1.5,
               }}
             >
-              Select farm products below and add them to your cart.
+              Add products from the live catalogue to your customer cart. Your cart is linked to your signed-in account.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '16px' }}>
+              <Link href="/bodhimart/products" className="btn" style={{ background: '#ffffff', color: '#145c2b', textDecoration: 'none' }}>Shop Products</Link>
+              <Link href="/bodhimart/cart" className="btn alt" style={{ textDecoration: 'none' }}>View Cart</Link>
             </div>
           </div>
         </div>
@@ -350,7 +349,6 @@ export default function Mart() {
               <ProductCard
                 key={product.name}
                 product={product}
-                onAdd={addToCart}
               />
             ))}
           </div>
@@ -494,7 +492,6 @@ export default function Mart() {
 
 function ProductCard({
   product,
-  onAdd,
 }: {
   product: {
     icon: string;
@@ -503,7 +500,6 @@ function ProductCard({
     category: string;
     description: string;
   };
-  onAdd: () => void;
 }) {
   return (
     <div
@@ -586,19 +582,17 @@ function ProductCard({
           {product.price}
         </div>
 
-        <button
-          type="button"
+        <Link
+          href="/bodhimart/products"
           className="btn"
-          onClick={onAdd}
           style={{
-            border: 'none',
-            cursor: 'pointer',
+            textDecoration: 'none',
             padding: '9px 12px',
             fontSize: '12px',
           }}
         >
-          Add to Cart
-        </button>
+          View in Catalogue
+        </Link>
       </div>
     </div>
   );
