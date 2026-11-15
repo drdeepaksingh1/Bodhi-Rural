@@ -49,6 +49,13 @@ begin
     raise exception 'Staff application submission RPC grants are incorrect';
   end if;
 
+  if has_table_privilege('authenticated', 'public.staff_application_approvals', 'INSERT')
+     or has_table_privilege('authenticated', 'public.staff_application_approvals', 'UPDATE')
+     or has_table_privilege('authenticated', 'public.staff_application_approvals', 'DELETE')
+     or not has_table_privilege('authenticated', 'public.staff_application_approvals', 'SELECT') then
+    raise exception 'Staff approval history table privileges are not read-only for authenticated users';
+  end if;
+
   if position('a.user_id = auth.uid()' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
      or position('a.status = ''DRAFT''' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0
      or position('current_stage = ''HR''' in pg_get_functiondef('public.submit_staff_application(uuid)'::regprocedure)) = 0 then
