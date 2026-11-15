@@ -121,12 +121,7 @@ export default function UserRoleManagementPage() {
         { data: profileData, error: profileError },
         { data: roleData, error: roleError },
       ] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select(
-            'id, full_name, email, phone, role_id, location_id, employee_code, is_active'
-          )
-          .order('full_name', { ascending: true }),
+        supabase.rpc('get_user_role_directory'),
 
         supabase
           .from('roles')
@@ -432,15 +427,12 @@ export default function UserRoleManagementPage() {
 
       const locationId = getLocationForRole();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role_id: selectedRoleId,
-          location_id: locationId,
-          is_active: isActive,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedUser.id);
+      const { error } = await supabase.rpc('update_managed_user_role', {
+        p_user_id: selectedUser.id,
+        p_role_id: selectedRoleId,
+        p_location_id: locationId,
+        p_is_active: isActive,
+      });
 
       if (error) {
         throw new Error(error.message);
