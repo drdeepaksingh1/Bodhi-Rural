@@ -12,8 +12,8 @@ This document records verified work and remaining gates. A successful TypeScript
 
 | Phase | Scope | Current status | Evidence / remaining work |
 |---|---|---|---|
-| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115090000_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115091000_scope_marketplace_seller_application_reads`. Two public marketplace views still trigger SECURITY DEFINER findings; review 43 authenticated SECURITY DEFINER functions individually. |
-| 2. Backend | Schema, migrations, functions, workflows and integrity | In progress | Live migration registry currently has 28 entries. Repository history is not fully reconciled; do not replay or fabricate historical migrations. Continue validating finance, procurement, inventory and marketplace RPC invariants. |
+| 1. Security | RLS, roles, permissions, RPCs, storage and data protection | In progress | Farmer-application review is routed through a scoped RPC; KYC buckets are private and restricted. Removed a legacy broad farmer visibility policy and anonymous table privileges from core farm tables in migration `20261115090000_scope_legacy_farmer_management_policy`. Restricted seller-application reads to corporate management in migration `20261115091000_scope_marketplace_seller_application_reads`. Aligned cluster-supervisor farm-data scope with the actual PANCHAYAT/BLOCK location model in migration `20261115093000_align_cluster_supervisor_farm_scope`. Two public marketplace views still trigger SECURITY DEFINER findings; review 43 authenticated SECURITY DEFINER functions individually. |
+| 2. Backend | Schema, migrations, functions, workflows and integrity | In progress | Live migration registry currently has 29 entries. Repository history is not fully reconciled; do not replay or fabricate historical migrations. Continue validating finance, procurement, inventory and marketplace RPC invariants. |
 | 3. Frontend | Farmer registration, dashboards, admin, supervisor and management panels | Build verified; functional testing pending | Current application passes TypeScript and Next.js production build in GitHub Actions. Role-by-role route and workflow testing requires signed-in test accounts. |
 | 4. Business modules | Farmer management, livestock, feed, inventory, orders and marketplace | In progress | Existing modules and workflows are present. Verify complete CRUD, authorization, stock movements, financial calculations, order state transitions and edge cases using non-production test accounts/data. |
 | 5. User experience | Hindi/English, mobile responsiveness, navigation and validation | In progress | Root document currently declares English. Verify translation coverage and mobile layouts across every role/module; no full bilingual acceptance test is recorded. |
@@ -46,6 +46,12 @@ Post-migration verification:
 - the legacy broad policy is absent;
 - the remaining management SELECT policy calls `farmer_in_user_scope(id)`;
 - no anonymous table grants remain on those six tables.
+
+### Cluster-supervisor farm-data scope
+
+The locations table has STATE, DISTRICT, BLOCK, PANCHAYAT and VILLAGE types, but no CLUSTER type. The previous `farmer_in_user_scope` implementation compared a cluster supervisor's assigned location to `farmers.cluster_id`, which could deny access when the supervisor is assigned to a panchayat or block.
+
+Migration `20261115093000_align_cluster_supervisor_farm_scope` now maps a CLUSTER_SUPERVISOR assigned to a PANCHAYAT to `farmers.panchayat_id`, or assigned to a BLOCK to `farmers.block_id`; other location types fail closed. The security assertion checks that this mapping is present. No active production CLUSTER_SUPERVISOR profiles were found, so real-role testing remains necessary.
 
 ### Registration upload reliability and orphan cleanup
 
@@ -87,7 +93,7 @@ Added `supabase/tests/security_release_assertions.sql`. It checks farmer review 
 
 ## Migration history
 
-The live Supabase registry currently reports 28 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. Historical migration reconciliation remains separate from applying new migrations. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
+The live Supabase registry currently reports 29 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. Historical migration reconciliation remains separate from applying new migrations. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
 
 ## Required owner/manual release gates
 
