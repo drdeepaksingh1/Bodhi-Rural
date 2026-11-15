@@ -2,7 +2,7 @@
 -- Run against a staging database first. This script raises an exception on a
 -- failed assertion and does not modify application data or schema.
 
-do $$
+do $bodhi_assertions$
 declare
   v_bucket_count integer;
   v_policy_count integer;
@@ -493,6 +493,6 @@ begin
   end if;
 
 end;
-$;
+$bodhi_assertions$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
