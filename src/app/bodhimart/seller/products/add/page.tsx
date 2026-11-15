@@ -261,8 +261,6 @@ export default function AddProductPage() {
                 : null,
             delivery_available:
               form.delivery_available,
-            status: 'PENDING',
-            created_by: user.id,
           })
           .select(
             'id, product_id, name'
