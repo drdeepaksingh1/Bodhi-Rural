@@ -415,6 +415,18 @@ begin
     raise exception 'Anonymous DML privileges remain on public catalogue tables';
   end if;
 
+  -- Farmer applicants can insert only application payload fields, never
+  -- generated identity or review/approval metadata.
+  if has_table_privilege('authenticated', 'public.farmer_applications', 'INSERT')
+     or has_column_privilege('authenticated', 'public.farmer_applications', 'farmer_id', 'INSERT')
+     or has_column_privilege('authenticated', 'public.farmer_applications', 'approved_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.farmer_applications', 'approved_at', 'INSERT')
+     or has_column_privilege('authenticated', 'public.farmer_applications', 'rejection_reason', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.farmer_applications', 'full_name', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.farmer_applications', 'status', 'INSERT') then
+    raise exception 'Farmer application submission column privileges are unsafe';
+  end if;
+
   if exists (
     select 1
     from information_schema.role_table_grants
