@@ -103,7 +103,18 @@ begin
   if v_policy_count <> 1 then
     raise exception 'Scope-aware farmer document read policy is missing';
   end if;
+
+  select count(*) into v_policy_count
+  from pg_policies
+  where schemaname = 'storage'
+    and tablename = 'objects'
+    and policyname = 'Applicants can delete unlinked farmer documents'
+    and cmd = 'DELETE';
+
+  if v_policy_count <> 1 then
+    raise exception 'Safe cleanup policy for unlinked applicant documents is missing';
+  end if;
 end;
-$$;
+$;
 
 select 'PASS: Bodhi Rural security release assertions' as result;
