@@ -199,6 +199,24 @@ begin
     raise exception 'An anonymous geography lookup is not stable/read-only over public locations';
   end if;
 
+  -- Staff application processing must reject unknown decisions and require
+  -- an explicit reason for rejection. Keep the workflow behind authenticated RPC access.
+  if not has_function_privilege('authenticated', 'public.process_staff_application(uuid,text,text)', 'EXECUTE')
+     or has_function_privilege('anon', 'public.process_staff_application(uuid,text,text)', 'EXECUTE') then
+    raise exception 'Staff application processing RPC grants are incorrect';
+  end if;
+
+  if position(
+       'Decision must be APPROVED or REJECTED'
+       in pg_get_functiondef('public.process_staff_application(uuid,text,text)'::regprocedure)
+     ) = 0
+     or position(
+       'A rejection reason is required'
+       in pg_get_functiondef('public.process_staff_application(uuid,text,text)'::regprocedure)
+     ) = 0 then
+    raise exception 'Staff application decision validation or rejection reason requirement is missing';
+  end if;
+
   if exists (
     select 1
     from information_schema.role_table_grants
