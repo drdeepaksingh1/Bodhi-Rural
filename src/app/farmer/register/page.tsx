@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
+import { uploadFarmerApplicationDocument } from './actions';
 
 type Location = {
   id: string;
@@ -220,28 +221,19 @@ export default function FarmerRegisterPage() {
   // ---------------------------------------------------------
 
   async function uploadFile(
-    bucket: string,
-    file: File,
-    userId: string
+    bucket: 'farmer-photos' | 'farmer-aadhaar' | 'farmer-bank-documents',
+    file: File
   ) {
-    const extension = file.name.split('.').pop() || 'file';
+    const formData = new FormData();
+    formData.set('bucket', bucket);
+    formData.set('file', file);
 
-    const path =
-      `${userId}/` +
-      `${crypto.randomUUID()}.${extension}`;
-
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (error) {
-      throw new Error(`${bucket}: ${error.message}`);
+    const result = await uploadFarmerApplicationDocument(formData);
+    if ('error' in result) {
+      throw new Error(result.error);
     }
 
-    return path;
+    return result.path;
   }
 
   // ---------------------------------------------------------
@@ -305,20 +297,17 @@ export default function FarmerRegisterPage() {
       // Upload documents
       const farmerPhotoUrl = await uploadFile(
         'farmer-photos',
-        farmerPhoto,
-        user.id
+        farmerPhoto
       );
 
       const aadhaarDocumentUrl = await uploadFile(
         'farmer-aadhaar',
-        aadhaarDocument,
-        user.id
+        aadhaarDocument
       );
 
       const bankPassbookUrl = await uploadFile(
         'farmer-bank-documents',
-        bankPassbook,
-        user.id
+        bankPassbook
       );
 
       // Insert application
@@ -686,7 +675,7 @@ export default function FarmerRegisterPage() {
 
           <input
             type="file"
-            accept="image/*,.pdf"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
             onChange={handleAadhaarChange}
             required
           />
@@ -746,7 +735,7 @@ export default function FarmerRegisterPage() {
 
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={handlePhotoChange}
             required
           />
