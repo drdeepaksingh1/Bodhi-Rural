@@ -492,6 +492,19 @@ begin
     raise exception 'Authenticated DELETE/UPDATE grants remain without matching workflow policies';
   end if;
 
+  -- Staff applicants may attach documents, but cannot assert reviewer verification.
+  if has_table_privilege('authenticated', 'public.staff_application_documents', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.staff_application_documents', 'application_id', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.staff_application_documents', 'document_type', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.staff_application_documents', 'file_name', 'INSERT')
+     or not has_column_privilege('authenticated', 'public.staff_application_documents', 'storage_path', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_application_documents', 'verification_status', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_application_documents', 'verified_by', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_application_documents', 'verified_at', 'INSERT')
+     or has_column_privilege('authenticated', 'public.staff_application_documents', 'remarks', 'INSERT') then
+    raise exception 'Staff document applicant INSERT columns are not safely restricted';
+  end if;
+
 end;
 $bodhi_assertions$;
 
