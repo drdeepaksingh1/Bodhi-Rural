@@ -107,7 +107,7 @@ Migration `20261115011539_revoke_unnecessary_anonymous_operational_grants` remov
 
 ## Migration history
 
-The live Supabase registry currently reports 31 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. Historical migration reconciliation remains separate from applying new migrations. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
+The live Supabase registry currently reports 31 migration entries. The repository's default branch migration directory previously contained 9 SQL files, while this PR adds farmer security migrations. The six additional production migrations in this PR now use filenames matching their exact live registry versions. The composite farmer-review migration `20261115080000_secure_farmer_application_review.sql` is retained as source history; production hardening was applied through four separately recorded migrations, so do not replay that composite migration. Historical reconciliation remains incomplete for older entries. Recover original SQL or establish a verified baseline; never fabricate empty migrations or replay unknown historical changes.
 
 ## Required owner/manual release gates
 
