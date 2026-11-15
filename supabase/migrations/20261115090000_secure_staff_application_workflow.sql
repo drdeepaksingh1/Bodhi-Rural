@@ -96,7 +96,7 @@ BEGIN
     END IF;
 
     -- Only HR, CEO and Chairman/MD can approve staff applications
-    IF v_role NOT IN (
+    IF v_role IS NULL OR v_role NOT IN (
         'HR',
         'CEO',
         'SUPER_ADMIN'
