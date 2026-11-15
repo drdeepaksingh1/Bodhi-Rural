@@ -63,6 +63,8 @@ drop policy if exists "Management can view farmer applications"
   on public.farmer_applications;
 drop policy if exists "Management can review farmer applications"
   on public.farmer_applications;
+drop policy if exists "Scoped management can view farmer applications"
+  on public.farmer_applications;
 
 create policy "Scoped management can view farmer applications"
   on public.farmer_applications
