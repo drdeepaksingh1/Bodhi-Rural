@@ -2,7 +2,10 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
-import { uploadFarmerApplicationDocument } from './actions';
+import {
+  createFarmerApplicationDocumentUpload,
+  verifyFarmerApplicationDocument,
+} from './actions';
 
 type Location = {
   id: string;
@@ -224,16 +227,38 @@ export default function FarmerRegisterPage() {
     bucket: 'farmer-photos' | 'farmer-aadhaar' | 'farmer-bank-documents',
     file: File
   ) {
-    const formData = new FormData();
-    formData.set('bucket', bucket);
-    formData.set('file', file);
+    const authorization = await createFarmerApplicationDocumentUpload(
+      bucket,
+      file.size,
+      file.type
+    );
 
-    const result = await uploadFarmerApplicationDocument(formData);
-    if ('error' in result) {
-      throw new Error(result.error);
+    if ('error' in authorization) {
+      throw new Error(authorization.error);
     }
 
-    return result.path;
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .uploadToSignedUrl(authorization.path, authorization.token, file, {
+        contentType: file.type,
+        cacheControl: '3600',
+      });
+
+    if (uploadError) {
+      throw new Error(`Unable to upload document: ${uploadError.message}`);
+    }
+
+    const verification = await verifyFarmerApplicationDocument(
+      bucket,
+      authorization.path,
+      file.type
+    );
+
+    if ('error' in verification) {
+      throw new Error(verification.error);
+    }
+
+    return verification.path;
   }
 
   // ---------------------------------------------------------
