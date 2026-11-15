@@ -118,7 +118,7 @@ export default function BodhiMartCartPage() {
 
       const { data: products, error: productsError } =
         await supabase
-          .from("marketplace_products")
+          .from("marketplace_public_products")
           .select(
             "id, product_id, name, brand, unit, mrp, selling_price, minimum_order_quantity, maximum_order_quantity, delivery_available, status"
           )
