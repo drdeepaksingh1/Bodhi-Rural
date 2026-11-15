@@ -414,7 +414,6 @@ export default function StaffRegistrationPage() {
 
           mobile: mobile,
 
-          otp_verified_at: new Date().toISOString(),
 
           full_name: fullName,
           father_husband_name: fatherHusbandName || null,
