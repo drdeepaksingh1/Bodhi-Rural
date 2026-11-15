@@ -37,9 +37,7 @@ async function approveApplication(formData: FormData) {
     redirect('/login');
   }
 
-  const { error } = await supabase
-    .from('farmer_applications')
-    .rpc('review_farmer_application', {
+  const { error } = await supabase.rpc('review_farmer_application', {
       p_application_id: applicationId,
       p_decision: 'APPROVE',
       p_rejection_reason: null,
@@ -162,11 +160,6 @@ export default async function FarmerApplicationsPage({
       land_area,
       shed_available,
       shed_capacity,
-      
-      
-      
-      
-      
       farmer_photo_url,
       aadhaar_document_url,
       bank_passbook_url,
@@ -236,7 +229,7 @@ export default async function FarmerApplicationsPage({
       .from(bucket)
       .createSignedUrl(path, 300);
 
-    return error ? null : data.signedUrl;
+    return error ? null : data?.signedUrl || null;
   }
 
   const applicationsWithDocuments = await Promise.all(
