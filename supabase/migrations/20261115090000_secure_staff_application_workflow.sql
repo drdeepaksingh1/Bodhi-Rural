@@ -327,7 +327,7 @@ BEGIN
             select 1
             from public.roles proposed_role
             where proposed_role.id = v_application.proposed_role_id
-              and proposed_role.code in ('SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN')
+              and proposed_role.code in ('SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN', 'FARMER')
         ) then
             raise exception 'Applicants cannot be assigned privileged administrator roles through staff recruitment';
         end if;
