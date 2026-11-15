@@ -483,8 +483,17 @@ export default function StaffRegistrationPage() {
         throw new Error(submitError.message);
       }
 
-      setApplicationId(submitted.application_id);
-      setApplicationNumber(submitted.application_number);
+      const submittedResult = submitted as {
+        application_id: string;
+        application_number: string;
+        status: string;
+      } | null;
+      if (!submittedResult) {
+        throw new Error('Application submission did not return a confirmation.');
+      }
+
+      setApplicationId(submittedResult.application_id);
+      setApplicationNumber(submittedResult.application_number);
 
       setMessage(
         `Application submitted successfully. Application Number: ${data.application_number}`
