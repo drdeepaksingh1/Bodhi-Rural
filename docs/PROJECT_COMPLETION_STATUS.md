@@ -17,7 +17,7 @@ This document records verified work and remaining gates. A successful TypeScript
 | 3. Frontend | Farmer registration, dashboards, admin, supervisor and management panels | Build verified; functional testing pending | Current application passes TypeScript and Next.js production build in GitHub Actions. Role-by-role route and workflow testing requires signed-in test accounts. |
 | 4. Business modules | Farmer management, livestock, feed, inventory, orders and marketplace | In progress | Existing modules and workflows are present. Verify complete CRUD, authorization, stock movements, financial calculations, order state transitions and edge cases using non-production test accounts/data. |
 | 5. User experience | Hindi/English, mobile responsiveness, navigation and validation | In progress | Root document currently declares English. Verify translation coverage and mobile layouts across every role/module; no full bilingual acceptance test is recorded. |
-| 6. Testing | TypeScript, CI, database checks, security review and deployment checks | Partial | TypeScript and production build passed on commit `147dcee...`; the latest documentation commit `593bd6d...` has its own CI run in progress at time of writing. Supabase health advisor returned no findings. SQL configuration checks passed for the farmer security change. Signed-in end-to-end tests remain outstanding. |
+| 6. Testing | TypeScript, CI, database checks, security review and deployment checks | Partial | TypeScript and production build passed on commit `147dcee...`; later commits include database hardening, documentation and read-only release assertions. The latest CI run is tracked in GitHub Actions. Supabase health advisor returned no findings. SQL configuration checks passed for the farmer security change. Signed-in end-to-end tests remain outstanding. |
 | 7. Deployment | GitHub integration, Vercel and production verification | Partial | Vercel reported the PR preview deployment Ready. This does not establish that the production domain is running the approved release. Production environment variables and production smoke tests remain to be checked. |
 | 8. Final launch | Final checklist, unresolved issues and handover | Not ready | Keep PR #72 in draft until the outstanding release gates pass. Merge and production release require owner review and account-level access. |
 
@@ -55,6 +55,19 @@ Migration `20261115091000_scope_marketplace_seller_application_reads`:
 - replaces the broad management SELECT policy with `is_bodhi_corporate_management()`;
 - preserves applicants' own-row SELECT and authenticated INSERT policies;
 - revokes anonymous table privileges.
+
+### Seller application privacy fix
+
+A broad seller-application SELECT policy allowed all state, district, block and cluster managers to read seller application records, while the approval/rejection RPCs and UI authorize only corporate management.
+
+Migration `20261115091000_scope_marketplace_seller_application_reads`:
+- replaces the broad management SELECT policy with `is_bodhi_corporate_management()`;
+- preserves applicants' own-row SELECT and authenticated INSERT policies;
+- revokes anonymous table privileges.
+
+### Security release assertions
+
+Added `supabase/tests/security_release_assertions.sql`. It checks farmer review grants, scoped farmer and seller-application policies, anonymous grants on protected operational tables, KYC bucket privacy/size limits and the reviewer storage policy. The assertion block was executed against the connected production database and returned PASS; it makes no application-data changes.
 
 ## Current Supabase advisor findings
 
