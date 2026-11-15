@@ -166,13 +166,22 @@ export default function Home() {
           .br-hero-grid { gap: 30px; }
           .br-hero h1 { font-size: clamp(43px, 12vw, 58px); }
           .br-lead { font-size: 15px; }
-          .br-hero-visual { min-height: min(88vw, 430px); }
-          .br-hero-photo { inset: 0 17px 20px 0; }
+          .br-hero-visual {
+            min-height: 0; display: grid; grid-template-columns: 1fr;
+            gap: 0; align-items: start;
+          }
+          .br-hero-photo {
+            position: relative; inset: auto; height: min(76vw, 360px);
+            margin-right: 17px;
+          }
           .br-photo-caption {
-            top: 14px; bottom: auto; left: 14px; padding: 7px 9px;
+            left: 14px; bottom: 14px; padding: 7px 9px;
             background: rgba(18,61,43,.82); font-size: 9px; letter-spacing: .1em;
           }
-          .br-vision { width: 172px; padding: 17px; }
+          .br-vision {
+            position: relative; right: auto; bottom: auto; z-index: 2;
+            justify-self: end; width: 172px; padding: 17px; margin-top: -18px;
+          }
           .br-vision strong { font-size: 21px; }
           .br-intro { padding: 62px 0; }
           .br-intro-grid { gap: 26px; }
