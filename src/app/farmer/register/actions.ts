@@ -54,7 +54,16 @@ export async function uploadFarmerApplicationDocument(
     return { error: 'Unsupported document category.' };
   }
 
-  if (!(file instanceof File) || file.size <= 0) {
+  if (
+    !file ||
+    typeof file === 'string' ||
+    typeof file.arrayBuffer !== 'function'
+  ) {
+    return { error: 'Please select a valid document.' };
+  }
+
+  const uploadedFile = file as File;
+  if (uploadedFile.size <= 0) {
     return { error: 'Please select a valid document.' };
   }
 
@@ -63,18 +72,18 @@ export async function uploadFarmerApplicationDocument(
     ? ['image/jpeg', 'image/png', 'image/webp']
     : ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
-  if (file.size > maxBytes) {
+  if (uploadedFile.size > maxBytes) {
     return {
       error: `File is too large. Maximum allowed size is ${isPhoto ? '5 MB' : '10 MB'}.`,
     };
   }
 
-  if (!allowedTypes.includes(file.type)) {
+  if (!allowedTypes.includes(uploadedFile.type)) {
     return { error: 'Allowed formats are JPG, PNG, WebP, and PDF for KYC documents.' };
   }
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!hasSignature(bytes, file.type)) {
+  const bytes = new Uint8Array(await uploadedFile.arrayBuffer());
+  if (!hasSignature(bytes, uploadedFile.type)) {
     return { error: 'The selected file content does not match its declared file type.' };
   }
 
@@ -94,13 +103,13 @@ export async function uploadFarmerApplicationDocument(
     'image/webp': 'webp',
     'application/pdf': 'pdf',
   };
-  const path = `${user.id}/${randomUUID()}.${extensionByType[file.type]}`;
+  const path = `${user.id}/${randomUUID()}.${extensionByType[uploadedFile.type]}`;
 
   const { error } = await supabase.storage
     .from(bucket)
     .upload(path, file, {
       cacheControl: '3600',
-      contentType: file.type,
+      contentType: uploadedFile.type,
       upsert: false,
     });
 
