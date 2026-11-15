@@ -263,7 +263,7 @@ begin
     where table_schema = 'public'
       and grantee in ('anon', 'authenticated', 'PUBLIC')
       and table_name in (
-        'audit_logs', 'farmer_credit_recoveries', 'farmer_id_counters',
+        'audit_logs', 'farmer_id_counters',
         'inventory', 'marketplace_order_counters', 'marketplace_price_history',
         'marketplace_product_counters', 'marketplace_seller_application_counters',
         'marketplace_seller_counters', 'order_items', 'staff',
