@@ -6,7 +6,7 @@ import { createClient } from "../../../lib/supabase/client";
 
 type Product = {
   id: string; product_id: string; name: string; sku: string | null; unit: string | null;
-  mrp: number; selling_price: number; tax_percent: number;
+  mrp: number; selling_price: number; tax_percent: number; delivery_available: boolean;
   minimum_order_quantity: number; maximum_order_quantity: number | null; status: string;
 };
 type CartItem = { id: string; product_id: string; quantity: number; price_snapshot: number };
@@ -74,8 +74,8 @@ export default function BodhiMartCheckoutPage() {
       const ids = cartItems.map((item) => item.product_id);
       const [{ data: productRows, error: productError }, { data: stocks, error: stockError }] =
         await Promise.all([
-          supabase.from("marketplace_products")
-            .select("id, product_id, name, sku, unit, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, status")
+          supabase.from("marketplace_public_products")
+            .select("id, product_id, name, sku, unit, mrp, selling_price, tax_percent, delivery_available, minimum_order_quantity, maximum_order_quantity, status")
             .in("id", ids),
           supabase.from("marketplace_public_inventory").select("product_id, available_quantity").in("product_id", ids),
         ]);
@@ -110,7 +110,9 @@ export default function BodhiMartCheckoutPage() {
   ), [items]);
   const tax = useMemo(() => items.reduce((sum, item) => {
     const base = Number(item.product?.selling_price || 0) * Number(item.quantity);
-    return sum + Math.round(base * Number(item.product?.tax_percent || 0)) / 100;
+    const rate = Number(item.product?.tax_percent || 0);
+    const lineTax = Math.round((base * rate / 100) * 100) / 100;
+    return sum + lineTax;
   }, 0), [items]);
   const total = subtotal + tax;
   const invalidItems = items.some((item) => {
@@ -121,7 +123,14 @@ export default function BodhiMartCheckoutPage() {
       ? Math.min(item.availableStock, Number(product.maximum_order_quantity))
       : item.availableStock;
     return item.quantity < minimum || item.quantity > maximum || item.availableStock < item.quantity
-      || Number(item.price_snapshot) !== Number(product.selling_price);
+      || (deliveryMethod !== "PICKUP" && !product.delivery_available)
+      || Number(item.price_snapshot) !== Number(product.selling_price)
+      || !Number.isFinite(Number(product.selling_price)) || Number(product.selling_price) < 0
+      || !Number.isFinite(Number(product.mrp)) || Number(product.mrp) < 0
+      || !Number.isFinite(Number(product.tax_percent)) || Number(product.tax_percent) < 0
+      || Number(product.tax_percent) > 100
+      || (product.maximum_order_quantity !== null
+        && Number(product.maximum_order_quantity) < minimum);
   });
 
   function money(value: number) {
@@ -144,17 +153,43 @@ export default function BodhiMartCheckoutPage() {
       let selectedAddress: string | null = null;
       if (deliveryMethod !== "PICKUP") {
         selectedAddress = addressId;
+        if (addressId !== "NEW") {
+          const savedAddress = addresses.find((address) => address.id === addressId);
+          if (!savedAddress) throw new Error("Select a valid delivery address or add a new one.");
+          const savedMobile = savedAddress.mobile.replace(/[\s-]/g, "");
+          const savedPincode = (savedAddress.pincode || "").trim();
+          if (!savedAddress.recipient_name.trim() || !savedAddress.address_line1.trim()) {
+            throw new Error("The selected saved address is incomplete. Add a new delivery address.");
+          }
+          if (!/^(?:\+91)?[6-9]\d{9}$/.test(savedMobile)) {
+            throw new Error("The selected saved address has an invalid mobile number. Add a new delivery address.");
+          }
+          if (!/^[1-9]\d{5}$/.test(savedPincode)) {
+            throw new Error("The selected saved address has an invalid PIN code. Add a new delivery address.");
+          }
+        }
         if (addressId === "NEW") {
+          const mobile = addressForm.mobile.replace(/[\s-]/g, "");
+          const pincode = addressForm.pincode.trim();
+          if (!addressForm.recipient_name.trim() || !addressForm.address_line1.trim()) {
+            throw new Error("Enter the recipient name and complete delivery address.");
+          }
+          if (!/^(?:\+91)?[6-9]\d{9}$/.test(mobile)) {
+            throw new Error("Enter a valid 10-digit Indian mobile number.");
+          }
+          if (!/^[1-9]\d{5}$/.test(pincode)) {
+            throw new Error("Enter a valid 6-digit PIN code.");
+          }
           const { data, error: addressError } = await supabase.from("marketplace_customer_addresses")
             .insert({
               user_id: user.id,
               address_name: addressForm.address_name.trim() || "Delivery address",
               recipient_name: addressForm.recipient_name.trim(),
-              mobile: addressForm.mobile.trim(),
+              mobile,
               address_line1: addressForm.address_line1.trim(),
               address_line2: addressForm.address_line2.trim() || null,
               landmark: addressForm.landmark.trim() || null,
-              pincode: addressForm.pincode.trim() || null,
+              pincode,
               is_default: addresses.length === 0,
             }).select("id").single();
           if (addressError) throw addressError;
@@ -212,7 +247,7 @@ export default function BodhiMartCheckoutPage() {
         <h1 className="mt-4 text-3xl font-bold text-gray-900">Checkout</h1>
         <p className="mt-2 text-gray-600">Confirm delivery details and current prices.</p>
         {error && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
-        {invalidItems && <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Some items no longer meet the seller’s quantity, stock, or price requirements. Review your cart before ordering.</div>}
+        {invalidItems && <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Some items no longer meet the seller’s quantity, stock, price, tax, or delivery requirements. Choose pickup where delivery is unavailable, or review your cart before ordering.</div>}
 
         <form onSubmit={(event) => void placeOrder(event)} className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <section className="space-y-6">
@@ -220,7 +255,7 @@ export default function BodhiMartCheckoutPage() {
               <h2 className="text-lg font-bold">Delivery method</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
-                  <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
+                  <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} disabled={items.some((item) => !item.product?.delivery_available)} onChange={() => setDeliveryMethod("STANDARD")} />
                   <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Current delivery charge: ₹0.</small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
@@ -241,11 +276,11 @@ export default function BodhiMartCheckoutPage() {
               </label>}
               {addressId === "NEW" ? <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-medium">Recipient name<input required value={addressForm.recipient_name} onChange={(e) => setAddress("recipient_name", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">Mobile number<input required inputMode="tel" value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium">Mobile number<input required inputMode="tel" autoComplete="tel" pattern="(?:\+91)?[6-9][0-9]{9}" title="Enter a valid 10-digit Indian mobile number." value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium sm:col-span-2">Address line 1<input required value={addressForm.address_line1} onChange={(e) => setAddress("address_line1", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium">Address line 2<input value={addressForm.address_line2} onChange={(e) => setAddress("address_line2", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium">Landmark<input value={addressForm.landmark} onChange={(e) => setAddress("landmark", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">PIN code<input inputMode="numeric" value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium">PIN code<input required inputMode="numeric" autoComplete="postal-code" pattern="[1-9][0-9]{5}" title="Enter a valid 6-digit PIN code." value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
               </div> : selectedAddress && <div className="mt-4 rounded-xl bg-gray-50 p-4 text-sm">
                 <strong>{selectedAddress.recipient_name}</strong><div>{selectedAddress.mobile}</div><div>{selectedAddress.address_line1}</div>
                 {selectedAddress.address_line2 && <div>{selectedAddress.address_line2}</div>}
