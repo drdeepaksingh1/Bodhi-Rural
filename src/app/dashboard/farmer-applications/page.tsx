@@ -76,9 +76,7 @@ async function rejectApplication(formData: FormData) {
     redirect('/login');
   }
 
-  const { error } = await supabase
-    .from('farmer_applications')
-    .rpc('review_farmer_application', {
+  const { error } = await supabase.rpc('review_farmer_application', {
       p_application_id: applicationId,
       p_decision: 'REJECT',
       p_rejection_reason: rejectionReason,
