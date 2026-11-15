@@ -2,10 +2,10 @@ import { redirect } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/server';
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     status?: string;
     search?: string;
-  };
+  }>;
 };
 
 const MANAGEMENT_ROLES = [
@@ -92,6 +92,7 @@ async function rejectApplication(formData: FormData) {
 export default async function FarmerApplicationsPage({
   searchParams,
 }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -130,12 +131,12 @@ export default async function FarmerApplicationsPage({
   }
 
   const selectedStatus =
-    searchParams?.status &&
-    ['PENDING', 'APPROVED', 'REJECTED'].includes(searchParams.status)
-      ? searchParams.status
+    resolvedSearchParams?.status &&
+    ['PENDING', 'APPROVED', 'REJECTED'].includes(resolvedSearchParams.status)
+      ? resolvedSearchParams.status
       : 'PENDING';
 
-  const search = (searchParams?.search || '').trim().slice(0, 80).replace(/[,%()]/g, ' ');
+  const search = (resolvedSearchParams?.search || '').trim().slice(0, 80).replace(/[,%()]/g, ' ');
 
   let query = supabase
     .from('farmer_applications')
