@@ -508,7 +508,10 @@ export default function UserRoleManagementPage() {
       );
     }
 
-    if (roleCode === 'BLOCK_MANAGER') {
+    if (
+      roleCode === 'BLOCK_MANAGER' ||
+      roleCode === 'CLUSTER_SUPERVISOR'
+    ) {
       return (
         blocks.find(
           (block) => block.id === profile.location_id
