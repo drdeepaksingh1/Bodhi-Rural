@@ -39,7 +39,6 @@ const valueChain = [
 
 const companyDetails = [
   ['Legal name', 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED'],
-  ['Corporate form', 'Company Limited by Shares'],
   ['Registered office', 'Islampur, Nalanda, Bihar – 801303'],
   ['Email', 'ceo@brlps.co.in'],
 ];
@@ -61,13 +60,13 @@ export default function Page() {
         .br-about-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
         .br-about-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 14px; padding: 0 20px; background: #123d2b; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
         .br-about-button.secondary { border: 1px solid #123d2b; background: transparent; color: #123d2b; }
-        .br-about-profile { padding: 30px; background: #123d2b; color: #fff; box-shadow: 0 20px 48px rgba(18,61,43,.12); }
-        .br-about-profile-label { margin: 0 0 24px; color: #d6e1d6; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
-        .br-about-profile h2 { margin: 0 0 24px; color: #fff; font-size: 29px; line-height: 1.2; }
-        .br-about-detail { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.22); }
-        .br-about-detail dt { margin-bottom: 5px; color: #d6e1d6; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-        .br-about-detail dd { margin: 0; color: #fff; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
-        .br-about-detail a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+        .br-about-profile { padding: 30px; border: 1px solid #dce5dc; border-top: 4px solid #1c6844; background: #fff; color: #1c2b23; box-shadow: 0 18px 44px rgba(18,61,43,.08); }
+        .br-about-profile-label { margin: 0 0 18px; color: #1c6844; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+        .br-about-profile h2 { margin: 0 0 20px; color: #123d2b; font-size: 30px; line-height: 1.15; }
+        .br-about-detail { padding: 14px 0; border-top: 1px solid #e3e9e2; }
+        .br-about-detail dt { margin-bottom: 5px; color: #647269; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+        .br-about-detail dd { margin: 0; color: #1c2b23; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+        .br-about-detail a { color: #1c6844; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
         .br-about-section { padding: 82px 0; }
         .br-about-section.tinted { background: #f7f7f2; }
         .br-about-section-heading { max-width: 700px; margin-bottom: 36px; }
@@ -129,7 +128,7 @@ export default function Page() {
             </div>
             <aside className="br-about-profile" aria-labelledby="br-about-profile-title">
               <p className="br-about-profile-label">Company profile</p>
-              <h2 id="br-about-profile-title">Bodhi Rural Livelihood &amp; Agri Private Limited</h2>
+              <h2 id="br-about-profile-title">Bodhi Rural</h2>
               <dl>
                 {companyDetails.map(([label, value]) => (
                   <div className="br-about-detail" key={label}>
