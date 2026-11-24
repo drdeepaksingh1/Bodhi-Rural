@@ -23,6 +23,7 @@ export default function BodhiMartLoginChoicePage() {
             <h2 className="mt-5 text-2xl font-semibold">Buyer login</h2>
             <p className="mt-3 flex-1 text-sm leading-6 text-[#69766d]">Shop products, manage your cart and addresses, and view your orders.</p>
             <Link href={paths.buyer} className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-[#173f2b] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#20563a]">Continue as buyer</Link>
+            <p className="mt-4 text-center text-sm text-[#69766d]">New to BodhiMart? <Link href="/bodhimart/register" className="font-semibold text-[#27623b] underline">Create a buyer account</Link></p>
           </article>
           <article className="flex flex-col rounded-3xl border border-[#d9e2d5] bg-[#173f2b] p-7 text-white shadow-sm sm:p-9">
             <div className="text-3xl" aria-hidden="true">🏪</div>
