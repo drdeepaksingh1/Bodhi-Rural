@@ -7,6 +7,14 @@ import { createClient } from '../../lib/supabase/client';
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const accountType = searchParams.get('account');
+  const isSellerLogin = accountType === 'seller';
+  const isBuyerLogin = accountType === 'buyer';
+  const fallbackRedirect = isSellerLogin
+    ? '/bodhimart/seller/dashboard'
+    : isBuyerLogin
+      ? '/bodhimart/products'
+      : '/dashboard';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +27,7 @@ function LoginForm() {
     const requestedPath = searchParams.get('redirect');
 
     if (!requestedPath) {
-      return '/dashboard';
+      return fallbackRedirect;
     }
 
     try {
@@ -29,7 +37,7 @@ function LoginForm() {
       );
 
       if (parsedUrl.origin !== window.location.origin) {
-        return '/dashboard';
+        return fallbackRedirect;
       }
 
       return (
@@ -38,7 +46,7 @@ function LoginForm() {
         parsedUrl.hash
       );
     } catch {
-      return '/dashboard';
+      return fallbackRedirect;
     }
   }
 
@@ -156,7 +164,11 @@ function LoginForm() {
           <p className="mt-2 text-sm text-gray-600">
             {isForgotPassword
               ? 'Reset your account password'
-              : 'Welcome to BodhiMart'}
+              : isSellerLogin
+                ? 'Seller workspace sign in'
+                : isBuyerLogin
+                  ? 'Shop and manage your BodhiMart orders'
+                  : 'Welcome to BodhiMart'}
           </p>
         </div>
 
@@ -164,8 +176,20 @@ function LoginForm() {
         <h2 className="mb-6 text-xl font-semibold text-gray-800">
           {isForgotPassword
             ? 'Forgot Password'
-            : 'Login to Your Account'}
+            : isSellerLogin
+              ? 'Seller Login'
+              : isBuyerLogin
+                ? 'Buyer Login'
+                : 'Login to Your Account'}
         </h2>
+
+        {!isForgotPassword && (isSellerLogin || isBuyerLogin) && (
+          <p className="-mt-3 mb-5 text-sm leading-6 text-gray-600">
+            {isSellerLogin
+              ? 'Sign in to manage your approved shop. Seller tools are available after BodhiMart admin approval.'
+              : 'Sign in to shop the catalogue, save products and manage your orders.'}
+          </p>
+        )}
 
         <form
           onSubmit={
@@ -273,6 +297,25 @@ function LoginForm() {
             >
               Back to Login
             </button>
+          </div>
+        )}
+
+        {!isForgotPassword && (
+          <div className="mt-6 text-center text-sm text-gray-600">
+            <a
+              href={isSellerLogin
+                ? '/login?account=buyer&redirect=%2Fbodhimart%2Fproducts'
+                : isBuyerLogin
+                  ? '/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard'
+                  : '/bodhimart/login'}
+              className="font-semibold text-green-800 underline"
+            >
+              {isSellerLogin
+                ? 'Shopping instead? Buyer login'
+                : isBuyerLogin
+                  ? 'Selling on BodhiMart? Seller login'
+                  : 'Choose buyer or seller sign in'}
+            </a>
           </div>
         )}
 

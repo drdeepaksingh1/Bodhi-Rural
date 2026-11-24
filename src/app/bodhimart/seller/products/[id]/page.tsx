@@ -119,7 +119,7 @@ export default function EditProductPage() {
 
       if (!user) {
         router.push(
-          `/login?redirect=${encodeURIComponent(`/bodhimart/seller/products/${productId}`)}`
+          `/login?account=seller&redirect=${encodeURIComponent(`/bodhimart/seller/products/${productId}`)}`
         );
         return;
       }

@@ -315,7 +315,7 @@ export default function BodhiMartProductsPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login?redirect=%2Fbodhimart%2Fproducts");
+        router.push("/login?account=buyer&redirect=%2Fbodhimart%2Fproducts");
         return;
       }
 
@@ -356,7 +356,7 @@ export default function BodhiMartProductsPage() {
           "Please login before adding products to your cart."
         );
 
-        router.push("/login");
+        router.push("/login?account=buyer&redirect=%2Fbodhimart%2Fproducts");
         return;
       }
 
@@ -726,7 +726,7 @@ export default function BodhiMartProductsPage() {
               {products.length === 0 && (
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <Link
-                    href="/login?redirect=%2Fbodhimart%2Fseller%2Fproducts%2Fadd"
+                    href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard"
                     className="rounded-lg bg-green-700 px-5 py-3 text-sm font-semibold text-white hover:bg-green-800"
                   >
                     Seller login

@@ -374,7 +374,7 @@ export default function SellerRegistrationPage() {
               </div>
             )}
             <p style={{ marginTop: 20, fontSize: 13, color: '#666' }}>
-              Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?redirect=%2Fbodhimart%2Fseller%2Fregister">Log in</Link>
+              Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fregister">Log in</Link>
             </p>
           </section>
         ) : (

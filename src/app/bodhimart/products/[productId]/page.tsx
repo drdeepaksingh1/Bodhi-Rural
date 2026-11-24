@@ -238,7 +238,7 @@ export default function ProductDetailsPage() {
     const cataloguePath = new URLSearchParams(window.location.search).get('from');
     if (cataloguePath) returnTo.searchParams.set('from', cataloguePath);
     returnTo.searchParams.set('resume', '1');
-    router.push(`/login?redirect=${encodeURIComponent(`${returnTo.pathname}${returnTo.search}`)}`);
+    router.push(`/login?account=buyer&redirect=${encodeURIComponent(`${returnTo.pathname}${returnTo.search}`)}`);
   }, [product, router]);
 
   const toggleWishlist = useCallback(async () => {

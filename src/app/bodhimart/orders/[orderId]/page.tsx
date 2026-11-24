@@ -69,12 +69,12 @@ export default function BodhiMartOrderReceiptPage() {
         error: authError,
       } = await supabase.auth.getUser();
       if (!user && authError?.message === 'Auth session missing!') {
-        router.replace(`/login?redirect=${encodeURIComponent(`/bodhimart/orders/${orderId}`)}`);
+        router.replace(`/login?account=buyer&redirect=${encodeURIComponent(`/bodhimart/orders/${orderId}`)}`);
         return;
       }
       if (authError) throw authError;
       if (!user) {
-        router.replace(`/login?redirect=${encodeURIComponent(`/bodhimart/orders/${orderId}`)}`);
+        router.replace(`/login?account=buyer&redirect=${encodeURIComponent(`/bodhimart/orders/${orderId}`)}`);
         return;
       }
 

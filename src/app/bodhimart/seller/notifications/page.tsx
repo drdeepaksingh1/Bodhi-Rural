@@ -40,7 +40,7 @@ export default function SellerNotificationsPage() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fnotifications');
+        router.replace('/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fnotifications');
         return;
       }
       setUserId(user.id);

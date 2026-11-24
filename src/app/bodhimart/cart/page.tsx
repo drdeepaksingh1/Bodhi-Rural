@@ -384,7 +384,7 @@ export default function BodhiMartCartPage() {
             </p>
 
             <Link
-              href={`/login?redirect=${encodeURIComponent("/bodhimart/cart")}`}
+              href={`/login?account=buyer&redirect=${encodeURIComponent("/bodhimart/cart")}`}
               className="mt-6 inline-block rounded-xl bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
             >
               Login

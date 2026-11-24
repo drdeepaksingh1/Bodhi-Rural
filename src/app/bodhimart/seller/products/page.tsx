@@ -62,7 +62,7 @@ export default function SellerProductsPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fproducts');
+        router.replace('/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fproducts');
         return;
       }
 

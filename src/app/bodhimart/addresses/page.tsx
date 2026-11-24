@@ -61,12 +61,12 @@ export default function BodhiMartAddressesPage() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError?.message === 'Auth session missing!') {
-        router.replace('/login?redirect=%2Fbodhimart%2Faddresses');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Faddresses');
         return;
       }
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Faddresses');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Faddresses');
         return;
       }
 
@@ -145,7 +145,7 @@ export default function BodhiMartAddressesPage() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Faddresses');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Faddresses');
         return;
       }
 
@@ -200,7 +200,7 @@ export default function BodhiMartAddressesPage() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Faddresses');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Faddresses');
         return;
       }
 
@@ -236,7 +236,7 @@ export default function BodhiMartAddressesPage() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Faddresses');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Faddresses');
         return;
       }
       const { error: deleteError } = await supabase

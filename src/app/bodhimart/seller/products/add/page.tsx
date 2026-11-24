@@ -84,7 +84,7 @@ export default function AddProductPage() {
 
       if (!user) {
         router.push(
-          '/login?redirect=%2Fbodhimart%2Fseller%2Fproducts%2Fadd'
+          '/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fproducts%2Fadd'
         );
         return;
       }
