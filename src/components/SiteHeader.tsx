@@ -9,13 +9,17 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
+  const [loginAccount, setLoginAccount] = useState<'buyer' | 'seller' | null>(null);
 
   const syncRedirectPath = useEffectEvent(() => {
     if (pathname === '/login') {
       const params = new URLSearchParams(window.location.search);
       setRedirectPath(params.get('redirect'));
+      const account = params.get('account');
+      setLoginAccount(account === 'buyer' || account === 'seller' ? account : null);
     } else {
       setRedirectPath(null);
+      setLoginAccount(null);
     }
   });
 
@@ -27,6 +31,21 @@ export default function SiteHeader() {
   function closeMenu() {
     setMenuOpen(false);
   }
+
+  const isBodhiMartPage = pathname.startsWith('/bodhimart');
+  const loginHref = isBodhiMartPage
+    ? '/bodhimart/login'
+    : loginAccount
+      ? `/login?account=${loginAccount}${redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : ''}`
+      : '/login';
+  const loginLabel = isBodhiMartPage
+    ? 'Buyer / Seller Login'
+    : loginAccount === 'seller'
+      ? 'Seller Login'
+      : loginAccount === 'buyer'
+        ? 'Buyer Login'
+        : 'Login';
+  const loginPageIsActive = pathname === '/login' || pathname === '/bodhimart/login';
 
   function isActive(href: string) {
     // Normal page URL
@@ -147,8 +166,8 @@ export default function SiteHeader() {
           </NavLink>
 
           <Link
-            href="/login"
-            aria-current={isActive('/login') ? 'page' : undefined}
+            href={loginHref}
+            aria-current={loginPageIsActive ? 'page' : undefined}
             style={{
               background: '#ffffff',
               color: '#145c2b',
@@ -160,7 +179,7 @@ export default function SiteHeader() {
               marginLeft: '4px',
             }}
           >
-            Login
+            {loginLabel}
           </Link>
         </nav>
 
@@ -249,9 +268,9 @@ export default function SiteHeader() {
           </MobileLink>
 
           <Link
-            href="/login"
+            href={loginHref}
             onClick={closeMenu}
-            aria-current={isActive('/login') ? 'page' : undefined}
+            aria-current={loginPageIsActive ? 'page' : undefined}
             style={{
               display: 'block',
               marginTop: '8px',
@@ -264,7 +283,7 @@ export default function SiteHeader() {
               textAlign: 'center',
             }}
           >
-            Login
+            {loginLabel}
           </Link>
         </div>
       )}
