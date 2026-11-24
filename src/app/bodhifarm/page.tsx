@@ -19,6 +19,30 @@ type Farm = {
   status: string;
 };
 
+const farmActivityCategories = [
+  {
+    id: 'crops',
+    title: 'Crops & horticulture',
+    icon: '🌾',
+    description: 'Paddy, wheat, maize, millets, pulses, oilseeds, vegetables, fruits, spices, nurseries, mushrooms and agroforestry.',
+    matches: /crop|paddy|rice|wheat|maize|millet|pulse|oilseed|vegetable|fruit|orchard|spice|medicinal|seed|nursery|mushroom|agroforestry/i,
+  },
+  {
+    id: 'livestock',
+    title: 'Livestock & dairy',
+    icon: '🐄',
+    description: 'Cow and buffalo rearing, milk production, goats, sheep, pigs, poultry, ducks, beekeeping and sericulture.',
+    matches: /dairy|cattle|cow|buffalo|goat|sheep|pig|poultry|duck|bee|sericulture/i,
+  },
+  {
+    id: 'fisheries',
+    title: 'Fisheries & allied',
+    icon: '🐟',
+    description: 'Fishery, aquaculture, integrated fish farming, food processing and other agriculture-linked livelihoods.',
+    matches: /fish|aquaculture|integrated|processing|value addition|allied/i,
+  },
+];
+
 type BirdBatch = {
   id: string;
   batch_code: string;
@@ -546,6 +570,8 @@ export default function BodhiFarmPage() {
   );
 
   const totalFarms = allFarms.length;
+  const getActivityCount = (pattern: RegExp) =>
+    allFarms.filter((farm) => pattern.test(farm.farm_type || '')).length;
 
   const totalEggs = eggs.reduce(
     (sum, record) =>
@@ -621,7 +647,7 @@ export default function BodhiFarmPage() {
             </h1>
 
             <p className="mt-1 max-w-3xl text-sm text-slate-500">
-              Manage farmer profiles and farm enterprises across crops, livestock, dairy, fisheries and allied activities. Poultry tools cover batches, eggs, feed, health and flock performance.
+              One place for farmer profiles and every farm enterprise: crops, livestock, dairy, fisheries and allied livelihoods. Poultry and duck batch tools remain available for those enterprises.
             </p>
           </div>
 
@@ -645,15 +671,15 @@ export default function BodhiFarmPage() {
 
           <div className="mb-5">
             <h2 className="text-2xl font-bold text-slate-900">
-              BodhiFarm Overview
+              Farmer & enterprise overview
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Farmer and farm overview with dedicated poultry production, egg, feed and veterinary records.
+              A cross-sector view of registered farmers and their crop, livestock, dairy, fisheries and allied enterprises.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
 
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
               <p className="text-sm text-slate-500">
@@ -685,52 +711,95 @@ export default function BodhiFarmPage() {
 
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
               <p className="text-sm text-slate-500">
-                Live Birds
+                Crop & horticulture farms
               </p>
 
               <p className="mt-2 text-3xl font-bold text-emerald-700">
-                {totalCurrentBirds.toLocaleString('en-IN')}
+                {getActivityCount(farmActivityCategories[0].matches).toLocaleString('en-IN')}
               </p>
 
               <p className="mt-1 text-xs text-slate-400">
-                Current flock
+                Paddy, wheat, vegetables, fruit, spices and more
               </p>
             </div>
 
             <div className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
               <p className="text-sm text-slate-500">
-                Mortality
+                Livestock & dairy farms
               </p>
 
               <p className="mt-2 text-3xl font-bold text-red-600">
-                {totalMortality.toLocaleString('en-IN')}
+                {getActivityCount(farmActivityCategories[1].matches).toLocaleString('en-IN')}
               </p>
 
               <p className="mt-1 text-xs text-slate-400">
-                Total recorded mortality
+                Cattle, milk, goats, pigs, poultry and ducks
               </p>
             </div>
 
             <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
               <p className="text-sm text-slate-500">
-                Total Eggs
+                Fisheries & allied farms
               </p>
 
               <p className="mt-2 text-3xl font-bold text-amber-600">
-                {totalEggs.toLocaleString('en-IN')}
+                {getActivityCount(farmActivityCategories[2].matches).toLocaleString('en-IN')}
               </p>
 
               <p className="mt-1 text-xs text-slate-400">
-                Recorded production
+                Fishery, aquaculture, processing and more
               </p>
             </div>
 
+          </div>
+
+          <div className="mb-4 mt-8">
+            <h3 className="text-lg font-bold text-slate-900">Poultry & duckery snapshot</h3>
+            <p className="mt-1 text-sm text-slate-500">Specialist production indicators for bird enterprises.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
             <div className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
               <p className="text-sm text-slate-500">
-                Saleable Eggs
+                Live birds
               </p>
 
               <p className="mt-2 text-3xl font-bold text-green-700">
+                {totalCurrentBirds.toLocaleString('en-IN')}
+              </p>
+
+              <p className="mt-1 text-xs text-slate-400">
+                Poultry and duckery records
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">
+                Recorded mortality
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-orange-600">
+                {totalMortality.toLocaleString('en-IN')}
+              </p>
+
+              <p className="mt-1 text-xs text-slate-400">
+                Bird batch records
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">Total eggs</p>
+              <p className="mt-2 text-3xl font-bold text-amber-600">{totalEggs.toLocaleString('en-IN')}</p>
+              <p className="mt-1 text-xs text-slate-400">Recorded production</p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+              <p className="text-sm text-slate-500">
+                Saleable eggs
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-emerald-700">
                 {totalSaleableEggs.toLocaleString('en-IN')}
               </p>
 
@@ -740,39 +809,42 @@ export default function BodhiFarmPage() {
             </div>
 
             <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-slate-500">
-                Feed Consumed
-              </p>
-
-              <p className="mt-2 text-3xl font-bold text-orange-600">
-                {totalFeedKg.toFixed(2)} kg
-              </p>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Recorded feed
-              </p>
+              <p className="text-sm text-slate-500">Feed consumed</p>
+              <p className="mt-2 text-3xl font-bold text-orange-600">{totalFeedKg.toFixed(2)} kg</p>
+              <p className="mt-1 text-xs text-slate-400">Recorded bird feed</p>
             </div>
 
             <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
-              <p className="text-sm text-slate-500">
-                Feed Cost
-              </p>
-
-              <p className="mt-2 text-3xl font-bold text-purple-700">
-                ₹
-                {totalFeedCost.toLocaleString('en-IN', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-
-              <p className="mt-1 text-xs text-slate-400">
-                Recorded feed cost
-              </p>
+              <p className="text-sm text-slate-500">Feed cost</p>
+              <p className="mt-2 text-3xl font-bold text-purple-700">₹{totalFeedCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="mt-1 text-xs text-slate-400">Recorded bird feed cost</p>
             </div>
 
           </div>
 
+        </div>
+
+        <div className="mb-8">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-slate-900">All agriculture & allied activities</h2>
+            <p className="mt-1 text-sm text-slate-500">Register one or more activity profiles for each farmer. Choose a sector to get started.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {farmActivityCategories.map((category) => (
+              <Link
+                key={category.id}
+                href="/bodhifarm/farms#register-enterprise"
+                className="group rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+              >
+                <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-2xl">{category.icon}</span>
+                <h3 className="mt-4 font-bold text-slate-900 group-hover:text-emerald-800">{category.title}</h3>
+                <p className="mt-2 min-h-16 text-sm leading-6 text-slate-600">{category.description}</p>
+                <p className="mt-4 text-sm font-semibold text-emerald-800">
+                  {getActivityCount(category.matches).toLocaleString('en-IN')} registered · Register activity →
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* ===================================================
@@ -782,7 +854,7 @@ export default function BodhiFarmPage() {
         <div className="mb-8">
 
           <h2 className="mb-5 text-xl font-bold text-slate-900">
-            BodhiFarm Modules
+            Farmer services & specialist tools
           </h2>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -870,11 +942,11 @@ export default function BodhiFarmPage() {
               className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm transition hover:bg-emerald-100"
             >
               <p className="font-bold text-emerald-800">
-                Poultry Batch Management
+                Poultry & duck batch management
               </p>
 
               <p className="mt-1 text-sm text-emerald-700">
-                Manage poultry batches as one specialized farm activity.
+                Manage bird batches, flock counts and mortality for poultry and duckery enterprises.
               </p>
             </a>
 
