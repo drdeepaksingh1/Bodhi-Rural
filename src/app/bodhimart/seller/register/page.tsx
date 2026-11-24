@@ -1,12 +1,11 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '../../../../lib/supabase/client';
 
 export default function SellerRegistrationPage() {
   const supabase = useMemo(() => createClient(), []);
-  const router = useRouter();
 
   const [form, setForm] = useState({
     owner_name: '',
@@ -22,6 +21,12 @@ export default function SellerRegistrationPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
@@ -33,16 +38,23 @@ export default function SellerRegistrationPage() {
         const { data, error: authError } = await supabase.auth.getUser();
         if (!active) return;
 
-        if (authError || !data.user) {
-          router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
+        if (authError && !authError.message.toLowerCase().includes('auth session missing')) {
+          setError(authError.message);
+          setCheckingSession(false);
           return;
         }
 
+        if (data.user) {
+          setUserId(data.user.id);
+          setVerificationEmail(data.user.email || '');
+          setForm((current) => ({
+            ...current,
+            email: current.email || data.user.email || '',
+          }));
+        }
         setCheckingSession(false);
       } catch {
-        if (active) {
-          router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
-        }
+        if (active) setCheckingSession(false);
       }
     }
 
@@ -50,7 +62,7 @@ export default function SellerRegistrationPage() {
     return () => {
       active = false;
     };
-  }, [router, supabase]);
+  }, [supabase]);
 
   function updateField(
     field: keyof typeof form,
@@ -60,6 +72,68 @@ export default function SellerRegistrationPage() {
       ...previous,
       [field]: value,
     }));
+  }
+
+  async function sendVerificationCode() {
+    setError('');
+    setSuccess('');
+    const email = verificationEmail.trim().toLowerCase();
+    if (!email) {
+      setError('Enter your email address to receive a verification code.');
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/bodhimart/seller/register`,
+        },
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      setSuccess('Verification code sent. Check your email and enter the 8-digit code below.');
+    } catch (err: any) {
+      setError(err?.message || 'Unable to send a verification code. Please try again.');
+    } finally {
+      setSendingOtp(false);
+    }
+  }
+
+  async function verifyEmail() {
+    setError('');
+    setSuccess('');
+    const cleanedOtp = otp.replace(/\D/g, '');
+    if (!/^\d{8}$/.test(cleanedOtp)) {
+      setError('Enter the 8-digit verification code from your email.');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: verificationEmail.trim().toLowerCase(),
+        token: cleanedOtp,
+        type: 'email',
+      });
+      if (error) throw error;
+      const verifiedUser = data.user;
+      if (!verifiedUser) throw new Error('Email verified, but the account could not be opened. Please try again.');
+
+      setUserId(verifiedUser.id);
+      setVerificationEmail(verifiedUser.email || verificationEmail.trim().toLowerCase());
+      setForm((current) => ({
+        ...current,
+        email: current.email || verifiedUser.email || '',
+      }));
+      setSuccess('Email verified. Complete your seller application below. BodhiMart admins review every application before activation.');
+    } catch (err: any) {
+      setError(err?.message || 'Unable to verify this code. Please check it and try again.');
+    } finally {
+      setVerifyingOtp(false);
+    }
   }
 
   async function submitApplication(
@@ -89,17 +163,15 @@ export default function SellerRegistrationPage() {
         throw authError;
       }
 
-      if (!userData.user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
-        return;
+      const authenticatedUser = userData.user;
+      if (!authenticatedUser || authenticatedUser.id !== userId) {
+        throw new Error('Verify your email before submitting a seller application.');
       }
-
-      const userId = userData.user.id;
 
       const { data, error } = await supabase
         .from('marketplace_seller_applications')
         .insert({
-          user_id: userId,
+          user_id: authenticatedUser.id,
           owner_name: form.owner_name.trim(),
           shop_name: form.shop_name.trim(),
           mobile: form.mobile.trim(),
@@ -209,8 +281,7 @@ export default function SellerRegistrationPage() {
               lineHeight: 1.6,
             }}
           >
-            Register your shop or business to sell
-            products through BodhiMart. Please sign in first so your seller account can be securely linked to your application.
+            Apply to list your shop or business on BodhiMart. Verify your email first; our team reviews every application before seller activation.
           </p>
         </div>
 
@@ -245,16 +316,78 @@ export default function SellerRegistrationPage() {
           </div>
         )}
 
-        <form
-          onSubmit={submitApplication}
-          style={{
-            background: '#fff',
-            borderRadius: 18,
-            padding: 28,
-            boxShadow:
-              '0 4px 18px rgba(0,0,0,0.06)',
-          }}
-        >
+        {!userId ? (
+          <section
+            style={{
+              background: '#fff',
+              borderRadius: 18,
+              padding: 28,
+              boxShadow: '0 4px 18px rgba(0,0,0,0.06)',
+            }}
+          >
+            <h2 style={{ marginTop: 0, color: '#145c2b' }}>Verify your email to get started</h2>
+            <p style={{ color: '#555', lineHeight: 1.6 }}>
+              We’ll use your verified email to link your seller application to your account. Creating an account does not activate a seller profile or publish products.
+            </p>
+            <label htmlFor="seller-verification-email" style={labelStyle}>Email Address</label>
+            <input
+              id="seller-verification-email"
+              type="email"
+              value={verificationEmail}
+              onChange={(event) => setVerificationEmail(event.target.value)}
+              placeholder="name@example.com"
+              autoComplete="email"
+              required
+              disabled={otpSent || sendingOtp || verifyingOtp}
+              style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 9, border: '1px solid #ccc', marginTop: 8 }}
+            />
+            <button
+              type="button"
+              onClick={sendVerificationCode}
+              disabled={sendingOtp || otpSent}
+              style={{ marginTop: 16, background: '#145c2b', color: '#fff', border: 0, borderRadius: 9, padding: '13px 20px', fontWeight: 700, cursor: sendingOtp || otpSent ? 'not-allowed' : 'pointer', opacity: sendingOtp || otpSent ? 0.7 : 1 }}
+            >
+              {sendingOtp ? 'Sending code…' : otpSent ? 'Code sent' : 'Send verification code'}
+            </button>
+            {otpSent && (
+              <div style={{ marginTop: 20 }}>
+                <label htmlFor="seller-verification-code" style={labelStyle}>8-digit verification code</label>
+                <input
+                  id="seller-verification-code"
+                  type="text"
+                  value={otp}
+                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                  placeholder="Enter code from email"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={8}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: 12, borderRadius: 9, border: '1px solid #ccc', marginTop: 8 }}
+                />
+                <button
+                  type="button"
+                  onClick={verifyEmail}
+                  disabled={verifyingOtp}
+                  style={{ marginTop: 12, background: '#1f2937', color: '#fff', border: 0, borderRadius: 9, padding: '13px 20px', fontWeight: 700, cursor: verifyingOtp ? 'not-allowed' : 'pointer', opacity: verifyingOtp ? 0.7 : 1 }}
+                >
+                  {verifyingOtp ? 'Verifying…' : 'Verify email'}
+                </button>
+              </div>
+            )}
+            <p style={{ marginTop: 20, fontSize: 13, color: '#666' }}>
+              Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?redirect=%2Fbodhimart%2Fseller%2Fregister">Log in</Link>
+            </p>
+          </section>
+        ) : (
+          <form
+            onSubmit={submitApplication}
+            style={{
+              background: '#fff',
+              borderRadius: 18,
+              padding: 28,
+              boxShadow:
+                '0 4px 18px rgba(0,0,0,0.06)',
+            }}
+          >
           {/* OWNER INFORMATION */}
           <h2
             style={{
@@ -423,7 +556,8 @@ export default function SellerRegistrationPage() {
               ? 'Submitting...'
               : 'Submit Seller Application'}
           </button>
-        </form>
+          </form>
+        )}
       </div>
     </main>
   );
