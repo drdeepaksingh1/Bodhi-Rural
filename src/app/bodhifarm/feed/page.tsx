@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -119,8 +121,11 @@ export default function FeedManagementPage() {
       ? summary.cost / summary.quantity
       : 0;
 
+  const loadDataFromEffect = useEffectEvent(() => { loadData() });
+
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => loadDataFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   async function loadData() {
@@ -340,8 +345,8 @@ export default function FeedManagementPage() {
             </p>
           </div>
 
-          <img
-            src="/branding/bodhi-rural-logo.png"
+          <Image
+            src="/branding/bodhi-rural-logo.png" width={210} height={80}
             alt="Bodhi Rural Livelihood and Agri Private Limited"
             className="h-auto w-[210px] object-contain"
           />

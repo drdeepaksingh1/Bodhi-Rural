@@ -2,10 +2,10 @@ import { redirect } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/server';
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     status?: string;
     search?: string;
-  };
+  }>;
 };
 
 const MANAGEMENT_ROLES = [
@@ -27,7 +27,7 @@ async function approveApplication(formData: FormData) {
     throw new Error('Application ID is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -68,7 +68,7 @@ async function rejectApplication(formData: FormData) {
     throw new Error('Rejection reason is required');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -97,7 +97,8 @@ async function rejectApplication(formData: FormData) {
 export default async function FarmerApplicationsPage({
   searchParams,
 }: PageProps) {
-  const supabase = createClient();
+  const params = await searchParams;
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -135,12 +136,12 @@ export default async function FarmerApplicationsPage({
   }
 
   const selectedStatus =
-    searchParams?.status &&
-    ['PENDING', 'APPROVED', 'REJECTED'].includes(searchParams.status)
-      ? searchParams.status
+    params?.status &&
+    ['PENDING', 'APPROVED', 'REJECTED'].includes(params.status)
+      ? params.status
       : 'PENDING';
 
-  const search = (searchParams?.search || '').trim();
+  const search = (params?.search || '').trim();
 
   let query = supabase
     .from('farmer_applications')

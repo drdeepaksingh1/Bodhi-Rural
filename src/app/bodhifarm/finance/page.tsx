@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Summary = {
@@ -53,7 +53,7 @@ type Farmer = {
 };
 
 export default function FinanceDashboardPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [farmers, setFarmers] = useState<Farmer[]>([]);
@@ -71,9 +71,7 @@ export default function FinanceDashboardPage() {
   const [statementFrom, setStatementFrom] = useState(monthISO);
   const [statementTo, setStatementTo] = useState(todayISO);
 
-  async function loadData() {
-    setLoading(true);
-    setError('');
+  const loadData = useCallback(async () => {
 
     const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes] =
       await Promise.all([
@@ -122,11 +120,12 @@ export default function FinanceDashboardPage() {
     setExpenses((expenseRes.data || []) as Expense[]);
     setPayments((paymentRes.data || []) as Payment[]);
     setLoading(false);
-  }
+  }, [supabase]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
 
   useEffect(() => {
     if (!printFarmerId) return;
@@ -150,17 +149,17 @@ export default function FinanceDashboardPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   }, []);
 
-  function inPeriod(date: string) {
+  const inPeriod = useCallback((date: string) => {
     if (period === 'ALL') return true;
     return new Date(`${date}T00:00:00`) >= monthStart;
-  }
+  }, [period, monthStart]);
 
   const approvedProcurements = useMemo(
     () =>
       procurements.filter(
         (x) => x.status === 'APPROVED' && inPeriod(x.collection_date)
       ),
-    [procurements, period, monthStart]
+    [procurements, inPeriod]
   );
 
   const approvedExpenses = useMemo(
@@ -168,7 +167,7 @@ export default function FinanceDashboardPage() {
       expenses.filter(
         (x) => x.status === 'APPROVED' && inPeriod(x.expense_date)
       ),
-    [expenses, period, monthStart]
+    [expenses, inPeriod]
   );
 
   const paidPayments = useMemo(
@@ -176,7 +175,7 @@ export default function FinanceDashboardPage() {
       payments.filter(
         (x) => x.status === 'PAID' && inPeriod(x.payment_date)
       ),
-    [payments, period, monthStart]
+    [payments, inPeriod]
   );
 
   const pendingPayments = useMemo(
@@ -186,7 +185,7 @@ export default function FinanceDashboardPage() {
           (x.status === 'PENDING' || x.status === 'APPROVED') &&
           inPeriod(x.payment_date)
       ),
-    [payments, period, monthStart]
+    [payments, inPeriod]
   );
 
   const pendingPaymentTotal = useMemo(

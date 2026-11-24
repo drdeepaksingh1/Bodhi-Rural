@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
 
 type Role = { id: string; code: string; name: string };
@@ -110,9 +112,6 @@ export default function StaffApplicationsPage() {
     ].filter(Boolean).some(x => String(x).toLowerCase().includes(q));
   }), [apps, search, filter, roleConfig]);
 
-  useEffect(() => { load(); }, []);
-  useEffect(() => { if (selectedId) loadHistory(selectedId); else setHistory([]); }, [selectedId]);
-
   async function load() {
     setLoading(true); setError('');
     try {
@@ -199,6 +198,18 @@ export default function StaffApplicationsPage() {
     setHistory(rows); setHistoryLoading(false);
   }
 
+  const loadApplicationsFromEffect = useEffectEvent(() => { load() });
+  const loadHistoryFromEffect = useEffectEvent(() => { if (selectedId) loadHistory(selectedId); else setHistory([]); });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadApplicationsFromEffect(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadHistoryFromEffect(), 0);
+    return () => window.clearTimeout(timer);
+  }, [selectedId]);
+
   const lname = (id: string | null) => id ? locs[id]?.name || '—' : '—';
   const rname = (id: string | null) => id ? roles.find(r => r.id === id)?.name || '—' : '—';
 
@@ -245,7 +256,7 @@ export default function StaffApplicationsPage() {
         <header className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <img src="/branding/bodhi-rural-logo.png" alt="Bodhi Rural" className="h-16 w-auto object-contain" />
+              <Image src="/branding/bodhi-rural-logo.png" width={210} height={80} alt="Bodhi Rural" className="h-16 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">{roleConfig.title}</h1>
                 <p className="text-sm text-green-700">{roleConfig.subtitle}</p>

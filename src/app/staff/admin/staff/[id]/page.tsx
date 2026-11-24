@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '../../../../../lib/supabase/client';
 
@@ -68,10 +70,6 @@ export default function StaffProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (id) loadStaff();
-  }, [id]);
 
   async function loadStaff() {
     setLoading(true);
@@ -220,6 +218,13 @@ export default function StaffProfilePage() {
         .toUpperCase()
     : 'ST';
 
+  const loadStaffFromEffect = useEffectEvent(() => { if (id) loadStaff() });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadStaffFromEffect(), 0);
+    return () => window.clearTimeout(timer);
+  }, [id]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 p-6">
@@ -284,8 +289,8 @@ export default function StaffProfilePage() {
 
           <div className="flex flex-col items-center gap-4 text-center md:flex-row md:text-left">
 
-            <img
-              src="/branding/bodhi-rural-logo.png"
+            <Image
+              src="/branding/bodhi-rural-logo.png" width={210} height={80}
               alt="Bodhi Rural Livelihood & Agri Private Limited"
               className="h-20 w-auto object-contain"
             />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/client';
@@ -317,8 +317,11 @@ export default function Farm360Page() {
     }
   }
 
+  const loadFarm360FromEffect = useEffectEvent(() => { loadFarm360() });
+
   useEffect(() => {
-    loadFarm360();
+    const timer = window.setTimeout(() => loadFarm360FromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, [farmId]);
 
   async function refreshFarm() {

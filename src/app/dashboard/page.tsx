@@ -253,7 +253,7 @@ function getNavigation(
 }
 
 export default async function Dashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   /*
    * AUTH
@@ -742,7 +742,7 @@ export default async function Dashboard() {
               <div className="rounded-2xl border bg-white p-5 shadow-sm">
 
                 <p className="text-sm font-medium text-slate-500">
-                  Today's Production
+                  Today&apos;s Production
                 </p>
 
                 <p className="mt-2 text-3xl font-bold text-emerald-700">

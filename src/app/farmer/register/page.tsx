@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Location = {
@@ -10,7 +10,7 @@ type Location = {
 };
 
 export default function FarmerRegisterPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [states, setStates] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
@@ -70,7 +70,7 @@ export default function FarmerRegisterPage() {
     }
 
     loadStates();
-  }, []);
+  }, [supabase]);
 
   // ---------------------------------------------------------
   // State → District

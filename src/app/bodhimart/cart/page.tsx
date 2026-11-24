@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
 
 type Product = {
@@ -38,7 +39,7 @@ type Inventory = {
 };
 
 export default function BodhiMartCartPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [cartId, setCartId] = useState<string | null>(null);
   const [items, setItems] = useState<CartLine[]>([]);
@@ -47,9 +48,7 @@ export default function BodhiMartCartPage() {
   const [error, setError] = useState("");
   const [userEmail, setUserEmail] = useState("");
 
-  async function loadCart() {
-    setLoading(true);
-    setError("");
+  const loadCart = useCallback(async () => {
 
     try {
       const {
@@ -202,11 +201,14 @@ export default function BodhiMartCartPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase]);
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadCart();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadCart]);
 
   async function updateQuantity(
     item: CartLine,
@@ -381,12 +383,12 @@ export default function BodhiMartCartPage() {
               {error}
             </p>
 
-            <a
-              href="/login"
+            <Link
+              href={`/login?redirect=${encodeURIComponent("/bodhimart/cart")}`}
               className="mt-6 inline-block rounded-xl bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
             >
               Login
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -433,12 +435,12 @@ export default function BodhiMartCartPage() {
               Browse BodhiMart and add products to your cart.
             </p>
 
-            <a
+            <Link
               href="/bodhimart/products"
               className="mt-7 inline-block rounded-xl bg-green-700 px-7 py-3 font-semibold text-white hover:bg-green-800"
             >
               Continue Shopping
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-3">
@@ -596,12 +598,12 @@ export default function BodhiMartCartPage() {
                 );
               })}
 
-              <a
+              <Link
                 href="/bodhimart/products"
                 className="inline-block rounded-xl border border-green-700 px-5 py-3 font-semibold text-green-700 hover:bg-green-50"
               >
                 ← Continue Shopping
-              </a>
+              </Link>
             </div>
 
             {/* Summary */}
@@ -672,7 +674,7 @@ export default function BodhiMartCartPage() {
               </a>
 
               <p className="mt-3 text-center text-xs text-gray-500">
-                Online payment is not configured. Orders are submitted with payment pending.
+                Pay the seller when your order is delivered or picked up. Payment remains pending until BodhiMart confirms receipt.
               </p>
             </aside>
           </div>

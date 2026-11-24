@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -84,8 +86,11 @@ export default function EggProductionPage() {
   const productionPercentage =
     liveBirds > 0 ? ((total / liveBirds) * 100).toFixed(1) : '0.0';
 
+  const loadInitialDataFromEffect = useEffectEvent(() => { loadInitialData() });
+
   useEffect(() => {
-    loadInitialData();
+    const timer = window.setTimeout(() => loadInitialDataFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   async function loadInitialData() {
@@ -326,8 +331,8 @@ export default function EggProductionPage() {
             </p>
           </div>
 
-          <img
-            src="/branding/bodhi-rural-logo.png"
+          <Image
+            src="/branding/bodhi-rural-logo.png" width={210} height={80}
             alt="Bodhi Rural Livelihood and Agri Private Limited"
             className="h-auto w-[210px] object-contain"
           />

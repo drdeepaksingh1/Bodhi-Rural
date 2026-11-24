@@ -1,8 +1,17 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '../../../../../lib/supabase/client';
+import {
+  removeMarketplaceProductPhotos,
+  uploadMarketplaceProductPhoto,
+} from '../../../../../lib/marketplace/product-photos';
+import { validateProductListingDetails } from '../../../../../lib/marketplace/product-listing-validation';
+
+const marketplacePhotoLoader = ({ src }: { src: string }) => src;
 
 type Category = {
   id: string;
@@ -17,7 +26,8 @@ type Seller = {
 };
 
 export default function AddProductPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
 
   const [seller, setSeller] = useState<Seller | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -25,11 +35,18 @@ export default function AddProductPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [photoInputKey, setPhotoInputKey] = useState(0);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviewUrls, setGalleryPreviewUrls] = useState<string[]>([]);
+  const [galleryInputKey, setGalleryInputKey] = useState(0);
 
   const [form, setForm] = useState({
     name: '',
     sku: '',
     category_id: '',
+    image_url: '',
     description: '',
     brand: '',
     unit: '',
@@ -43,10 +60,20 @@ export default function AddProductPage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    return () => {
+      if (imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
-  async function loadData() {
+  useEffect(() => {
+    return () => {
+      galleryPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [galleryPreviewUrls]);
+
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -56,8 +83,9 @@ export default function AddProductPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        window.location.href =
-          '/login?redirect=/bodhimart/seller/products/add';
+        router.push(
+          '/login?redirect=%2Fbodhimart%2Fseller%2Fproducts%2Fadd'
+        );
         return;
       }
 
@@ -110,7 +138,13 @@ export default function AddProductPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router, supabase]);
+
+  useEffect(() => {
+    // Loading uses async Supabase requests; state updates happen after those requests resolve.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
 
   function updateField(
     field: keyof typeof form,
@@ -122,13 +156,103 @@ export default function AddProductPage() {
     }));
   }
 
+  function handlePhotoSelection(file: File | null) {
+    setError('');
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreviewUrl('');
+      return;
+    }
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError('Choose a JPG, PNG, or WebP product photo.');
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Product photos must be 5 MB or smaller.');
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      return;
+    }
+
+    setForm((current) => ({ ...current, image_url: '' }));
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleGallerySelection(fileList: FileList | null) {
+    setError('');
+    const files = Array.from(fileList || []);
+
+    if (files.length > 4) {
+      setError('Choose up to four additional product photos.');
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const invalidFile = files.find(
+      (file) => !allowedTypes.includes(file.type) || file.size > 5 * 1024 * 1024
+    );
+
+    if (invalidFile) {
+      setError(
+        !allowedTypes.includes(invalidFile.type)
+          ? 'Choose JPG, PNG, or WebP product photos.'
+          : 'Each product photo must be 5 MB or smaller.'
+      );
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
+      return;
+    }
+
+    setGalleryFiles(files);
+    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+  }
+
   function validateForm() {
     if (!form.name.trim()) {
       return 'Product name is required.';
     }
 
+    const listingDetailsError = validateProductListingDetails(
+      form.description,
+      form.unit
+    );
+    if (listingDetailsError) return listingDetailsError;
+
     if (!form.category_id) {
       return 'Please select a category.';
+    }
+
+    if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+      return 'Product photos must be 5 MB or smaller.';
+    }
+
+    if (form.image_url.trim()) {
+      try {
+        const imageUrl = new URL(form.image_url.trim());
+        if (imageUrl.protocol !== 'https:') {
+          return 'Product photo links must use HTTPS.';
+        }
+      } catch {
+        return 'Please enter a valid product photo URL.';
+      }
     }
 
     const mrp = Number(form.mrp);
@@ -206,6 +330,7 @@ export default function AddProductPage() {
     }
 
     setSaving(true);
+    const uploadedPhotoPaths: string[] = [];
 
     try {
       const {
@@ -216,6 +341,33 @@ export default function AddProductPage() {
         throw new Error(
           'Your session has expired. Please login again.'
         );
+      }
+
+      let productImageUrl = form.image_url.trim() || null;
+
+      if (imageFile) {
+        const uploadedPhoto = await uploadMarketplaceProductPhoto(
+          supabase,
+          user.id,
+          imageFile
+        );
+        uploadedPhotoPaths.push(uploadedPhoto.path);
+        productImageUrl = uploadedPhoto.publicUrl;
+      }
+
+      const galleryUrls: string[] = [];
+      for (const file of galleryFiles) {
+        const uploadedPhoto = await uploadMarketplaceProductPhoto(
+          supabase,
+          user.id,
+          file
+        );
+        uploadedPhotoPaths.push(uploadedPhoto.path);
+        galleryUrls.push(uploadedPhoto.publicUrl);
+      }
+
+      if (!productImageUrl && galleryUrls.length > 0) {
+        productImageUrl = galleryUrls.shift() || null;
       }
 
       const slug =
@@ -236,6 +388,8 @@ export default function AddProductPage() {
             category_id: form.category_id,
             name: form.name.trim(),
             slug,
+            image_url: productImageUrl,
+            image_gallery: galleryUrls,
             description:
               form.description.trim() || null,
             brand: form.brand.trim() || null,
@@ -261,7 +415,6 @@ export default function AddProductPage() {
                 : null,
             delivery_available:
               form.delivery_available,
-            status: 'PENDING',
             created_by: user.id,
           })
           .select(
@@ -273,6 +426,8 @@ export default function AddProductPage() {
         throw insertError;
       }
 
+      uploadedPhotoPaths.length = 0;
+
       setMessage(
         `Product created successfully. Product ID: ${data.product_id}`
       );
@@ -281,6 +436,7 @@ export default function AddProductPage() {
         name: '',
         sku: '',
         category_id: '',
+        image_url: '',
         description: '',
         brand: '',
         unit: '',
@@ -292,8 +448,27 @@ export default function AddProductPage() {
         maximum_order_quantity: '',
         delivery_available: true,
       });
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
     } catch (err: any) {
-      console.error(err);
+      if (uploadedPhotoPaths.length > 0) {
+        try {
+          await removeMarketplaceProductPhotos(supabase, uploadedPhotoPaths);
+        } catch (cleanupError) {
+          console.error('Unable to remove unused product photos.', cleanupError);
+        }
+      }
+
+      console.error('Unable to create marketplace product.', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+      });
       setError(
         err?.message ||
           'Unable to create the product.'
@@ -532,7 +707,97 @@ export default function AddProductPage() {
               </Field>
             </div>
 
-            <Field label="Description">
+            <Field label="Add photo from this device">
+              <input
+                key={photoInputKey}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) =>
+                  handlePhotoSelection(e.currentTarget.files?.[0] || null)
+                }
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Choose a JPG, PNG, or WebP photo up to 5 MB.
+              </p>
+            </Field>
+
+            <Field label="Add more product angles">
+              <input
+                key={galleryInputKey}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(e) =>
+                  handleGallerySelection(e.currentTarget.files)
+                }
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Select up to four extra JPG, PNG, or WebP photos, 5 MB each.
+                If no main photo is set, the first selected photo becomes the cover.
+              </p>
+              {galleryPreviewUrls.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {galleryPreviewUrls.map((url, index) => (
+                    <Image
+                      key={url}
+                      src={url}
+                      alt={`Additional product photo ${index + 1}`}
+                      width={96}
+                      height={76}
+                      loader={marketplacePhotoLoader}
+                      unoptimized
+                      className="h-[76px] w-24 rounded-lg border border-gray-200 bg-white object-contain p-1"
+                    />
+                  ))}
+                </div>
+              )}
+            </Field>
+
+            <Field label="Or add a photo URL">
+              <input
+                type="url"
+                value={form.image_url}
+                onChange={(e) => {
+                  setImageFile(null);
+                  setImagePreviewUrl('');
+                  setPhotoInputKey((current) => current + 1);
+                  updateField('image_url', e.target.value);
+                }}
+                placeholder="https://example.com/product-photo.jpg"
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Optional alternative. Use a direct HTTPS link to a clear product photo.
+              </p>
+              {(imagePreviewUrl || form.image_url.trim().startsWith('https://')) && (
+                <Image
+                  src={imagePreviewUrl || form.image_url.trim()}
+                  alt="Product photo preview"
+                  width={132}
+                  height={96}
+                  loader={marketplacePhotoLoader}
+                  unoptimized
+                  loading="lazy"
+                  style={{
+                    display: 'block',
+                    width: 132,
+                    height: 96,
+                    objectFit: 'contain',
+                    marginTop: 10,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 10,
+                    background: '#f8faf7',
+                  }}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+            </Field>
+
+            <Field label="Description *">
               <textarea
                 value={form.description}
                 onChange={(e) =>
@@ -541,20 +806,26 @@ export default function AddProductPage() {
                     e.target.value
                   )
                 }
-                placeholder="Describe the product, quality, usage and other important information."
+                placeholder="Include contents, pack size, quality and intended use."
                 rows={5}
+                minLength={20}
+                maxLength={1000}
+                required
                 style={{
                   ...inputStyle,
                   resize: 'vertical',
                 }}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                {form.description.trim().length}/1,000 characters · at least 20 required
+              </p>
             </Field>
           </Section>
 
           {/* Quantity */}
           <Section title="Product Measurement">
             <div className="form-grid">
-              <Field label="Unit">
+              <Field label="Pack or measurement unit *">
                 <input
                   value={form.unit}
                   onChange={(e) =>
@@ -563,7 +834,9 @@ export default function AddProductPage() {
                       e.target.value
                     )
                   }
-                  placeholder="kg / piece / pack / litre"
+                  placeholder="kg, piece, pack, bag or litre"
+                  maxLength={30}
+                  required
                   style={inputStyle}
                 />
               </Field>

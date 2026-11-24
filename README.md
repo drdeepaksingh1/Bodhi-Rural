@@ -15,8 +15,8 @@ The repository is an actively integrated application, not the original static pr
 
 ## Technology
 
-- Next.js 14
-- React 18
+- Next.js 16.4.6
+- React 19.2.0
 - Supabase Auth and PostgreSQL
 - Vercel deployment
 
@@ -24,7 +24,7 @@ The repository is an actively integrated application, not the original static pr
 
 ### Requirements
 
-- Node.js 18.17 or later (use a currently supported LTS release where possible)
+- Node.js 20.9 or later (use a currently supported LTS release where possible)
 - npm
 - Access to the configured Supabase project
 

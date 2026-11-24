@@ -19,6 +19,7 @@ type MarketplaceOrder = {
   order_number: string;
   order_status: string;
   payment_status: string;
+  payment_method: string;
   delivery_method: string;
   customer_notes: string | null;
   total_amount: number;
@@ -49,7 +50,7 @@ export default function SellerOrdersPage() {
   const [error, setError] = useState('');
   const [needsLogin, setNeedsLogin] = useState(false);
   const [filter, setFilter] = useState('ALL');
-  const [search, setSearch] = useState('');
+        const [search, setSearch] = useState(() => typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('search') || '');
   const [updatingOrderId, setUpdatingOrderId] = useState('');
   const [actionMessage, setActionMessage] = useState('');
 
@@ -106,7 +107,7 @@ export default function SellerOrdersPage() {
       const [marketResult, itemResult] = await Promise.all([
         supabase
           .from('marketplace_orders')
-          .select('id, order_number, order_status, payment_status, delivery_method, customer_notes, total_amount, created_at')
+          .select('id, order_number, order_status, payment_status, payment_method, delivery_method, customer_notes, total_amount, created_at')
           .in('id', ids),
         supabase
           .from('marketplace_order_items')
@@ -131,6 +132,31 @@ export default function SellerOrdersPage() {
       setError('Orders could not be loaded. Please refresh and try again.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function advanceOrder(orderId: string, currentStatus: string) {
+    setUpdatingOrderId(orderId);
+    setActionMessage('');
+    try {
+      let actionError;
+      if (currentStatus === 'PLACED') {
+        ({ error: actionError } = await supabase.rpc('seller_accept_marketplace_order', { p_seller_order_id: orderId }));
+      } else if (currentStatus === 'ACCEPTED') {
+        ({ error: actionError } = await supabase.rpc('seller_start_marketplace_order_processing', { p_seller_order_id: orderId }));
+      } else if (currentStatus === 'PROCESSING') {
+        ({ error: actionError } = await supabase.rpc('seller_mark_marketplace_order_packed', { p_seller_order_id: orderId }));
+      } else {
+        throw new Error('This order cannot be advanced from its current status.');
+      }
+      if (actionError) throw actionError;
+      setActionMessage(currentStatus === 'PLACED' ? 'Order accepted.' : currentStatus === 'ACCEPTED' ? 'Order preparation started.' : 'Order marked as packed.');
+      await loadOrders();
+    } catch (cause) {
+      console.error('Unable to advance seller order.', cause);
+      setActionMessage('The order could not be updated. Refresh and try again.');
+    } finally {
+      setUpdatingOrderId('');
     }
   }
 
@@ -170,7 +196,43 @@ export default function SellerOrdersPage() {
     }
   }
 
-  const statuses = useMemo(() => orders.map((order) => order.status).filter((status, index, all) => all.indexOf(status) === index).sort(), [orders]);
+  async function markDispatched(orderId: string) {
+    setUpdatingOrderId(orderId);
+    setActionMessage('');
+    try {
+      const { error: dispatchError } = await supabase.rpc('seller_mark_marketplace_order_dispatched', {
+        p_seller_order_id: orderId,
+      });
+      if (dispatchError) throw dispatchError;
+      setActionMessage('Order marked as dispatched.');
+      await loadOrders();
+    } catch (cause) {
+      console.error('Unable to mark seller order dispatched.', cause);
+      setActionMessage('The order could not be updated. Refresh and try again.');
+    } finally {
+      setUpdatingOrderId('');
+    }
+  }
+
+    async function markDelivered(orderId: string) {
+    setUpdatingOrderId(orderId);
+    setActionMessage('');
+    try {
+      const { error: deliveryError } = await supabase.rpc('seller_mark_marketplace_order_delivered', {
+        p_seller_order_id: orderId,
+      });
+      if (deliveryError) throw deliveryError;
+      setActionMessage('Delivery recorded. Payment status is unchanged.');
+      await loadOrders();
+    } catch (cause) {
+      console.error('Unable to record marketplace order delivery.', cause);
+      setActionMessage('The order could not be updated. Refresh and try again.');
+    } finally {
+      setUpdatingOrderId('');
+    }
+  }
+
+const statuses = useMemo(() => orders.map((order) => order.status).filter((status, index, all) => all.indexOf(status) === index).sort(), [orders]);
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
     return orders.filter((order) => {
@@ -183,7 +245,8 @@ export default function SellerOrdersPage() {
       const matchesSearch = !term
         || (order.seller_order_number || '').toLowerCase().includes(term)
         || (market?.order_number || '').toLowerCase().includes(term)
-        || itemText.includes(term);
+                        || itemText.includes(term)
+        || order.id.toLowerCase().includes(term);
       return matchesStatus && matchesSearch;
     });
   }, [orders, marketOrders, itemsByOrder, filter, search]);
@@ -260,6 +323,7 @@ export default function SellerOrdersPage() {
                 <h2>No matching orders</h2>
                 <p>Try a different search or status filter.</p>
               </section>
+
             ) : (
               <section className="order-list" aria-label="Seller orders">
                 {filteredOrders.map((order) => {
@@ -278,6 +342,16 @@ export default function SellerOrdersPage() {
                         </div>
                         <div className="status-stack">
                           <span className="status-pill">{readable(order.status)}</span>
+                          {['PLACED', 'ACCEPTED', 'PROCESSING'].includes(order.status) && (
+                            <button
+                              className="accept-button"
+                              type="button"
+                              onClick={() => void advanceOrder(order.id, order.status)}
+                              disabled={updatingOrderId === order.id}
+                            >
+                              {updatingOrderId === order.id ? 'Saving…' : order.status === 'PLACED' ? 'Accept order' : order.status === 'ACCEPTED' ? 'Start preparing' : 'Mark packed'}
+                            </button>
+                          )}
                           {order.status === 'PACKED' && (
                             <button
                               className="accept-button"
@@ -288,6 +362,27 @@ export default function SellerOrdersPage() {
                               {updatingOrderId === order.id ? 'Saving…' : market?.delivery_method === 'PICKUP' ? 'Ready for pickup' : 'Ready for dispatch'}
                             </button>
                           )}
+                          {order.status === 'READY_FOR_DISPATCH' && market?.delivery_method !== 'PICKUP' && (
+                            <button
+                              className="accept-button"
+                              type="button"
+                              onClick={() => void markDispatched(order.id)}
+                              disabled={updatingOrderId === order.id}
+                            >
+                              {updatingOrderId === order.id ? 'Saving…' : 'Mark dispatched'}
+                            </button>
+                          )}
+                          {order.status === 'DISPATCHED' && market?.delivery_method !== 'PICKUP' && (
+                            <button
+                              className="accept-button"
+                              type="button"
+                              onClick={() => void markDelivered(order.id)}
+                              disabled={updatingOrderId === order.id}
+                            >
+                              {updatingOrderId === order.id ? 'Saving…' : 'Mark delivered'}
+                            </button>
+                          )}
+
                           {order.status === 'READY' && market?.delivery_method === 'PICKUP' && (
                             <button
                               className="accept-button"
@@ -298,7 +393,9 @@ export default function SellerOrdersPage() {
                               {updatingOrderId === order.id ? 'Saving…' : 'Mark picked up'}
                             </button>
                           )}
-                          <span className="muted">Payment: {readable(market?.payment_status)}</span>
+                          <span className="muted">
+                            Payment: {readable(market?.payment_status)} · {market?.payment_method === 'PAY_AT_PICKUP' ? 'collect at pickup' : 'collect on delivery'}
+                          </span>
                         </div>
                       </div>
 

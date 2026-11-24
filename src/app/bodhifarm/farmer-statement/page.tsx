@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -21,7 +23,7 @@ type LedgerEntry = {
 };
 
 export default function FarmerStatementPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [selectedFarmer, setSelectedFarmer] = useState('');
@@ -50,7 +52,7 @@ export default function FarmerStatementPage() {
     }
 
     loadFarmers();
-  }, []);
+  }, [supabase]);
 
   async function loadStatement() {
     if (!selectedFarmer) return;
@@ -80,9 +82,11 @@ export default function FarmerStatementPage() {
     setStatementLoading(false);
   }
 
+  const loadStatementFromEffect = useEffectEvent(() => { if (selectedFarmer) loadStatement() });
+
   useEffect(() => {
-    if (selectedFarmer) loadStatement();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = window.setTimeout(() => loadStatementFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, [selectedFarmer]);
 
   const farmer = useMemo(
@@ -90,16 +94,10 @@ export default function FarmerStatementPage() {
     [farmers, selectedFarmer]
   );
 
-  const rows = useMemo(() => {
-    let balance = 0;
-
-    return entries.map((entry) => {
-      const credit = Number(entry.credit || 0);
-      const debit = Number(entry.debit || 0);
-      balance += credit - debit;
-      return { ...entry, balance };
-    });
-  }, [entries]);
+  const rows = useMemo(() => entries.reduce<{ rows: Array<LedgerEntry & { balance: number }>; balance: number }>((result, entry) => {
+    const balance = result.balance + Number(entry.credit || 0) - Number(entry.debit || 0);
+    return { balance, rows: [...result.rows, { ...entry, balance }] };
+  }, { rows: [], balance: 0 }).rows, [entries]);
 
   const totals = useMemo(() => {
     const credit = entries.reduce((s, e) => s + Number(e.credit || 0), 0);
@@ -228,8 +226,8 @@ export default function FarmerStatementPage() {
             <header className="border-b pb-6">
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-center gap-4">
-                  <img
-                    src="/branding/bodhi-rural-logo.png"
+                  <Image
+                    src="/branding/bodhi-rural-logo.png" width={210} height={80}
                     alt="Bodhi Rural Livelihood and Agri Private Limited"
                     className="h-16 w-auto object-contain"
                   />

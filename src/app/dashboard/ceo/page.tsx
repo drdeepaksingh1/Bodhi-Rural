@@ -16,7 +16,7 @@ function formatCurrency(value: number) {
 }
 
 export default async function CEODashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   /*
    * -------------------------------------------------------

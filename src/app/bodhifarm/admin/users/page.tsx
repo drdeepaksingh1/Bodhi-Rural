@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
 
 type Role = {
@@ -108,9 +108,23 @@ export default function UserRoleManagementPage() {
   const managementLocationCount =
     states.length + districts.length + blocks.length;
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
+  async function loadStates() {
+    setLoadingStates(true);
+
+    try {
+      const { data, error } = await supabase.rpc('get_states');
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setStates((data || []) as Location[]);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load states.');
+    } finally {
+      setLoadingStates(false);
+    }
+  }
 
   async function loadInitialData() {
     setLoading(true);
@@ -153,23 +167,12 @@ export default function UserRoleManagementPage() {
     }
   }
 
-  async function loadStates() {
-    setLoadingStates(true);
+  const loadInitialDataFromEffect = useEffectEvent(() => { loadInitialData() });
 
-    try {
-      const { data, error } = await supabase.rpc('get_states');
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setStates((data || []) as Location[]);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load states.');
-    } finally {
-      setLoadingStates(false);
-    }
-  }
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadInitialDataFromEffect(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function loadDistricts(stateId: string) {
     setLoadingDistricts(true);

@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -61,7 +63,7 @@ function getDateDaysAgo(days: number) {
 }
 
 export default function PerformancePage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [batches, setBatches] = useState<BirdBatch[]>([]);
@@ -82,13 +84,7 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    setLoading(true);
-    setError('');
+  const loadData = useCallback(async () => {
 
     const [
       farmersResponse,
@@ -181,7 +177,12 @@ export default function PerformancePage() {
     setEggRecords(eggResponse.data || []);
 
     setLoading(false);
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
 
   const farmerBatches = useMemo(() => {
     if (!selectedFarmer) return [];
@@ -389,7 +390,6 @@ export default function PerformancePage() {
   }, [
     filteredFeed,
     filteredEggs,
-    selectedBatchData,
     performanceBatches,
     fromDate,
     toDate,
@@ -436,8 +436,8 @@ export default function PerformancePage() {
             </p>
           </div>
 
-          <img
-            src="/branding/bodhi-rural-logo.png"
+          <Image
+            src="/branding/bodhi-rural-logo.png" width={210} height={80}
             alt="Bodhi Rural Livelihood and Agri Private Limited"
             className="h-auto w-[210px] object-contain"
           />

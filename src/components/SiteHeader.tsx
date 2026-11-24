@@ -3,20 +3,25 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 
 export default function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
-  useEffect(() => {
+  const syncRedirectPath = useEffectEvent(() => {
     if (pathname === '/login') {
       const params = new URLSearchParams(window.location.search);
       setRedirectPath(params.get('redirect'));
     } else {
       setRedirectPath(null);
     }
+  });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => syncRedirectPath(), 0);
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   function closeMenu() {

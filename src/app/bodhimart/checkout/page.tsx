@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
 
 type Product = {
@@ -16,7 +17,7 @@ type Address = {
   address_line1: string; address_line2: string | null; landmark: string | null;
   pincode: string | null; is_default: boolean;
 };
-type Order = { order_id: string; order_number: string; total_amount: number };
+type Order = { order_id: string; order_number: string; total_amount: number; delivery_method: "STANDARD" | "PICKUP" };
 type AddressForm = {
   address_name: string; recipient_name: string; mobile: string; address_line1: string;
   address_line2: string; landmark: string; pincode: string;
@@ -28,6 +29,7 @@ const blankAddress: AddressForm = {
 const supabase = createClient();
 
 export default function BodhiMartCheckoutPage() {
+  const router = useRouter();
   const [items, setItems] = useState<Line[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressId, setAddressId] = useState("NEW");
@@ -40,15 +42,17 @@ export default function BodhiMartCheckoutPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const requestId = useRef<string | null>(null);
 
-  useEffect(() => { void load(); }, []);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (!user && authError?.message === 'Auth session missing!') {
+        router.replace('/login?redirect=%2Fbodhimart%2Fcheckout');
+        return;
+      }
       if (authError) throw authError;
-      if (!user) { setError("Please sign in before checking out."); return; }
+      if (!user) { router.replace('/login?redirect=%2Fbodhimart%2Fcheckout'); return; }
 
       const [{ data: cartRow, error: cartError }, { data: addressRows, error: addressError }] =
         await Promise.all([
@@ -103,7 +107,13 @@ export default function BodhiMartCheckoutPage() {
       console.error(cause);
       setError(cause instanceof Error ? cause.message : "Unable to prepare checkout.");
     } finally { setLoading(false); }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    // Checkout setup loads the signed-in shopper's cart and delivery addresses.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load]);
 
   const subtotal = useMemo(() => items.reduce(
     (sum, item) => sum + Math.round(Number(item.product?.selling_price || 0) * Number(item.quantity) * 100) / 100, 0
@@ -138,8 +148,12 @@ export default function BodhiMartCheckoutPage() {
     setError("");
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (!user && authError?.message === 'Auth session missing!') {
+        router.push('/login?redirect=%2Fbodhimart%2Fcheckout');
+        return;
+      }
       if (authError) throw authError;
-      if (!user) { window.location.href = "/login"; return; }
+      if (!user) { router.push("/login?redirect=%2Fbodhimart%2Fcheckout"); return; }
 
       let selectedAddress: string | null = null;
       if (deliveryMethod !== "PICKUP") {
@@ -173,7 +187,12 @@ export default function BodhiMartCheckoutPage() {
       if (orderError) throw orderError;
       const result = Array.isArray(data) ? data[0] : data;
       if (!result?.order_id || !result?.order_number) throw new Error("Order confirmation was not returned.");
-      setOrder({ order_id: result.order_id, order_number: result.order_number, total_amount: Number(result.total_amount || 0) });
+      setOrder({
+        order_id: result.order_id,
+        order_number: result.order_number,
+        total_amount: Number(result.total_amount || 0),
+        delivery_method: deliveryMethod,
+      });
       setItems([]);
     } catch (cause: unknown) {
       console.error(cause);
@@ -190,8 +209,15 @@ export default function BodhiMartCheckoutPage() {
         <h1 className="mt-4 text-2xl font-bold">Order placed</h1>
         <p className="mt-3 text-gray-600">Order number: <strong>{order.order_number}</strong></p>
         <p className="mt-2">Total: {money(order.total_amount)}</p>
-        <p className="mt-3 text-sm text-amber-800">Payment is pending. Online payment is not configured.</p>
-        <Link className="mt-7 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/products">Continue shopping</Link>
+        <p className="mt-3 text-sm text-amber-800">
+          {order.delivery_method === "PICKUP" ? "Pay the seller when you collect your order." : "Pay the seller when your order is delivered."}
+          {" "}Payment remains pending until an administrator confirms it was received.
+        </p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href={`/bodhimart/orders/${order.order_id}`}>View / print summary</Link>
+          <Link className="inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/orders">View my orders</Link>
+          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/products">Continue shopping</Link>
+        </div>
       </section>
     </main>
   );
@@ -221,17 +247,20 @@ export default function BodhiMartCheckoutPage() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
-                  <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Current delivery charge: ₹0.</small></span>
+                  <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Pay the seller when the order is delivered. Current delivery charge: ₹0.</small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "PICKUP"} onChange={() => setDeliveryMethod("PICKUP")} />
-                  <span><strong>Pickup</strong><small className="mt-1 block text-gray-500">Collect from the seller.</small></span>
+                  <span><strong>Pickup</strong><small className="mt-1 block text-gray-500">Pay the seller when you collect the order.</small></span>
                 </label>
               </div>
             </div>
 
             {deliveryMethod !== "PICKUP" && <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold">Delivery address</h2>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-lg font-bold">Delivery address</h2>
+                  <Link href="/bodhimart/addresses" className="text-sm font-semibold text-green-800 hover:underline">Manage saved addresses</Link>
+                </div>
               {addresses.length > 0 && <label className="mt-4 block text-sm font-medium">
                 Saved address
                 <select value={addressId} onChange={(event) => setAddressId(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3">
@@ -271,7 +300,9 @@ export default function BodhiMartCheckoutPage() {
               <div className="flex justify-between text-sm"><span>Delivery</span><span>{money(0)}</span></div>
               <div className="flex justify-between border-t pt-3 text-lg font-bold"><span>Total</span><span className="text-green-800">{money(total)}</span></div>
             </div>
-            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Online payment is not configured. The order will be recorded with payment pending.</p>
+            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
+              {deliveryMethod === "PICKUP" ? "Manual payment at pickup." : "Manual payment on delivery."} The order stays pending until BodhiMart confirms payment was received.
+            </p>
             <button type="submit" disabled={submitting || invalidItems || !items.length} className="mt-5 w-full rounded-xl bg-green-700 px-5 py-3 font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600">
               {submitting ? "Placing order…" : "Place order"}
             </button>

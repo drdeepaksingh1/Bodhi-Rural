@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -108,14 +108,18 @@ export default function FarmerLedgerPage() {
     setLedgerLoading(false);
   }
 
-  useEffect(() => {
-    loadBase();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const loadBaseFromEffect = useEffectEvent(() => { loadBase() });
 
   useEffect(() => {
-    loadLedger(selectedFarmer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = window.setTimeout(() => loadBaseFromEffect(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const loadLedgerFromEffect = useEffectEvent(() => { loadLedger(selectedFarmer) });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadLedgerFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, [selectedFarmer]);
 
   const selectedSummary = useMemo(
@@ -128,17 +132,10 @@ export default function FarmerLedgerPage() {
     [farmers, selectedFarmer]
   );
 
-  const ledgerRows = useMemo(() => {
-    let balance = 0;
-
-    return entries.map((entry) => {
-      const credit = Number(entry.credit || 0);
-      const debit = Number(entry.debit || 0);
-      balance += credit - debit;
-
-      return { ...entry, runningBalance: balance };
-    });
-  }, [entries]);
+  const ledgerRows = useMemo(() => entries.reduce<{ rows: Array<LedgerEntry & { runningBalance: number }>; balance: number }>((result, entry) => {
+    const balance = result.balance + Number(entry.credit || 0) - Number(entry.debit || 0);
+    return { balance, rows: [...result.rows, { ...entry, runningBalance: balance }] };
+  }, { rows: [], balance: 0 }).rows, [entries]);
 
   const totals = useMemo(() => {
     const credit = entries.reduce((sum, e) => sum + Number(e.credit || 0), 0);

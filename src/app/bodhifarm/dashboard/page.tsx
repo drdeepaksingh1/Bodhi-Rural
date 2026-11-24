@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -150,8 +150,11 @@ export default function BodhiFarmDashboardPage() {
     setLoading(false);
   }
 
+  const loadDashboardFromEffect = useEffectEvent(() => { loadDashboard() });
+
   useEffect(() => {
-    loadDashboard();
+    const timer = window.setTimeout(() => loadDashboardFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const farmerMap = useMemo(() => {

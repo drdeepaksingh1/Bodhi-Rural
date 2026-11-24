@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
 
 type SellerApplication = {
@@ -31,7 +33,7 @@ type SellerApplication = {
 };
 
 export default function SellerApplicationsPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [applications, setApplications] = useState<
     SellerApplication[]
@@ -47,9 +49,7 @@ export default function SellerApplicationsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  async function loadApplications() {
-    setLoading(true);
-    setError('');
+  const loadApplications = useCallback(async () => {
 
     const { data: roleCode } = await supabase.rpc(
       'current_user_role_code'
@@ -76,11 +76,14 @@ export default function SellerApplicationsPage() {
     }
 
     setLoading(false);
-  }
+  }, [supabase]);
 
   useEffect(() => {
-    loadApplications();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadApplications();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadApplications]);
 
   async function approveSeller(
     application: SellerApplication
@@ -818,11 +821,14 @@ export default function SellerApplicationsPage() {
                   Shop Photo
                 </div>
 
-                <img
+                <Image
                   src={
                     selected.shop_photo_url
                   }
                   alt="Shop"
+                  width={480}
+                  height={320}
+                  unoptimized
                   style={{
                     maxWidth: '100%',
                     maxHeight: 300,

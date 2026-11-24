@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
 
@@ -36,6 +37,7 @@ type InventoryRow = {
 
 export default function SellerInventoryPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [seller, setSeller] = useState<Seller | null>(null);
   const [rows, setRows] = useState<InventoryRow[]>([]);
@@ -78,8 +80,7 @@ export default function SellerInventoryPage() {
       }
 
       if (!user) {
-        window.location.href =
-          '/login?redirect=/bodhimart/seller/inventory';
+        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Finventory');
         return;
       }
 

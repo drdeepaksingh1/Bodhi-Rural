@@ -1,5 +1,6 @@
 
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
 import LogoutButton from '../../../components/LogoutButton';
@@ -17,6 +18,7 @@ type MarketplaceOrder = {
   tax_amount: number;
   total_amount: number;
   payment_status: string;
+  payment_method: string;
   order_status: string;
   delivery_method: string | null;
   customer_notes: string | null;
@@ -60,7 +62,7 @@ type Seller = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -96,6 +98,31 @@ async function getAuthorizedAdmin() {
   }
 
   return { supabase, user, profile, role };
+}
+
+async function confirmManualPayment(formData: FormData) {
+  'use server';
+
+  const orderId = String(formData.get('order_id') || '').trim();
+  const confirmed = formData.get('payment_received') === 'yes';
+  const paymentReference = String(formData.get('payment_reference') || '').trim();
+
+  if (!orderId) throw new Error('Order ID is required.');
+  if (!confirmed) throw new Error('Confirm that payment was received before updating this order.');
+  if (paymentReference.length > 120) throw new Error('Payment reference must be 120 characters or fewer.');
+
+  const { supabase } = await getAuthorizedAdmin();
+  const { error } = await supabase.rpc('admin_mark_marketplace_order_paid', {
+    p_order_id: orderId,
+    p_payment_reference: paymentReference || null,
+  });
+
+  if (error) throw new Error(`Unable to confirm payment: ${error.message}`);
+
+  revalidatePath('/dashboard/marketplace/orders');
+  revalidatePath('/bodhimart/orders');
+  revalidatePath('/bodhimart/orders/[orderId]', 'page');
+  redirect('/dashboard/marketplace/orders?payment=PENDING&paymentUpdated=1');
 }
 
 function formatCurrency(value: number | null | undefined) {
@@ -195,17 +222,19 @@ function InfoItem({
 export default async function OrderManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     payment?: string;
     date?: string;
-  };
+    paymentUpdated?: string;
+  }>;
 }) {
+  const params = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
+  const search = (params?.q || '').trim().slice(0, 80);
 
   // Keep these filters aligned with marketplace_orders database constraints.
   // Seller fulfilment statuses belong to marketplace_seller_orders instead.
@@ -237,11 +266,11 @@ export default async function OrderManagementPage({
   ];
 
   const requestedStatus = (
-    searchParams?.status || 'ALL'
+    params?.status || 'ALL'
   ).toUpperCase();
 
   const requestedPayment = (
-    searchParams?.payment || 'ALL'
+    params?.payment || 'ALL'
   ).toUpperCase();
 
   const selectedStatus = validOrderStatuses.includes(requestedStatus)
@@ -252,7 +281,8 @@ export default async function OrderManagementPage({
     ? requestedPayment
     : 'ALL';
 
-  const selectedDate = searchParams?.date || '';
+  const selectedDate = params?.date || '';
+  const paymentUpdated = params?.paymentUpdated === '1';
 
   // Load master customer orders.
   let orderQuery = supabase
@@ -391,6 +421,13 @@ export default async function OrderManagementPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/marketplace/orders?payment=PENDING"
+              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+            >
+              Review pending payments
+            </Link>
+
             <Link
               href="/dashboard/marketplace"
               className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
@@ -596,6 +633,13 @@ export default async function OrderManagementPage({
           ))}
         </nav>
 
+        {paymentUpdated && (
+          <section role="status" className="mb-6 rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-900">
+            Payment marked received. The audit record has been saved, and the pending-payment queue is refreshed.
+          </section>
+        )}
+
+
         {/* ORDER DIRECTORY */}
         <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -605,7 +649,7 @@ export default async function OrderManagementPage({
               </h2>
 
               <p className="mt-1 text-xs text-gray-500">
-                Read-only administrative view
+                Order and fulfilment details are read-only; pending payment confirmations are recorded separately.
               </p>
             </div>
 
@@ -659,6 +703,27 @@ export default async function OrderManagementPage({
                       </div>
                     </div>
 
+                    {order.payment_status === 'PENDING' && order.order_status !== 'CANCELLED' && (
+                      <form action={confirmManualPayment} className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-sm font-semibold text-amber-950">
+                          {order.payment_method === 'PAY_AT_PICKUP' ? 'Collect payment at pickup.' : 'Collect payment when the order is delivered.'}
+                        </p>
+                        <p className="mt-1 text-xs text-amber-800">Only confirm after the customer has paid. This change is recorded in the audit log.</p>
+                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                          <input type="hidden" name="order_id" value={order.id} />
+                          <label className="flex items-start gap-2 text-sm text-gray-800 sm:mr-auto">
+                            <input className="mt-1" type="checkbox" name="payment_received" value="yes" required />
+                            <span>I confirm payment was received</span>
+                          </label>
+                          <label className="text-xs font-medium text-gray-600">
+                            Reference (optional)
+                            <input name="payment_reference" maxLength={120} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm" placeholder="Receipt or transaction reference" />
+                          </label>
+                          <button type="submit" className="rounded-lg bg-green-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-900">Confirm payment received</button>
+                        </div>
+                      </form>
+                    )}
+
                     <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       <InfoItem
                         label="Customer User ID"
@@ -693,6 +758,11 @@ export default async function OrderManagementPage({
                       <InfoItem
                         label="Delivery Method"
                         value={order.delivery_method}
+                      />
+
+                      <InfoItem
+                        label="Manual Payment Method"
+                        value={order.payment_method === 'PAY_AT_PICKUP' ? 'Pay at pickup' : 'Pay on delivery'}
                       />
 
                       <InfoItem
@@ -928,8 +998,7 @@ export default async function OrderManagementPage({
             This module is restricted to SUPER_ADMIN. It reads customer
             orders, order items and seller fulfilment records using the
             authenticated Supabase client. Existing customer and seller
-            access policies remain unchanged. No order, payment, delivery,
-            inventory or stock records are modified by this page.
+            access policies remain unchanged. Only pending, non-cancelled manual payments can be marked received, and each confirmation is recorded in the audit log. Order fulfilment, inventory and stock records are unchanged.
           </p>
         </section>
 

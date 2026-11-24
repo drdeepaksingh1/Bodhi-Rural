@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase/client";
+
+const marketplacePhotoLoader = ({ src }: { src: string }) => src;
 
 type Product = {
   id: string;
@@ -10,6 +15,7 @@ type Product = {
   category_id: string | null;
   name: string;
   slug: string | null;
+  image_url: string | null;
   description: string | null;
   brand: string | null;
   unit: string | null;
@@ -33,8 +39,24 @@ type Category = {
   name: string;
 };
 
+function getProductPlaceholder(product: Product, categoryName = "") {
+  const name = product.name.toLowerCase();
+  const normalizedCategory = categoryName.toLowerCase();
+
+  if (/biscuit|cookie|cracker/.test(name)) return "🍪";
+  if (/rice|grain|cereal/.test(name)) return "🍚";
+  if (/milk|dairy|cheese|butter/.test(name)) return "🥛";
+  if (/fruit|vegetable|produce/.test(name)) return "🥬";
+  if (normalizedCategory.includes("grocer")) return "🛍️";
+  if (/seed/.test(name)) return "🌱";
+  if (/feed|poultry|layer/.test(name)) return "🐓";
+
+  return "🌾";
+}
+
 export default function BodhiMartProductsPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<Inventory[]>([]);
@@ -46,9 +68,15 @@ export default function BodhiMartProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
   const [sort, setSort] = useState("DEFAULT");
+  const [stockFilter, setStockFilter] = useState("ALL");
   const [addingProduct, setAddingProduct] = useState<string | null>(null);
+  const [savedProductIds, setSavedProductIds] = useState<string[]>([]);
+  const [wishlistUpdating, setWishlistUpdating] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareMessage, setCompareMessage] = useState("");
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -57,7 +85,7 @@ export default function BodhiMartProductsPage() {
         await Promise.all([
           supabase
             .from("marketplace_public_products")
-            .select("id, product_id, sku, category_id, name, slug, description, brand, unit, weight, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, delivery_available, status, created_at")
+            .select("id, product_id, sku, category_id, name, slug, image_url, description, brand, unit, weight, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, delivery_available, status, created_at")
             .eq("status", "ACTIVE")
             .order("created_at", { ascending: false }),
 
@@ -83,6 +111,25 @@ export default function BodhiMartProductsPage() {
         throw categoriesResult.error;
       }
 
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const { data: savedItems, error: wishlistError } = await supabase
+            .from("marketplace_wishlist_items")
+            .select("product_id")
+            .eq("user_id", user.id);
+          if (wishlistError) throw wishlistError;
+          setSavedProductIds((savedItems || []).map((item) => item.product_id));
+        } else {
+          setSavedProductIds([]);
+        }
+      } catch (wishlistLoadError) {
+        console.warn("Unable to load saved product markers.", wishlistLoadError);
+        setSavedProductIds([]);
+      }
+
       setProducts((productsResult.data || []) as Product[]);
       setInventory((inventoryResult.data || []) as Inventory[]);
       setCategories((categoriesResult.data || []) as Category[]);
@@ -92,11 +139,40 @@ export default function BodhiMartProductsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase]);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const params = new URLSearchParams(window.location.search);
+    const initialSearch = params.get("search");
+    const initialAvailability = params.get("availability");
+    const initialCategory = params.get("category");
+    const initialSort = params.get("sort");
+
+    // The URL initializes the controlled search field once on page load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initialSearch) setSearch(initialSearch);
+    if (initialAvailability === "in_stock") setStockFilter("IN_STOCK");
+    if (initialAvailability === "out_of_stock") setStockFilter("OUT_OF_STOCK");
+    if (initialCategory) setCategory(initialCategory);
+    if (["PRICE_LOW", "PRICE_HIGH", "SAVINGS", "NAME"].includes(initialSort || "")) {
+      setSort(initialSort || "DEFAULT");
+    }
+    void loadProducts();
+  }, [loadProducts]);
+
+  function productDetailsHref(product: Product) {
+    const returnParams = new URLSearchParams();
+    if (search.trim()) returnParams.set("search", search.trim());
+    if (category !== "ALL") returnParams.set("category", category);
+    if (sort !== "DEFAULT") returnParams.set("sort", sort);
+    if (stockFilter !== "ALL") {
+      returnParams.set("availability", stockFilter.toLowerCase());
+    }
+
+    const returnTo = `/bodhimart/products${returnParams.size ? `?${returnParams.toString()}` : ""}`;
+    const detailsParams = new URLSearchParams({ from: returnTo });
+    return `/bodhimart/products/${encodeURIComponent(product.product_id)}?${detailsParams.toString()}`;
+  }
 
   const inventoryMap = useMemo(() => {
     const map: Record<string, Inventory> = {};
@@ -121,7 +197,9 @@ export default function BodhiMartProductsPage() {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    const searchText = search.trim().toLowerCase();
+    const normalizeSearchText = (value: string) =>
+      value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery");
+    const searchText = normalizeSearchText(search);
 
     if (searchText) {
       result = result.filter((product) => {
@@ -130,17 +208,11 @@ export default function BodhiMartProductsPage() {
           : "";
 
         return (
-          product.name.toLowerCase().includes(searchText) ||
-          (product.product_id || "")
-            .toLowerCase()
-            .includes(searchText) ||
-          (product.sku || "")
-            .toLowerCase()
-            .includes(searchText) ||
-          (product.brand || "")
-            .toLowerCase()
-            .includes(searchText) ||
-          categoryName.toLowerCase().includes(searchText)
+          normalizeSearchText(product.name).includes(searchText) ||
+          normalizeSearchText(product.product_id || "").includes(searchText) ||
+          normalizeSearchText(product.sku || "").includes(searchText) ||
+          normalizeSearchText(product.brand || "").includes(searchText) ||
+          normalizeSearchText(categoryName).includes(searchText)
         );
       });
     }
@@ -149,6 +221,15 @@ export default function BodhiMartProductsPage() {
       result = result.filter(
         (product) => product.category_id === category
       );
+    }
+
+    if (stockFilter !== "ALL") {
+      result = result.filter((product) => {
+        const available = Number(
+          inventoryMap[product.id]?.available_quantity || 0
+        );
+        return stockFilter === "IN_STOCK" ? available > 0 : available <= 0;
+      });
     }
 
     if (sort === "PRICE_LOW") {
@@ -173,7 +254,29 @@ export default function BodhiMartProductsPage() {
     }
 
     return result;
-  }, [products, search, category, sort, categoryMap]);
+  }, [products, search, category, sort, stockFilter, categoryMap, inventoryMap]);
+
+  const comparedProducts = useMemo(
+    () => compareIds
+      .map((id) => products.find((product) => product.id === id))
+      .filter((product): product is Product => Boolean(product)),
+    [compareIds, products]
+  );
+
+  function toggleCompare(product: Product) {
+    setCompareMessage("");
+    if (compareIds.includes(product.id)) {
+      setCompareIds(compareIds.filter((id) => id !== product.id));
+      return;
+    }
+
+    if (compareIds.length >= 3) {
+      setCompareMessage("Compare up to 3 products at a time. Remove one to add another.");
+      return;
+    }
+
+    setCompareIds([...compareIds, product.id]);
+  }
 
   function getAvailableStock(productId: string) {
     const item = inventoryMap[productId];
@@ -201,6 +304,44 @@ export default function BodhiMartProductsPage() {
     );
   }
 
+  async function toggleWishlist(product: Product) {
+    if (wishlistUpdating) return;
+    setWishlistUpdating(true);
+    setError("");
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login?redirect=%2Fbodhimart%2Fproducts");
+        return;
+      }
+
+      const isSaved = savedProductIds.includes(product.id);
+      if (isSaved) {
+        const { error: removeError } = await supabase
+          .from("marketplace_wishlist_items")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", product.id);
+        if (removeError) throw removeError;
+        setSavedProductIds((current) => current.filter((id) => id !== product.id));
+      } else {
+        const { error: saveError } = await supabase
+          .from("marketplace_wishlist_items")
+          .insert({ user_id: user.id, product_id: product.id });
+        if (saveError) throw saveError;
+        setSavedProductIds((current) => [...current, product.id]);
+      }
+    } catch (wishlistError: any) {
+      setError(wishlistError?.message || "Unable to update your saved items.");
+    } finally {
+      setWishlistUpdating(false);
+    }
+  }
+
   async function handleAddToCart(product: Product) {
     setAddingProduct(product.id);
     setError("");
@@ -215,14 +356,14 @@ export default function BodhiMartProductsPage() {
           "Please login before adding products to your cart."
         );
 
-        window.location.href = "/login";
+        router.push("/login");
         return;
       }
 
       const stock = getAvailableStock(product.id);
 
       if (stock <= 0) {
-        alert("This product is currently out of stock.");
+        setError("This product is currently out of stock. Refresh the catalogue to see the latest availability.");
         return;
       }
 
@@ -299,7 +440,7 @@ export default function BodhiMartProductsPage() {
         const newQuantity = currentQuantity + 1;
 
         if (newQuantity > maximumQuantity) {
-          alert(
+          setError(
             `Maximum order quantity is ${maximumQuantity} unit${
               maximumQuantity === 1 ? "" : "s"
             }.`
@@ -327,7 +468,7 @@ export default function BodhiMartProductsPage() {
          * refuse the add if current stock cannot satisfy it.
          */
         if (minimumQuantity > maximumQuantity) {
-          alert(
+          setError(
             `This product requires a minimum order of ${minimumQuantity} units, but only ${stock} are available.`
           );
           return;
@@ -348,11 +489,7 @@ export default function BodhiMartProductsPage() {
         }
       }
 
-      alert(
-        `${product.name} has been added to your cart.`
-      );
-
-      window.location.href = "/bodhimart/cart";
+      router.push("/bodhimart/cart");
     } catch (err: any) {
       console.error(err);
 
@@ -366,7 +503,7 @@ export default function BodhiMartProductsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className={`min-h-screen bg-gray-50 ${comparedProducts.length ? "pb-24" : ""}`}>
       {/* Hero */}
       <section className="bg-green-800 text-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -391,7 +528,7 @@ export default function BodhiMartProductsPage() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Search and filters */}
         <div className="mb-8 rounded-2xl bg-white p-4 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Search Products
@@ -468,11 +605,26 @@ export default function BodhiMartProductsPage() {
                 </option>
               </select>
             </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Availability
+              </label>
+              <select
+                value={stockFilter}
+                onChange={(e) => setStockFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              >
+                <option value="ALL">All products</option>
+                <option value="IN_STOCK">In stock</option>
+                <option value="OUT_OF_STOCK">Out of stock</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
               Products
@@ -489,7 +641,25 @@ export default function BodhiMartProductsPage() {
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/bodhimart/orders"
+              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+            >
+              My orders
+            </Link>
+            <Link
+              href="/bodhimart/wishlist"
+              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+            >
+              ♡ Saved
+            </Link>
+            <Link
+              href="/bodhimart/addresses"
+              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+            >
+              Delivery addresses
+            </Link>
             <a
               href="/bodhimart/cart"
               className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
@@ -508,7 +678,7 @@ export default function BodhiMartProductsPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <strong>Unable to complete the request:</strong>{" "}
             {error}
           </div>
@@ -533,13 +703,41 @@ export default function BodhiMartProductsPage() {
               <div className="text-5xl">🛒</div>
 
               <h3 className="mt-4 text-lg font-semibold text-gray-900">
-                No products found
+                {products.length === 0
+                  ? "No active products are listed yet"
+                  : stockFilter !== "ALL"
+                    ? stockFilter === "IN_STOCK"
+                      ? "No in-stock products match these filters"
+                      : "No out-of-stock products match these filters"
+                    : search.trim()
+                      ? `No products match “${search.trim()}” yet`
+                      : "No products found"}
               </h3>
 
               <p className="mt-2 text-sm text-gray-500">
-                Try changing your search or category
-                filter.
+                {products.length === 0
+                  ? "Approved BodhiMart products will appear here when sellers add them."
+                  : stockFilter !== "ALL"
+                    ? "Try another availability option or clear the category and search filters."
+                    : search.trim()
+                      ? "The current catalogue has no matching items. Matching products will appear here once sellers list them."
+                      : "Try changing your search or category filter."}
               </p>
+              {products.length > 0 && (search.trim() || category !== "ALL" || stockFilter !== "ALL") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("ALL");
+                    setSort("DEFAULT");
+                    setStockFilter("ALL");
+                    window.history.replaceState(null, "", window.location.pathname);
+                  }}
+                  className="mt-5 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
 
@@ -577,22 +775,64 @@ export default function BodhiMartProductsPage() {
                     className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                   >
                     {/* Product image area */}
-                    <div className="relative flex h-48 items-center justify-center bg-gradient-to-br from-green-50 to-amber-50">
-                      <div className="text-center">
-                        <div className="text-5xl">
-                          🌾
+                    <div className="group/image relative flex h-52 items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#fffdf5_0%,#f3f7ed_60%,#e8f0e5_100%)]">
+                      <div
+                        aria-hidden="true"
+                        className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/70 blur-2xl"
+                      />
+                      <div className="relative flex h-full w-full items-center justify-center p-5">
+                        <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] border border-white/80 bg-white/75 shadow-[0_16px_38px_rgba(28,72,45,0.12)] transition duration-300 group-hover/image:scale-105">
+                          <span
+                            role="img"
+                            aria-label={`${product.name} product image`}
+                            className="text-7xl drop-shadow-sm"
+                          >
+                            {getProductPlaceholder(product, categoryName)}
+                          </span>
                         </div>
-
-                        <p className="mt-2 text-xs font-medium text-gray-500">
-                          BODHI MART
-                        </p>
+                        {product.image_url && (
+                          <Image
+                            src={product.image_url}
+                            alt={product.name}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            loader={marketplacePhotoLoader}
+                            unoptimized
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full bg-white object-contain p-3 transition duration-300 group-hover/image:scale-[1.03]"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                        )}
                       </div>
+                      <span className="absolute bottom-3 right-3 rounded-full border border-white/80 bg-white/85 px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-[#55735d] shadow-sm">
+                        BODHI MART
+                      </span>
 
                       {savingsPercent > 0 && (
                         <span className="absolute left-3 top-3 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
                           {savingsPercent}% OFF
                         </span>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => void toggleWishlist(product)}
+                        disabled={wishlistUpdating}
+                        aria-pressed={savedProductIds.includes(product.id)}
+                        aria-label={savedProductIds.includes(product.id)
+                          ? `Remove ${product.name} from saved items`
+                          : `Save ${product.name} to wishlist`}
+                        title={savedProductIds.includes(product.id)
+                          ? "Remove from saved items"
+                          : "Save to wishlist"}
+                        className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-2xl leading-none text-rose-600 shadow-sm transition hover:scale-105 hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-700 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <span aria-hidden="true">
+                          {savedProductIds.includes(product.id) ? "♥" : "♡"}
+                        </span>
+                      </button>
                     </div>
 
                     {/* Product content */}
@@ -614,7 +854,12 @@ export default function BodhiMartProductsPage() {
                       </div>
 
                       <h3 className="min-h-[48px] text-lg font-bold text-gray-900">
-                        {product.name}
+                        <Link
+                          href={productDetailsHref(product)}
+                          className="rounded-sm transition hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-700"
+                        >
+                          {product.name}
+                        </Link>
                       </h3>
 
                       {product.brand && (
@@ -628,6 +873,18 @@ export default function BodhiMartProductsPage() {
                           Unit: {product.unit}
                         </p>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => toggleCompare(product)}
+                        aria-pressed={compareIds.includes(product.id)}
+                        className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                      >
+                        <span aria-hidden="true" className="text-base">
+                          {compareIds.includes(product.id) ? "☑" : "□"}
+                        </span>
+                        {compareIds.includes(product.id) ? "Added to compare" : "Compare"}
+                      </button>
 
                       {/* Price */}
                       <div className="mt-4">
@@ -665,17 +922,20 @@ export default function BodhiMartProductsPage() {
                       {/* Stock */}
                       <div className="mt-4">
                         {outOfStock ? (
-                          <span className="font-semibold text-red-600">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
+                            <span className="h-2 w-2 rounded-full bg-red-500" />
                             Out of Stock
                           </span>
                         ) : availableStock <=
                           (5) ? (
-                          <span className="font-medium text-orange-600">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+                            <span className="h-2 w-2 rounded-full bg-amber-500" />
                             Only {availableStock}{" "}
                             available
                           </span>
                         ) : (
-                          <span className="font-medium text-green-600">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700">
+                            <span className="h-2 w-2 rounded-full bg-green-500" />
                             In Stock
                           </span>
                         )}
@@ -686,6 +946,13 @@ export default function BodhiMartProductsPage() {
                         Product ID:{" "}
                         {product.product_id}
                       </p>
+
+                      <Link
+                        href={productDetailsHref(product)}
+                        className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                      >
+                        View product details
+                      </Link>
 
                       {/* Add to cart */}
                       <button
@@ -716,6 +983,125 @@ export default function BodhiMartProductsPage() {
             </div>
           )}
       </section>
+
+      {compareMessage && (
+        <div role="status" className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[#183426] px-5 py-3 text-sm font-semibold text-white shadow-lg">
+          {compareMessage}
+        </div>
+      )}
+
+      {comparedProducts.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-green-900/15 bg-white/95 p-4 shadow-[0_-12px_40px_rgba(20,60,38,0.12)] backdrop-blur">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[#183426]">
+                Compare products <span className="text-gray-500">({comparedProducts.length}/3)</span>
+              </p>
+              <p className="mt-1 truncate text-xs text-gray-600">
+                {comparedProducts.map((product) => product.name).join(" · ")}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCompareIds([]);
+                  setCompareMessage("");
+                  setCompareOpen(false);
+                }}
+                className="min-h-10 rounded-xl px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-700"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompareOpen(true)}
+                disabled={comparedProducts.length < 2}
+                className="min-h-10 rounded-xl bg-green-800 px-5 text-sm font-bold text-white transition hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                Compare {comparedProducts.length} products
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {compareOpen && comparedProducts.length > 1 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#102b1d]/60 p-3 backdrop-blur-sm sm:p-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCompareOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bodhimart-compare-title"
+            className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-gray-100 p-5 sm:p-7">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700">BodhiMart</p>
+                <h2 id="bodhimart-compare-title" className="mt-1 text-2xl font-bold text-gray-950">Compare products</h2>
+                <p className="mt-1 text-sm text-gray-500">Review current listing details side by side.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCompareOpen(false)}
+                aria-label="Close product comparison"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-700"
+              >
+                ×
+              </button>
+            </div>
+            <div className="max-h-[calc(90vh-110px)] overflow-auto p-4 sm:p-7">
+              <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" className="sticky left-0 bg-white p-3 text-xs font-bold uppercase tracking-wide text-gray-500">Product detail</th>
+                    {comparedProducts.map((product) => (
+                      <th scope="col" key={product.id} className="min-w-44 border-b border-gray-100 p-3 align-top">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-gray-950">{product.name}</p>
+                            <p className="mt-1 text-xs font-normal text-gray-500">{product.brand || "BodhiMart seller"}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleCompare(product)}
+                            aria-label={`Remove ${product.name} from comparison`}
+                            className="rounded-md px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: "Category", value: (product: Product) => product.category_id ? categoryMap[product.category_id] || "Product" : "Product" },
+                    { label: "Price", value: (product: Product) => `₹${Number(product.selling_price).toLocaleString("en-IN")}` },
+                    { label: "MRP", value: (product: Product) => `₹${Number(product.mrp).toLocaleString("en-IN")}` },
+                    { label: "Unit / pack", value: (product: Product) => product.unit || "Not provided" },
+                    { label: "Availability", value: (product: Product) => getAvailableStock(product.id) > 0 ? `${getAvailableStock(product.id)} available` : "Out of stock" },
+                    { label: "Fulfilment", value: (product: Product) => product.delivery_available ? "Delivery available" : "Pickup only" },
+                    { label: "Minimum order", value: (product: Product) => `${Math.max(1, Number(product.minimum_order_quantity) || 1)} ${product.unit || "unit(s)"}` },
+                  ].map((row) => (
+                    <tr key={row.label} className="border-b border-gray-100 last:border-0">
+                      <th scope="row" className="sticky left-0 bg-white p-3 font-semibold text-gray-600">{row.label}</th>
+                      {comparedProducts.map((product) => (
+                        <td key={product.id} className="p-3 font-medium text-gray-900">{row.value(product)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
