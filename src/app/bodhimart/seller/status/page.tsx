@@ -58,7 +58,9 @@ export default function SellerApplicationStatusPage() {
 
     try {
       const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
+      if (authError && !authError.message.toLowerCase().includes('auth session missing')) {
+        throw authError;
+      }
       if (!authData.user) {
         router.replace('/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fstatus');
         return;
