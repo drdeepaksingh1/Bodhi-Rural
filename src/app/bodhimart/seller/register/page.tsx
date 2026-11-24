@@ -28,6 +28,7 @@ export default function SellerRegistrationPage() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [success, setSuccess] = useState('');
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -194,7 +195,8 @@ export default function SellerRegistrationPage() {
         throw error;
       }
 
-      setSuccess(
+      setApplicationSubmitted(true);
+setSuccess(
         `Seller application submitted successfully${
           data?.application_number
             ? ` — Application No. ${data.application_number}`
@@ -298,6 +300,13 @@ export default function SellerRegistrationPage() {
             }}
           >
             {success}
+            {applicationSubmitted && (
+              <p style={{ margin: '10px 0 0' }}>
+                <Link href="/bodhimart/seller/status" style={{ color: '#145c2b', fontWeight: 700 }}>
+                  View your application status →
+                </Link>
+              </p>
+            )}
           </div>
         )}
 
