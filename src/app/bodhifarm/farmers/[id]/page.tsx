@@ -11,6 +11,8 @@ type Farm = {
   farm_name: string | null;
   farm_type: string | null;
   shed_capacity: number | null;
+  land_area: number | null;
+  land_unit: string | null;
   status: string | null;
 };
 
@@ -125,6 +127,8 @@ export default function Farm360Page() {
           farm_name,
           farm_type,
           shed_capacity,
+          land_area,
+          land_unit,
           status
           `
         )
@@ -653,10 +657,8 @@ export default function Farm360Page() {
         <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
           <MetricCard
-            label="Shed Capacity"
-            value={Number(
-              farm.shed_capacity || 0
-            ).toLocaleString('en-IN')}
+            label="Land / pond area"
+            value={farm.land_area != null ? `${farm.land_area} ${farm.land_unit || 'acres'}` : 'Not recorded'}
             description="Maximum recorded capacity"
           />
 
@@ -708,10 +710,8 @@ export default function Farm360Page() {
               />
 
               <InfoItem
-                label="Shed Capacity"
-                value={Number(
-                  farm.shed_capacity || 0
-                ).toLocaleString('en-IN')}
+                label="Land / pond area"
+                value={farm.land_area != null ? `${farm.land_area} ${farm.land_unit || 'acres'}` : 'Not recorded'}
               />
 
               <InfoItem
@@ -1445,3 +1445,4 @@ function EmptyState({
     </div>
   );
 }
+
