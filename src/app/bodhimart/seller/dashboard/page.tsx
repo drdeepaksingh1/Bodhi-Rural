@@ -326,6 +326,10 @@ export default function SellerDashboardPage() {
                 Retry
               </button>
 
+              <Link href="/bodhimart/seller/status">
+                Check application status
+              </Link>
+
               <Link href="/bodhimart">
                 Back to BodhiMart
               </Link>
