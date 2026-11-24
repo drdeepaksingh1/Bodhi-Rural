@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
@@ -42,6 +43,7 @@ export default function SellerApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [canManageApplications, setCanManageApplications] = useState(false);
+  const [canManageProducts, setCanManageProducts] = useState(false);
   const [selected, setSelected] =
     useState<SellerApplication | null>(null);
 
@@ -58,6 +60,7 @@ export default function SellerApplicationsPage() {
       typeof roleCode === 'string' &&
       ['SUPER_ADMIN', 'CEO', 'CORPORATE_ADMIN'].includes(roleCode)
     );
+    setCanManageProducts(roleCode === 'SUPER_ADMIN');
 
     const { data, error } = await supabase
       .from('marketplace_seller_applications')
@@ -265,6 +268,24 @@ export default function SellerApplicationsPage() {
             Review and manage shopkeeper
             onboarding applications.
           </p>
+          {canManageProducts && (
+            <Link
+              href="/dashboard/marketplace/products?status=PENDING"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                marginTop: 18,
+                padding: '11px 16px',
+                borderRadius: 10,
+                background: '#fff',
+                color: '#145c2b',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Review pending product listings →
+            </Link>
+          )}
         </section>
 
         {/* SUCCESS */}
