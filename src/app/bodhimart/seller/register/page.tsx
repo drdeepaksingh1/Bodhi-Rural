@@ -196,7 +196,7 @@ export default function SellerRegistrationPage() {
       }
 
       setApplicationSubmitted(true);
-setSuccess(
+      setSuccess(
         `Seller application submitted successfully${
           data?.application_number
             ? ` — Application No. ${data.application_number}`
