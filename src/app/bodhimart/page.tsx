@@ -296,6 +296,13 @@ export default function BodhiMartPage() {
               Buyer login
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </Link>
+            <Link
+              href="/login?account=buyer&redirect=%2Fbodhimart%2Faccount"
+              className="mt-4 ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#27623b] hover:text-[#173f2b]"
+            >
+              My account
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </article>
 
           <article className={`${printStyles.tradeCard} ${printStyles.tradeDarkCard} rounded-[28px] bg-[#173f2b] p-7 text-white shadow-sm sm:p-9`}>
