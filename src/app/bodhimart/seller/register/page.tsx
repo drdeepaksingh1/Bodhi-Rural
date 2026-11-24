@@ -38,7 +38,7 @@ export default function SellerRegistrationPage() {
         const { data, error: authError } = await supabase.auth.getUser();
         if (!active) return;
 
-        if (authError) {
+        if (authError && !authError.message.toLowerCase().includes('auth session missing')) {
           setError(authError.message);
           setCheckingSession(false);
           return;
