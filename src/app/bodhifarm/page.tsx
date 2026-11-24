@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '../../lib/supabase/client';
 
 type Farmer = {
@@ -271,26 +272,23 @@ export default function BodhiFarmPage() {
    * ---------------------------------------------------------
    */
 
+  const loadInitialDataFromEffect = useEffectEvent(async () => {
+    setLoading(true);
+    setError('');
+    await Promise.all([loadFarmers(), loadAllFarms(), loadBatches(), loadOperationalData()]);
+    setLoading(false);
+  });
+
   useEffect(() => {
-    async function loadInitialData() {
-      setLoading(true);
-      setError('');
-
-      await Promise.all([
-        loadFarmers(),
-        loadAllFarms(),
-        loadBatches(),
-        loadOperationalData(),
-      ]);
-
-      setLoading(false);
-    }
-
-    loadInitialData();
+    const timer = window.setTimeout(() => loadInitialDataFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
+  const loadFarmsFromEffect = useEffectEvent(() => { loadFarms(selectedFarmer) });
+
   useEffect(() => {
-    loadFarms(selectedFarmer);
+    const timer = window.setTimeout(() => loadFarmsFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, [selectedFarmer]);
 
   /*
@@ -791,7 +789,7 @@ export default function BodhiFarmPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-            <a
+            <Link
               href="/bodhifarm/farmers"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
@@ -802,9 +800,9 @@ export default function BodhiFarmPage() {
               <p className="mt-1 text-sm text-slate-500">
                 Farmer profiles and operational summaries.
               </p>
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/bodhifarm/farms"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
@@ -815,7 +813,7 @@ export default function BodhiFarmPage() {
               <p className="mt-1 text-sm text-slate-500">
                 Register farms and manage farm capacity.
               </p>
-            </a>
+            </Link>
 
             <a
               href="/bodhifarm/egg-production"

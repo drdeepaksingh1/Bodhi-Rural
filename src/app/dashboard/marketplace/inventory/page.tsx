@@ -66,7 +66,7 @@ type Adjustment = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -156,19 +156,20 @@ function statusStyle(status: string) {
 export default async function InventoryManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     seller?: string;
     stock?: string;
-  };
+  }>;
 }) {
+  const params = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
-  const selectedSeller = searchParams?.seller || 'ALL';
+  const search = (params?.q || '').trim().slice(0, 80);
+  const selectedSeller = params?.seller || 'ALL';
   const selectedStock = (
-    searchParams?.stock || 'ALL'
+    params?.stock || 'ALL'
   ).toUpperCase();
 
   const validStockFilters = [

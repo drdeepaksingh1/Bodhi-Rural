@@ -1,10 +1,12 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/client';
 
 export default function SellerRegistrationPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
 
   const [form, setForm] = useState({
     owner_name: '',
@@ -19,8 +21,36 @@ export default function SellerRegistrationPage() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function requireSellerSession() {
+      try {
+        const { data, error: authError } = await supabase.auth.getUser();
+        if (!active) return;
+
+        if (authError || !data.user) {
+          router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
+          return;
+        }
+
+        setCheckingSession(false);
+      } catch {
+        if (active) {
+          router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
+        }
+      }
+    }
+
+    void requireSellerSession();
+    return () => {
+      active = false;
+    };
+  }, [router, supabase]);
 
   function updateField(
     field: keyof typeof form,
@@ -60,9 +90,7 @@ export default function SellerRegistrationPage() {
       }
 
       if (!userData.user) {
-        window.location.assign(
-          '/login?redirect=%2Fbodhimart%2Fseller%2Fregister'
-        );
+        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fregister');
         return;
       }
 
@@ -121,6 +149,14 @@ export default function SellerRegistrationPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (checkingSession) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f5f8f5] px-4 text-center text-sm text-gray-600">
+        <p aria-live="polite">Checking your BodhiMart account…</p>
+      </main>
+    );
   }
 
   return (

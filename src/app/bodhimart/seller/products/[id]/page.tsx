@@ -1,9 +1,18 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '../../../../../lib/supabase/client';
+import {
+  marketplaceProductPhotoPathFromUrl,
+  removeMarketplaceProductPhotos,
+  uploadMarketplaceProductPhoto,
+} from '../../../../../lib/marketplace/product-photos';
+import { validateProductListingDetails } from '../../../../../lib/marketplace/product-listing-validation';
+
+const marketplacePhotoLoader = ({ src }: { src: string }) => src;
 
 type Product = {
   id: string;
@@ -11,6 +20,8 @@ type Product = {
   sku: string | null;
   name: string;
   slug: string | null;
+  image_url: string | null;
+  image_gallery: string[];
   description: string | null;
   brand: string | null;
   unit: string | null;
@@ -38,8 +49,9 @@ type Seller = {
 };
 
 export default function EditProductPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const params = useParams();
+  const router = useRouter();
 
   const productId = Array.isArray(params.id)
     ? params.id[0]
@@ -56,11 +68,19 @@ export default function EditProductPage() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [photoInputKey, setPhotoInputKey] = useState(0);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviewUrls, setGalleryPreviewUrls] = useState<string[]>([]);
+  const [galleryInputKey, setGalleryInputKey] = useState(0);
 
   const [form, setForm] = useState({
     name: '',
     sku: '',
     category_id: '',
+    image_url: '',
     description: '',
     brand: '',
     unit: '',
@@ -74,12 +94,20 @@ export default function EditProductPage() {
   });
 
   useEffect(() => {
-    if (productId) {
-      loadProduct();
-    }
-  }, [productId]);
+    return () => {
+      if (imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
-  async function loadProduct() {
+  useEffect(() => {
+    return () => {
+      galleryPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [galleryPreviewUrls]);
+
+  const loadProduct = useCallback(async () => {
     setLoading(true);
     setError('');
     setMessage('');
@@ -90,8 +118,9 @@ export default function EditProductPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        window.location.href =
-          `/login?redirect=/bodhimart/seller/products/${productId}`;
+        router.push(
+          `/login?redirect=${encodeURIComponent(`/bodhimart/seller/products/${productId}`)}`
+        );
         return;
       }
 
@@ -133,6 +162,8 @@ export default function EditProductPage() {
                 sku,
                 name,
                 slug,
+                image_url,
+                image_gallery,
                 description,
                 brand,
                 unit,
@@ -176,6 +207,7 @@ export default function EditProductPage() {
       const p = productResult.data as Product;
 
       setProduct(p);
+      setGalleryUrls(Array.isArray(p.image_gallery) ? p.image_gallery : []);
       setCategories(
         (categoriesResult.data || []) as Category[]
       );
@@ -184,6 +216,7 @@ export default function EditProductPage() {
         name: p.name || '',
         sku: p.sku || '',
         category_id: p.category_id || '',
+        image_url: p.image_url || '',
         description: p.description || '',
         brand: p.brand || '',
         unit: p.unit || '',
@@ -232,7 +265,13 @@ export default function EditProductPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [productId, router, supabase]);
+
+  useEffect(() => {
+    // Loading uses async Supabase requests; state updates happen after those requests resolve.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (productId) void loadProduct();
+  }, [loadProduct, productId]);
 
   function updateField(
     field: keyof typeof form,
@@ -244,13 +283,106 @@ export default function EditProductPage() {
     }));
   }
 
+  function handlePhotoSelection(file: File | null) {
+    setError('');
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreviewUrl('');
+      return;
+    }
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError('Choose a JPG, PNG, or WebP product photo.');
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Product photos must be 5 MB or smaller.');
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleGallerySelection(fileList: FileList | null) {
+    setError('');
+    const files = Array.from(fileList || []);
+
+    if (galleryUrls.length + files.length > 4) {
+      setError('A product can have up to four additional photos. Remove an existing photo first.');
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const invalidFile = files.find(
+      (file) => !allowedTypes.includes(file.type) || file.size > 5 * 1024 * 1024
+    );
+
+    if (invalidFile) {
+      setError(
+        !allowedTypes.includes(invalidFile.type)
+          ? 'Choose JPG, PNG, or WebP product photos.'
+          : 'Each product photo must be 5 MB or smaller.'
+      );
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
+      return;
+    }
+
+    setGalleryFiles(files);
+    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+  }
+
   function validateForm() {
     if (!form.name.trim()) {
       return 'Product name is required.';
     }
 
+    const listingDetailsError = validateProductListingDetails(
+      form.description,
+      form.unit
+    );
+    if (listingDetailsError) return listingDetailsError;
+
     if (!form.category_id) {
       return 'Please select a category.';
+    }
+
+    if (form.image_url.trim()) {
+      try {
+        const imageUrl = new URL(form.image_url.trim());
+        if (imageUrl.protocol !== 'https:') {
+          return 'Product photo links must use HTTPS.';
+        }
+      } catch {
+        return 'Please enter a valid product photo URL.';
+      }
+    }
+
+    if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+      return 'Product photos must be 5 MB or smaller.';
+    }
+
+    if (galleryUrls.length + galleryFiles.length > 4) {
+      return 'A product can have up to four additional photos.';
     }
 
     const mrp = Number(form.mrp);
@@ -336,8 +468,46 @@ export default function EditProductPage() {
     }
 
     setSaving(true);
+    const uploadedPhotoPaths: string[] = [];
 
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error(
+          'Your session has expired. Please login again.'
+        );
+      }
+
+      let productImageUrl = form.image_url.trim() || null;
+      const nextGalleryUrls = [...galleryUrls];
+
+      if (imageFile) {
+        const uploadedPhoto = await uploadMarketplaceProductPhoto(
+          supabase,
+          user.id,
+          imageFile
+        );
+        uploadedPhotoPaths.push(uploadedPhoto.path);
+        productImageUrl = uploadedPhoto.publicUrl;
+      }
+
+      for (const file of galleryFiles) {
+        const uploadedPhoto = await uploadMarketplaceProductPhoto(
+          supabase,
+          user.id,
+          file
+        );
+        uploadedPhotoPaths.push(uploadedPhoto.path);
+        nextGalleryUrls.push(uploadedPhoto.publicUrl);
+      }
+
+      if (!productImageUrl && nextGalleryUrls.length > 0) {
+        productImageUrl = nextGalleryUrls.shift() || null;
+      }
+
       const { error: updateError } =
         await supabase
           .from('marketplace_products')
@@ -345,6 +515,8 @@ export default function EditProductPage() {
             sku: form.sku.trim() || null,
             category_id: form.category_id,
             name: form.name.trim(),
+            image_url: productImageUrl,
+            image_gallery: nextGalleryUrls,
             description:
               form.description.trim() || null,
             brand: form.brand.trim() || null,
@@ -379,12 +551,56 @@ export default function EditProductPage() {
         throw updateError;
       }
 
-      setMessage(
-        'Product updated successfully.'
-      );
+      uploadedPhotoPaths.length = 0;
 
+      const retainedPhotoUrls = new Set([
+        productImageUrl,
+        ...nextGalleryUrls,
+      ].filter((url): url is string => Boolean(url)));
+      const removedPhotoPaths = [
+        product.image_url,
+        ...(product.image_gallery || []),
+      ]
+        .filter(
+          (url): url is string =>
+            url !== null && !retainedPhotoUrls.has(url)
+        )
+        .map((url) => marketplaceProductPhotoPathFromUrl(url, user.id))
+        .filter((path): path is string => Boolean(path));
+
+      let photoCleanupFailed = false;
+      try {
+        await removeMarketplaceProductPhotos(supabase, removedPhotoPaths);
+      } catch (cleanupError) {
+        photoCleanupFailed = true;
+        console.error('Product was saved, but removed photo files could not be cleaned up.', cleanupError);
+      }
+
+      setImageFile(null);
+      setImagePreviewUrl('');
+      setPhotoInputKey((current) => current + 1);
+      setGalleryFiles([]);
+      setGalleryPreviewUrls([]);
+      setGalleryInputKey((current) => current + 1);
+
+      const wasLiveListing = product.status === 'ACTIVE';
       await loadProduct();
+      setMessage(
+        photoCleanupFailed
+          ? 'Product updated. A removed photo could not be deleted from storage; please contact support.'
+          : wasLiveListing
+            ? 'Changes saved and sent for admin review. Customers will see the listing again after approval.'
+            : 'Product updated successfully.'
+      );
     } catch (err: any) {
+      if (uploadedPhotoPaths.length > 0) {
+        try {
+          await removeMarketplaceProductPhotos(supabase, uploadedPhotoPaths);
+        } catch (cleanupError) {
+          console.error('Unable to remove unused product photos.', cleanupError);
+        }
+      }
+
       console.error(err);
 
       setError(
@@ -694,7 +910,121 @@ export default function EditProductPage() {
               </Field>
             </div>
 
-            <Field label="Description">
+            <Field label="Change photo from this device">
+              <input
+                key={photoInputKey}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) =>
+                  handlePhotoSelection(e.currentTarget.files?.[0] || null)
+                }
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Choose a JPG, PNG, or WebP photo up to 5 MB.
+              </p>
+            </Field>
+
+            <Field label="Or use a photo URL">
+              <input
+                type="url"
+                value={form.image_url}
+                onChange={(e) => {
+                  setImageFile(null);
+                  setImagePreviewUrl('');
+                  setPhotoInputKey((current) => current + 1);
+                  updateField('image_url', e.target.value);
+                }}
+                placeholder="https://example.com/product-photo.jpg"
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Leave blank to remove the current photo.
+              </p>
+              {(imagePreviewUrl || form.image_url.trim().startsWith('https://')) && (
+                <Image
+                  src={imagePreviewUrl || form.image_url.trim()}
+                  alt="Product photo preview"
+                  width={160}
+                  height={120}
+                  loader={marketplacePhotoLoader}
+                  unoptimized
+                  loading="lazy"
+                  style={{
+                    display: 'block',
+                    width: 160,
+                    height: 120,
+                    objectFit: 'contain',
+                    marginTop: 10,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 10,
+                    background: '#f8faf7',
+                  }}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+            </Field>
+
+            <Field label={`More product photos (${galleryUrls.length}/4)`}>
+              <input
+                key={galleryInputKey}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(e) =>
+                  handleGallerySelection(e.currentTarget.files)
+                }
+                style={inputStyle}
+              />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
+                Add up to four extra JPG, PNG, or WebP photos. Each can be up to 5 MB.
+              </p>
+              {(galleryUrls.length > 0 || galleryPreviewUrls.length > 0) && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {galleryUrls.map((url, index) => (
+                    <div key={url} className="relative">
+                      <Image
+                        src={url}
+                        alt={`Additional product photo ${index + 1}`}
+                        width={88}
+                        height={72}
+                        loader={marketplacePhotoLoader}
+                        unoptimized
+                        className="h-[72px] w-[88px] rounded-lg border border-gray-200 bg-white object-contain p-1"
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove additional photo ${index + 1}`}
+                        onClick={() =>
+                          setGalleryUrls((current) =>
+                            current.filter((photoUrl) => photoUrl !== url)
+                          )
+                        }
+                        className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow hover:bg-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {galleryPreviewUrls.map((url, index) => (
+                    <Image
+                      key={url}
+                      src={url}
+                      alt={`New additional photo ${index + 1}`}
+                      width={88}
+                      height={72}
+                      loader={marketplacePhotoLoader}
+                      unoptimized
+                      className="h-[72px] w-[88px] rounded-lg border border-dashed border-green-400 bg-white object-contain p-1"
+                    />
+                  ))}
+                </div>
+              )}
+            </Field>
+
+            <Field label="Description *">
               <textarea
                 value={form.description}
                 onChange={(e) =>
@@ -703,19 +1033,26 @@ export default function EditProductPage() {
                     e.target.value
                   )
                 }
+                placeholder="Include contents, pack size, quality and intended use."
                 rows={5}
+                minLength={20}
+                maxLength={1000}
+                required
                 style={{
                   ...inputStyle,
                   resize: 'vertical',
                 }}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                {form.description.trim().length}/1,000 characters · at least 20 required
+              </p>
             </Field>
           </Section>
 
           {/* Measurement */}
           <Section title="Product Measurement">
             <div className="form-grid">
-              <Field label="Unit">
+              <Field label="Pack or measurement unit *">
                 <input
                   value={form.unit}
                   onChange={(e) =>
@@ -724,7 +1061,9 @@ export default function EditProductPage() {
                       e.target.value
                     )
                   }
-                  placeholder="kg / piece / pack / litre"
+                  placeholder="kg, piece, pack, bag or litre"
+                  maxLength={30}
+                  required
                   style={inputStyle}
                 />
               </Field>
@@ -920,8 +1259,11 @@ export default function EditProductPage() {
             >
               <strong>Listing status:</strong> {product.status}
               <p style={{ marginTop: 6 }}>
-                Listing status is controlled by the marketplace administrator.
-                Contact support if this product needs review.
+                {product.status === 'ACTIVE'
+                  ? 'Changes to a live product return it to pending review, and customers will not see the updated listing until an administrator approves it.'
+                  : product.status === 'PENDING'
+                    ? 'This product stays hidden from customers while it awaits administrator review.'
+                    : 'Listing status is controlled by the marketplace administrator.'}
               </p>
             </div>
           </Section>

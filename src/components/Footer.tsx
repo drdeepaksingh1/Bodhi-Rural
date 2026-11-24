@@ -76,7 +76,7 @@ export default function Footer() {
                 opacity: 0.9,
               }}
             >
-              "Bodhi – Growing Together"
+              &quot;Bodhi – Growing Together&quot;
             </p>
           </div>
 

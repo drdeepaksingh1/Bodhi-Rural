@@ -1,6 +1,12 @@
 node_modules
+.npm-cache
+.supabase
+supabase/.temp
 .next
+.next-verify
 out
+*.tsbuildinfo
+*.backup
 .env*
 !.env.example
 .DS_Store

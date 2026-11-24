@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
+import { validateProductListingDetails } from '../../../../lib/marketplace/product-listing-validation';
 
 type Product = {
   id: string;
@@ -40,7 +42,8 @@ type Seller = {
 };
 
 export default function SellerProductsPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
 
   const [seller, setSeller] = useState<Seller | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -51,9 +54,7 @@ export default function SellerProductsPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
-  async function loadProducts() {
-    setLoading(true);
-    setMessage('');
+  const loadProducts = useCallback(async () => {
 
     try {
       const {
@@ -61,8 +62,7 @@ export default function SellerProductsPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        window.location.href =
-          '/login?redirect=/bodhimart/seller/products';
+        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Fproducts');
         return;
       }
 
@@ -148,11 +148,14 @@ export default function SellerProductsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [router, supabase]);
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void loadProducts();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadProducts]);
 
   const categoryMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -577,7 +580,13 @@ export default function SellerProductsPage() {
                 </thead>
 
                 <tbody>
-                  {filteredProducts.map((product) => (
+                  {filteredProducts.map((product) => {
+                    const detailsIssue = validateProductListingDetails(
+                      product.description || '',
+                      product.unit || ''
+                    );
+
+                    return (
                     <tr key={product.id}>
                       <td style={tdStyle}>
                         <div
@@ -681,6 +690,23 @@ export default function SellerProductsPage() {
                         <StatusBadge
                           status={product.status}
                         />
+                        {detailsIssue && (
+                          <div
+                            role="status"
+                            style={{
+                              maxWidth: 240,
+                              marginTop: 8,
+                              color: '#92400e',
+                              fontSize: 12,
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            {product.status === 'ACTIVE'
+                              ? 'Live listing needs correction: '
+                              : 'Needs correction: '}
+                            {detailsIssue}
+                          </div>
+                        )}
                       </td>
 
                       <td style={tdStyle}>
@@ -697,11 +723,12 @@ export default function SellerProductsPage() {
                             fontSize: 13,
                           }}
                         >
-                          View / Edit
+                          {detailsIssue ? 'Fix listing' : 'View / Edit'}
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

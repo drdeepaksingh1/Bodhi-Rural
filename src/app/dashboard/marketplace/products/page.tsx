@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
+import { validateProductListingDetails } from '../../../../lib/marketplace/product-listing-validation';
 import LogoutButton from '../../../components/LogoutButton';
 
 const ALLOWED_ROLES = [
@@ -23,6 +24,28 @@ async function setProductStatus(formData: FormData) {
   }
 
   const { supabase } = await getAuthorizedAdmin();
+
+  if (status === 'ACTIVE') {
+    const { data: listing, error: listingError } = await supabase
+      .from('marketplace_products')
+      .select('description, unit')
+      .eq('id', productId)
+      .single();
+
+    if (listingError || !listing) {
+      redirect(`${PAGE_PATH}?error=listing-check`);
+    }
+
+    const detailsIssue = validateProductListingDetails(
+      listing.description || '',
+      listing.unit || ''
+    );
+
+    if (detailsIssue) {
+      redirect(`${PAGE_PATH}?error=listing-details`);
+    }
+  }
+
   const { error } = await supabase.rpc('admin_set_marketplace_product_status', {
     p_product_id: productId,
     p_status: status,
@@ -43,6 +66,8 @@ type Product = {
   category_id: string | null;
   name: string;
   slug: string | null;
+  image_url: string | null;
+  image_gallery: string[] | null;
   description: string | null;
   brand: string | null;
   unit: string | null;
@@ -68,7 +93,7 @@ type Seller = {
 };
 
 async function getAuthorizedAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -145,22 +170,35 @@ function statusStyle(status: string) {
   }
 }
 
+function productPhotoPlaceholder(name: string) {
+  const normalizedName = name.toLowerCase();
+
+  if (/biscuit|cookie|cracker/.test(normalizedName)) return '🍪';
+  if (/rice|grain|cereal/.test(normalizedName)) return '🍚';
+  if (/seed/.test(normalizedName)) return '🌱';
+  if (/feed|poultry|layer/.test(normalizedName)) return '🐓';
+
+  return '📦';
+}
+
 export default async function ProductManagementPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     status?: string;
     seller?: string;
     updated?: string;
-  };
+    error?: string;
+  }>;
 }) {
+  const params = await searchParams;
   const { supabase, user, profile, role } =
     await getAuthorizedAdmin();
 
-  const search = (searchParams?.q || '').trim().slice(0, 80);
-  const selectedStatus = (searchParams?.status || 'ALL').toUpperCase();
-  const selectedSeller = searchParams?.seller || 'ALL';
+  const search = (params?.q || '').trim().slice(0, 80);
+  const selectedStatus = (params?.status || 'ALL').toUpperCase();
+  const selectedSeller = params?.seller || 'ALL';
 
   const validStatuses = [
     'ALL',
@@ -282,10 +320,22 @@ export default async function ProductManagementPage({
           </p>
         </section>
 
-        {searchParams?.updated === '1' && (
+        {params?.updated === '1' && (
           <section role="status" className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">
             Product status updated successfully.
           </section>
+        )}
+
+        {params?.error === 'listing-details' && (
+          <div role="alert" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            Product activation was stopped because its description or pack unit needs correction. Review the highlighted listing below and ask the seller to update it before approving.
+          </div>
+        )}
+
+        {params?.error === 'listing-check' && (
+          <div role="alert" className="mb-5 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+            Product details could not be checked, so activation was stopped. Refresh the page and try again.
+          </div>
         )}
 
         {/* SUMMARY */}
@@ -450,6 +500,10 @@ export default async function ProductManagementPage({
             <div className="divide-y divide-gray-200">
               {products.map((product) => {
                 const seller = sellerMap.get(product.seller_id);
+                const listingDetailsIssue = validateProductListingDetails(
+                  product.description || '',
+                  product.unit || ''
+                );
 
                 return (
                   <article
@@ -457,7 +511,33 @@ export default async function ProductManagementPage({
                     className="p-5 sm:p-6"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-amber-50 sm:h-28 sm:w-28">
+                          {product.image_url ? (
+                            <>
+                              {/* Sellers can use any HTTPS photo host; keep review thumbnails small and load them directly. */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={product.image_url}
+                                alt={`${product.name} product photo`}
+                                width={112}
+                                height={112}
+                                loading="lazy"
+                                className="h-full w-full bg-white object-contain p-2"
+                              />
+                            </>
+                          ) : (
+                            <span
+                              role="img"
+                              aria-label={`${product.name} photo not added`}
+                              className="text-5xl"
+                            >
+                              {productPhotoPlaceholder(product.name)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                           Product ID
                         </p>
@@ -469,6 +549,7 @@ export default async function ProductManagementPage({
                         <p className="mt-1 text-xs text-gray-500">
                           SKU: {product.sku || 'Not assigned'}
                         </p>
+                        </div>
                       </div>
 
                       <span
@@ -477,6 +558,37 @@ export default async function ProductManagementPage({
                         {product.status}
                       </span>
                     </div>
+
+                    {(product.image_gallery || []).length > 0 && (
+                      <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Additional product photos ({product.image_gallery?.length || 0})
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {(product.image_gallery || []).map((photoUrl, index) => (
+                            <a
+                              key={`${photoUrl}-${index}`}
+                              href={photoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Open additional photo ${index + 1} for ${product.name}`}
+                              className="block h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-700"
+                            >
+                              {/* Admins need the original seller-hosted image for review; use an unoptimized thumbnail. */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={photoUrl}
+                                alt={`${product.name} additional photo ${index + 1}`}
+                                width={80}
+                                height={80}
+                                loading="lazy"
+                                className="h-full w-full object-contain p-1"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       <InfoItem
@@ -587,6 +699,17 @@ export default async function ProductManagementPage({
                       </div>
                     )}
 
+                    {listingDetailsIssue && (
+                      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        <p className="font-semibold">
+                          {product.status === 'ACTIVE'
+                            ? 'Live listing needs correction'
+                            : 'Listing details need correction before activation'}
+                        </p>
+                        <p className="mt-1">{listingDetailsIssue}</p>
+                      </div>
+                    )}
+
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
                       <p className="text-xs text-gray-500">
                         {product.status === 'ACTIVE'
@@ -602,10 +725,13 @@ export default async function ProductManagementPage({
                         />
                         <button
                           type="submit"
+                          disabled={product.status !== 'ACTIVE' && Boolean(listingDetailsIssue)}
                           className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${
                             product.status === 'ACTIVE'
                               ? 'bg-red-600 hover:bg-red-700'
-                              : 'bg-green-700 hover:bg-green-800'
+                              : listingDetailsIssue
+                                ? 'cursor-not-allowed bg-gray-400'
+                                : 'bg-green-700 hover:bg-green-800'
                           }`}
                         >
                           {product.status === 'ACTIVE' ? 'Deactivate Product' : 'Activate Product'}

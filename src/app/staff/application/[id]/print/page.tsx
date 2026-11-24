@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../../lib/supabase/client';
 
@@ -549,8 +551,8 @@ export default function StaffApplicationPrintPage() {
 
           <div className="brand-row">
 
-            <img
-              src={LOGO}
+            <Image
+              src={LOGO} width={210} height={80}
               alt="Bodhi Rural logo"
               className="company-logo"
             />

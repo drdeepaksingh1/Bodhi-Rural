@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../../../lib/supabase/client';
 
@@ -83,8 +83,11 @@ export default function FarmerManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const loadDataOnMount = useEffectEvent(loadData);
+
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => loadDataOnMount(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   async function loadData() {

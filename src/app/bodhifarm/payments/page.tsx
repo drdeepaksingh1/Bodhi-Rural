@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Farmer = {
@@ -58,7 +58,7 @@ function getIndiaDate() {
 }
 
 export default function FarmerPaymentsPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -118,13 +118,7 @@ export default function FarmerPaymentsPage() {
     Number(qualityDeduction || 0) -
     Number(otherDeduction || 0);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    setLoading(true);
-    setError('');
+  const loadData = useCallback(async () => {
 
     const [farmerResult, batchResult, procurementResult, expenseResult, paymentResult] =
       await Promise.all([
@@ -175,7 +169,12 @@ export default function FarmerPaymentsPage() {
     }
 
     setLoading(false);
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
 
   async function saveProcurement() {
     setMessage('');

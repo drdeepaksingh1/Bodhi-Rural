@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+
+import { useEffect, useEffectEvent, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Role = {
@@ -89,11 +91,6 @@ export default function StaffRegistrationPage() {
   const [proposedPanchayatId, setProposedPanchayatId] =
     useState('');
 
-  useEffect(() => {
-    loadRoles();
-    loadStates();
-  }, []);
-
   async function loadRoles() {
     const { data, error } = await supabase
       .from('roles')
@@ -128,6 +125,17 @@ export default function StaffRegistrationPage() {
 
     setStates((data || []) as Location[]);
   }
+
+  const loadRolesFromEffect = useEffectEvent(() => { loadRoles() });
+  const loadStatesFromEffect = useEffectEvent(() => { loadStates() });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadRolesFromEffect();
+      loadStatesFromEffect();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function loadDistricts(parentStateId: string) {
     const { data, error } = await supabase.rpc(
@@ -507,8 +515,8 @@ export default function StaffRegistrationPage() {
 
           <div className="flex items-center gap-4">
 
-            <img
-              src="/branding/bodhi-rural-logo.png"
+            <Image
+              src="/branding/bodhi-rural-logo.png" width={210} height={80}
               alt="Bodhi Rural Livelihood & Agri Private Limited"
               className="h-16 w-16 rounded-xl object-contain"
             />
@@ -1143,7 +1151,7 @@ export default function StaffRegistrationPage() {
 
               <p className="mt-2 text-sm text-green-800">
                 After submission, your application will
-                be reviewed according to Bodhi's approval
+                be reviewed according to Bodhi&apos;s approval
                 process. A permanent Staff ID such as
                 BRLP000002 will only be generated after
                 final approval.

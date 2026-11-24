@@ -1,0 +1,168 @@
+.root {}
+.hero {}
+.heroArtwork {}
+.heroContent {}
+.features {}
+.featureCard {}
+.shop {}
+.categoryGrid {}
+.categoryCard {}
+.tradeSection {}
+.tradeGrid {}
+.tradeCard {}
+.tradeDarkCard {}
+.seller {}
+.sellerActions {}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  .root,
+  .root * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .root {
+    min-height: 0 !important;
+    background: #fff !important;
+    color: #183426 !important;
+  }
+
+  .hero {
+    overflow: visible !important;
+    border: 1px solid #d6e0d3 !important;
+    border-radius: 12px !important;
+    background: #f1f5ef !important;
+    color: #183426 !important;
+  }
+
+  .heroArtwork {
+    display: none !important;
+  }
+
+  .hero,
+  .hero * {
+    color: #183426 !important;
+  }
+
+  .heroContent {
+    min-height: 0 !important;
+    max-width: none !important;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .hero a {
+    border: 1px solid #c9d7c6 !important;
+    background: #e5eee2 !important;
+    color: #183426 !important;
+    box-shadow: none !important;
+  }
+
+  .features {
+    border-color: #d6e0d3 !important;
+  }
+
+  .features > div {
+    padding-block: 6px !important;
+  }
+
+  .featureCard {
+    break-inside: avoid;
+  }
+
+  .shop {
+    break-before: page;
+    page-break-before: always;
+    padding-block: 10mm !important;
+  }
+
+  .categoryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 5mm !important;
+  }
+
+  .categoryCard {
+    break-inside: avoid;
+    border-radius: 12px !important;
+    padding: 14px !important;
+    box-shadow: none !important;
+  }
+
+  .tradeSection {
+    break-before: page;
+    page-break-before: always;
+    background: #fff !important;
+  }
+
+  .tradeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding-block: 10mm !important;
+  }
+
+  .tradeCard {
+    break-inside: avoid;
+    border: 1px solid #cbd8c8 !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+  }
+
+  .tradeDarkCard {
+    background: #f1f5ef !important;
+    color: #183426 !important;
+  }
+
+  .tradeDarkCard * {
+    color: #183426 !important;
+  }
+
+  .tradeDarkCard a {
+    border: 1px solid #c9d7c6 !important;
+    background: #e5eee2 !important;
+    color: #183426 !important;
+  }
+
+  .seller {
+    break-before: page;
+    page-break-before: always;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    padding-block: 10mm !important;
+  }
+
+  .sellerActions {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-self: end !important;
+  }
+
+  .sellerActions > a {
+    align-self: center !important;
+    min-height: 0 !important;
+  }
+
+  :global(body):has(.root) footer {
+    margin-top: 0 !important;
+    border-top: 1px solid #d6e0d3 !important;
+    background: #fff !important;
+    color: #183426 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  :global(body):has(.root) footer * {
+    color: #183426 !important;
+  }
+
+  :global(body):has(.root) footer a {
+    color: #27623b !important;
+  }
+}

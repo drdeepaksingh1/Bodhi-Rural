@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
 type Role = {
@@ -193,23 +195,15 @@ export default function StaffAdminPage() {
     }
   }
 
+  const loadStaffFromEffect = useEffectEvent(() => { loadStaff() });
+
   useEffect(() => {
-    loadStaff();
+    const timer = window.setTimeout(() => loadStaffFromEffect(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const locationName = (id: string | null) => {
-    if (!id) return '—';
-    return locations[id]?.name || '—';
-  };
-
-  const roleName = (id: string | null) => {
-    if (!id) return '—';
-
-    return (
-      roles.find((role) => role.id === id)?.name ||
-      '—'
-    );
-  };
+  const locationName = useCallback((id: string | null) => id ? locations[id]?.name || '—' : '—', [locations]);
+  const roleName = useCallback((id: string | null) => id ? roles.find((role) => role.id === id)?.name || '—' : '—', [roles]);
 
   const filteredStaff = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -247,8 +241,8 @@ export default function StaffAdminPage() {
     staff,
     search,
     statusFilter,
-    roles,
-    locations,
+    locationName,
+    roleName,
   ]);
 
   const statusCounts = useMemo(() => {
@@ -284,8 +278,8 @@ export default function StaffAdminPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
             <div className="flex items-center gap-4">
-              <img
-                src="/branding/bodhi-rural-logo.png"
+              <Image
+                src="/branding/bodhi-rural-logo.png" width={210} height={80}
                 alt="Bodhi Rural"
                 className="h-16 w-auto object-contain"
               />
