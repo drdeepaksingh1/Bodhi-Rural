@@ -41,6 +41,7 @@ export default function BodhiMartAccountPage() {
   const router = useRouter();
   const [summary, setSummary] = useState<AccountSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState('');
 
   const loadAccount = useCallback(async () => {
@@ -83,6 +84,20 @@ export default function BodhiMartAccountPage() {
     void loadAccount();
   }, [loadAccount]);
 
+  async function handleSignOut() {
+    setError('');
+    setSigningOut(true);
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+      router.replace('/bodhimart/login');
+      router.refresh();
+    } catch (signOutError) {
+      setError(signOutError instanceof Error ? signOutError.message : 'Unable to sign out. Please try again.');
+      setSigningOut(false);
+    }
+  }
+
   if (loading) {
     return <main className="flex min-h-[60vh] items-center justify-center bg-[#f5f7f2] px-5 text-gray-600">Loading your account…</main>;
   }
@@ -95,7 +110,12 @@ export default function BodhiMartAccountPage() {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#e1bd59]">Buyer account</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">My BodhiMart</h1>
           <p className="mt-3 text-sm text-white/80">{summary?.email || 'Your account overview'}</p>
-          <Link href="/bodhimart/products" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#e1bd59] px-5 py-3 text-sm font-bold text-[#183426] transition hover:bg-[#edd17e]">Continue shopping</Link>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/bodhimart/products" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#e1bd59] px-5 py-3 text-sm font-bold text-[#183426] transition hover:bg-[#edd17e]">Continue shopping</Link>
+            <button type="button" onClick={handleSignOut} disabled={signingOut} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
         </header>
 
         {error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
