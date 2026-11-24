@@ -80,7 +80,7 @@ export default function SellerInventoryPage() {
       }
 
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fseller%2Finventory');
+        router.replace('/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Finventory');
         return;
       }
 

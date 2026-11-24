@@ -48,11 +48,11 @@ export default function BodhiMartCheckoutPage() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (!user && authError?.message === 'Auth session missing!') {
-        router.replace('/login?redirect=%2Fbodhimart%2Fcheckout');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Fcheckout');
         return;
       }
       if (authError) throw authError;
-      if (!user) { router.replace('/login?redirect=%2Fbodhimart%2Fcheckout'); return; }
+      if (!user) { router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Fcheckout'); return; }
 
       const [{ data: cartRow, error: cartError }, { data: addressRows, error: addressError }] =
         await Promise.all([
@@ -149,11 +149,11 @@ export default function BodhiMartCheckoutPage() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (!user && authError?.message === 'Auth session missing!') {
-        router.push('/login?redirect=%2Fbodhimart%2Fcheckout');
+        router.push('/login?account=buyer&redirect=%2Fbodhimart%2Fcheckout');
         return;
       }
       if (authError) throw authError;
-      if (!user) { router.push("/login?redirect=%2Fbodhimart%2Fcheckout"); return; }
+      if (!user) { router.push("/login?account=buyer&redirect=%2Fbodhimart%2Fcheckout"); return; }
 
       let selectedAddress: string | null = null;
       if (deliveryMethod !== "PICKUP") {

@@ -289,6 +289,13 @@ export default function BodhiMartPage() {
               Shop products
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
+            <Link
+              href="/login?account=buyer&redirect=%2Fbodhimart%2Fproducts"
+              className="mt-4 ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#27623b] hover:text-[#173f2b]"
+            >
+              Buyer login
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </article>
 
           <article className={`${printStyles.tradeCard} ${printStyles.tradeDarkCard} rounded-[28px] bg-[#173f2b] p-7 text-white shadow-sm sm:p-9`}>
@@ -358,7 +365,7 @@ export default function BodhiMartPage() {
         </div>
         <div className={`${printStyles.sellerActions} flex flex-col gap-3 sm:flex-row`}>
           <Link
-            href="/login?redirect=/bodhimart/seller/products/add"
+            href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#173f2b] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#20563a]"
           >
             Seller login

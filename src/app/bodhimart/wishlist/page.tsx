@@ -55,12 +55,12 @@ export default function BodhiMartWishlistPage() {
       } = await supabase.auth.getUser();
 
       if (!user && authError?.message === 'Auth session missing!') {
-        router.replace('/login?redirect=%2Fbodhimart%2Fwishlist');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Fwishlist');
         return;
       }
       if (authError) throw authError;
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fwishlist');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Fwishlist');
         return;
       }
 
@@ -118,7 +118,7 @@ export default function BodhiMartWishlistPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.replace('/login?redirect=%2Fbodhimart%2Fwishlist');
+        router.replace('/login?account=buyer&redirect=%2Fbodhimart%2Fwishlist');
         return;
       }
 

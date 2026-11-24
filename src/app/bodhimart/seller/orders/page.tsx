@@ -282,7 +282,7 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
             <p>{error}</p>
             <div className="error-actions">
               <button className="primary" type="button" onClick={() => void loadOrders()}>Try again</button>
-              {needsLogin && <Link className="secondary" href="/login">Sign in</Link>}
+              {needsLogin && <Link className="secondary" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard">Sign in</Link>}
             </div>
           </section>
         ) : loading ? (
