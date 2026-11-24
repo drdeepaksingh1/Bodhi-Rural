@@ -174,6 +174,11 @@ export default function SellerApplicationStatusPage() {
               </dl>
 
               <div className="mt-6 flex flex-wrap gap-3">
+                {application.status === 'REJECTED' && (
+                  <Link href="/bodhimart/seller/register" className="rounded-xl bg-[#145c2b] px-5 py-3 text-sm font-bold text-white">
+                    Submit a new application
+                  </Link>
+                )}
                 {application.status === 'APPROVED' && (
                   <Link href="/bodhimart/seller/dashboard" className="rounded-xl bg-[#145c2b] px-5 py-3 text-sm font-bold text-white">
                     Open seller dashboard
