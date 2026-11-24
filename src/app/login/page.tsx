@@ -10,6 +10,10 @@ function LoginForm() {
   const accountType = searchParams.get('account');
   const isSellerLogin = accountType === 'seller';
   const isBuyerLogin = accountType === 'buyer';
+  const requestedRedirect = searchParams.get('redirect') || '';
+  const isBodhiFarmLogin = requestedRedirect === '/bodhifarm' || requestedRedirect.startsWith('/bodhifarm/');
+  const isBodhiMartLogin = isSellerLogin || isBuyerLogin || requestedRedirect === '/bodhimart' || requestedRedirect.startsWith('/bodhimart/');
+  const loginBrand = isBodhiMartLogin ? 'BodhiMart' : isBodhiFarmLogin ? 'BodhiFarm' : 'Bodhi Rural';
   const fallbackRedirect = isSellerLogin
     ? '/bodhimart/seller/dashboard'
     : isBuyerLogin
@@ -158,7 +162,7 @@ function LoginForm() {
         {/* Branding */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-green-800">
-            BodhiMart
+            {loginBrand}
           </h1>
 
           <p className="mt-2 text-sm text-gray-600">
@@ -168,7 +172,7 @@ function LoginForm() {
                 ? 'Seller workspace sign in'
                 : isBuyerLogin
                   ? 'Shop and manage your BodhiMart orders'
-                  : 'Welcome to BodhiMart'}
+                  : `Welcome to ${loginBrand}`}
           </p>
         </div>
 
@@ -307,14 +311,18 @@ function LoginForm() {
                 ? '/login?account=buyer&redirect=%2Fbodhimart%2Fproducts'
                 : isBuyerLogin
                   ? '/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard'
-                  : '/bodhimart/login'}
+                  : isBodhiMartLogin
+                    ? '/bodhimart/login'
+                    : '/'}
               className="font-semibold text-green-800 underline"
             >
               {isSellerLogin
                 ? 'Shopping instead? Buyer login'
                 : isBuyerLogin
                   ? 'Selling on BodhiMart? Seller login'
-                  : 'Choose buyer or seller sign in'}
+                  : isBodhiMartLogin
+                    ? 'Choose buyer or seller sign in'
+                    : 'Return to Bodhi Rural'}
             </a>
           </div>
         )}
