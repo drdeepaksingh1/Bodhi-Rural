@@ -508,7 +508,7 @@ export default function FarmManagement() {
 
               {/* REGISTER FARM */}
 
-              <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+              <section id="register-enterprise" className="scroll-mt-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
 
                 <h2 className="text-lg font-bold text-slate-900">
                   Register Farm or Enterprise
