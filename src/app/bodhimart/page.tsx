@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
 import printStyles from "./bodhimart-print.module.css";
 import {
   ArrowRight,
@@ -14,6 +16,26 @@ import {
   UsersRound,
   Wheat,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "BodhiMart | Farm & Rural Marketplace",
+  description:
+    "Explore BodhiMart, the farm and rural marketplace for agricultural inputs, livestock supplies, groceries and everyday essentials.",
+  alternates: { canonical: "/bodhimart" },
+  openGraph: {
+    type: "website",
+    title: "BodhiMart | Farm & Rural Marketplace",
+    description:
+      "Explore BodhiMart, the farm and rural marketplace for agricultural inputs, livestock supplies, groceries and everyday essentials.",
+    url: "/bodhimart",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BodhiMart | Farm & Rural Marketplace",
+    description:
+      "Explore BodhiMart, the farm and rural marketplace for agricultural inputs, livestock supplies, groceries and everyday essentials.",
+  },
+};
 
 const categories = [
   {
