@@ -319,6 +319,18 @@ function LoginForm() {
           </div>
         )}
 
+        {!isForgotPassword && isBuyerLogin && (
+          <p className="mt-3 text-center text-sm text-gray-600">
+            New to BodhiMart?{' '}
+            <a
+              href={`/bodhimart/register?redirect=${encodeURIComponent(searchParams.get('redirect') || '/bodhimart/products')}`}
+              className="font-semibold text-green-800 underline"
+            >
+              Create a buyer account
+            </a>
+          </p>
+        )}
+
         {/* Footer */}
         <div className="mt-8 border-t border-gray-200 pt-5 text-center">
           <p className="text-xs text-gray-500">
