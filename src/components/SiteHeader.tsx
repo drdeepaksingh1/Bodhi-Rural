@@ -74,7 +74,7 @@ export default function SiteHeader() {
   return (
     <header
       style={{
-        background: '#145c2b',
+        background: 'var(--green2)',
         color: '#ffffff',
         width: '100%',
       }}
@@ -170,7 +170,7 @@ export default function SiteHeader() {
             aria-current={loginPageIsActive ? 'page' : undefined}
             style={{
               background: '#ffffff',
-              color: '#145c2b',
+              color: 'var(--green2)',
               fontWeight: 700,
               padding: '9px 18px',
               borderRadius: '6px',
@@ -213,7 +213,7 @@ export default function SiteHeader() {
         <div
           className="mobileMenu"
           style={{
-            background: '#145c2b',
+            background: 'var(--green2)',
             borderTop:
               '1px solid rgba(255,255,255,0.2)',
             padding: '10px 20px 18px',
@@ -276,7 +276,7 @@ export default function SiteHeader() {
               marginTop: '8px',
               padding: '11px 14px',
               background: '#ffffff',
-              color: '#145c2b',
+              color: 'var(--green2)',
               borderRadius: '6px',
               textDecoration: 'none',
               fontWeight: 700,
