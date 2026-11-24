@@ -18,8 +18,38 @@ type Farm = {
   farm_name: string | null;
   farm_type: string | null;
   shed_capacity: number | null;
+  land_area: number | null;
+  land_unit: string | null;
   status: string | null;
 };
+
+const farmTypeGroups = [
+  {
+    label: 'Crops & horticulture',
+    options: [
+      'Crop farming (mixed)', 'Paddy / rice', 'Wheat', 'Maize & millets',
+      'Pulses & oilseeds', 'Vegetable farming', 'Fruit & orchard farming',
+      'Spices & medicinal plants', 'Seed production & nursery',
+      'Mushroom cultivation', 'Agroforestry',
+    ],
+  },
+  {
+    label: 'Livestock & dairy',
+    options: [
+      'Dairy cattle (cow) & milk production', 'Dairy buffalo & milk production',
+      'Cattle rearing', 'Goat farming', 'Sheep farming', 'Piggery',
+      'Poultry — layers', 'Poultry — broilers', 'Poultry — dual purpose',
+      'Backyard poultry', 'Duckery', 'Beekeeping', 'Sericulture',
+    ],
+  },
+  {
+    label: 'Fisheries & other allied activities',
+    options: [
+      'Fishery & aquaculture', 'Integrated fish farming',
+      'Food processing & value addition', 'Other agriculture & allied activity',
+    ],
+  },
+];
 
 type BirdBatch = {
   id: string;
@@ -43,8 +73,11 @@ export default function FarmManagement() {
   const [selectedBatchId, setSelectedBatchId] = useState('');
 
   const [farmName, setFarmName] = useState('');
-  const [farmType, setFarmType] = useState('Dual Purpose Farm');
+  const [farmType, setFarmType] = useState('');
+  const [otherFarmType, setOtherFarmType] = useState('');
   const [shedCapacity, setShedCapacity] = useState('');
+  const [landArea, setLandArea] = useState('');
+  const [landUnit, setLandUnit] = useState('acres');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,7 +105,7 @@ export default function FarmManagement() {
       supabase
         .from('farms')
         .select(
-          'id, farmer_id, farm_name, farm_type, shed_capacity, status'
+          'id, farmer_id, farm_name, farm_type, shed_capacity, land_area, land_unit, status'
         )
         .order('farm_name'),
 
@@ -172,6 +205,10 @@ export default function FarmManagement() {
     [batches]
   );
 
+  const tracksBirdCapacity =
+    farmType.toLowerCase().includes('poultry') ||
+    farmType.toLowerCase().includes('duckery');
+
   function selectFarmer(id: string) {
     setSelectedFarmerId(id);
     setSelectedFarmId('');
@@ -198,6 +235,19 @@ export default function FarmManagement() {
       return;
     }
 
+    if (!farmType) {
+      setError('Please select an agriculture or allied activity.');
+      return;
+    }
+
+    if (
+      farmType === 'Other agriculture & allied activity' &&
+      !otherFarmType.trim()
+    ) {
+      setError('Please describe the other agriculture or allied activity.');
+      return;
+    }
+
     setSaving(true);
 
     const { error: insertError } = await supabase
@@ -205,10 +255,15 @@ export default function FarmManagement() {
       .insert({
         farmer_id: selectedFarmerId,
         farm_name: farmName.trim(),
-        farm_type: farmType,
-        shed_capacity: shedCapacity
+        farm_type:
+          farmType === 'Other agriculture & allied activity'
+            ? otherFarmType.trim()
+            : farmType,
+        shed_capacity: tracksBirdCapacity && shedCapacity
           ? Number(shedCapacity)
           : null,
+        land_area: landArea ? Number(landArea) : null,
+        land_unit: landArea ? landUnit : null,
         status: 'ACTIVE',
       });
 
@@ -219,8 +274,11 @@ export default function FarmManagement() {
     }
 
     setFarmName('');
-    setFarmType('Dual Purpose Farm');
+    setFarmType('');
+    setOtherFarmType('');
     setShedCapacity('');
+    setLandArea('');
+    setLandUnit('acres');
 
     setMessage('Farm registered successfully.');
 
@@ -313,11 +371,11 @@ export default function FarmManagement() {
             </Link>
 
             <h1 className="mt-2 text-3xl font-bold text-slate-900">
-              Farm Management
+              Farm & Enterprise Management
             </h1>
 
             <p className="mt-1 text-sm text-slate-600">
-              Register farms and connect bird batches to farms.
+              Register crop, livestock, dairy, fishery and other allied enterprises. Poultry batches can also be linked to a farm.
             </p>
 
           </div>
@@ -360,7 +418,7 @@ export default function FarmManagement() {
           />
 
           <Kpi
-            label="Shed Capacity"
+            label="Poultry Capacity"
             value={totalShedCapacity.toLocaleString('en-IN')}
           />
 
@@ -453,11 +511,11 @@ export default function FarmManagement() {
               <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
 
                 <h2 className="text-lg font-bold text-slate-900">
-                  Register Farm
+                  Register Farm or Enterprise
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Create a new farm under a farmer.
+                  Add one activity profile for a farmer. Create another profile if they run more than one activity.
                 </p>
 
                 <form
@@ -521,7 +579,7 @@ export default function FarmManagement() {
                   <label className="block">
 
                     <span className="mb-1 block text-sm font-semibold text-slate-700">
-                      Farm Type
+                      Farm or Activity Type *
                     </span>
 
                     <select
@@ -531,61 +589,74 @@ export default function FarmManagement() {
                           event.target.value
                         )
                       }
+                      required
                       className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm"
                     >
-
-                      <option>
-                        Dual Purpose Farm
-                      </option>
-
-                      <option>
-                        Layer Farm
-                      </option>
-
-                      <option>
-                        Broiler Farm
-                      </option>
-
-                      <option>
-                        Sonali Farm
-                      </option>
-
-                      <option>
-                        Backyard Poultry
-                      </option>
-
-                      <option>
-                        Mixed Farm
-                      </option>
-
-                      <option>
-                        Other
-                      </option>
-
+                      <option value="">Select an activity</option>
+                      {farmTypeGroups.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.options.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
 
                   </label>
 
-                  <label className="block">
+                  {farmType === 'Other agriculture & allied activity' && (
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-semibold text-slate-700">Describe the activity *</span>
+                      <input
+                        value={otherFarmType}
+                        onChange={(event) => setOtherFarmType(event.target.value)}
+                        placeholder="Example: floriculture or lac cultivation"
+                        required
+                        className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                      />
+                    </label>
+                  )}
 
-                    <span className="mb-1 block text-sm font-semibold text-slate-700">
-                      Shed Capacity
-                    </span>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Land or pond area (optional)</label>
+                    <div className="grid grid-cols-[1fr_130px] gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={landArea}
+                        onChange={(event) => setLandArea(event.target.value)}
+                        placeholder="Area"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                      />
+                      <select
+                        value={landUnit}
+                        onChange={(event) => setLandUnit(event.target.value)}
+                        aria-label="Area unit"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm"
+                      >
+                        <option value="acres">Acres</option>
+                        <option value="hectares">Hectares</option>
+                        <option value="bigha">Bigha</option>
+                      </select>
+                    </div>
+                  </div>
 
-                    <input
-                      type="number"
-                      min="0"
-                      value={shedCapacity}
-                      onChange={(event) =>
-                        setShedCapacity(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Example: 600"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
-                    />
-
-                  </label>
+                  {tracksBirdCapacity && (
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-semibold text-slate-700">
+                        Poultry / duck housing capacity (birds)
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={shedCapacity}
+                        onChange={(event) => setShedCapacity(event.target.value)}
+                        placeholder="Example: 600"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm"
+                      />
+                    </label>
+                  )}
 
                   <button
                     type="submit"
@@ -594,7 +665,7 @@ export default function FarmManagement() {
                   >
                     {saving
                       ? 'Saving...'
-                      : 'Save Farm'}
+                      : 'Save Farm or Enterprise'}
                   </button>
 
                 </form>
@@ -857,10 +928,11 @@ export default function FarmManagement() {
                             <div className="mt-4 grid grid-cols-2 gap-3">
 
                               <Metric
-                                label="Shed Capacity"
+                                label="Land / pond area"
                                 value={
-                                  farm.shed_capacity ||
-                                  0
+                                  farm.land_area != null
+                                    ? `${farm.land_area} ${farm.land_unit || 'acres'}`
+                                    : 'Not recorded'
                                 }
                               />
 
@@ -877,16 +949,8 @@ export default function FarmManagement() {
                               />
 
                               <Metric
-                                label="Utilization"
-                                value={
-                                  farm.shed_capacity
-                                    ? `${Math.round(
-                                        (liveBirds /
-                                          farm.shed_capacity) *
-                                          100
-                                      )}%`
-                                    : '—'
-                                }
+                                label="Poultry / duck capacity"
+                                value={farm.shed_capacity || '—'}
                               />
 
                             </div>
@@ -1021,7 +1085,7 @@ export default function FarmManagement() {
                         </th>
 
                         <th className="px-5 py-3">
-                          Capacity
+                          Area / bird capacity
                         </th>
 
                         <th className="px-5 py-3">
@@ -1104,8 +1168,11 @@ export default function FarmManagement() {
                             </td>
 
                             <td className="px-5 py-4 font-semibold">
-                              {farm.shed_capacity ||
-                                0}
+                              {farm.land_area != null
+                                ? `${farm.land_area} ${farm.land_unit || 'acres'}`
+                                : farm.shed_capacity
+                                  ? `${farm.shed_capacity} birds`
+                                  : '—'}
                             </td>
 
                             <td className="px-5 py-4">
@@ -1203,3 +1270,4 @@ function Metric({
     </div>
   );
 }
+
