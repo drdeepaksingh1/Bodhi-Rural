@@ -44,8 +44,8 @@ export default function Home() {
     <>
       <style>{`
         .br-home {
-          --br-forest: #123d2b;
-          --br-green: #1c6844;
+          --br-forest: var(--green2);
+          --br-green: var(--green);
           --br-leaf: #dce9dc;
           --br-gold: #bd9250;
           --br-ink: #1c2b23;
