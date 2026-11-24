@@ -263,8 +263,8 @@ export default function BodhiFarmDashboardPage() {
 
   const modules = [
     ['/bodhifarm/farmers', 'Farmers', 'Farmer profiles and Farmer 360°'],
-    ['/bodhifarm/farms', 'Farms', 'Farm and shed management'],
-    ['/bodhifarm', 'Bird Batches', 'Bird placement and flock management'],
+    ['/bodhifarm/farms', 'Farm & Enterprise Profiles', 'Crops, livestock, dairy, fisheries and allied activities'],
+    ['/bodhifarm', 'Poultry Operations', 'Bird placement and flock management'],
     ['/bodhifarm/egg-production', 'Egg Production', 'Daily egg collection'],
     ['/bodhifarm/feed', 'Feed', 'Feed consumption and cost'],
     ['/bodhifarm/veterinary', 'Veterinary', 'Health and mortality records'],
@@ -288,11 +288,10 @@ export default function BodhiFarmDashboardPage() {
               Bodhi Rural Livelihood & Agri Private Limited
             </div>
             <h1 className="text-3xl font-bold text-slate-900">
-              BodhiFarm Management Dashboard
+              BodhiFarm Agriculture & Allied Dashboard
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Central operational view of farmers, farms, birds, production,
-              health and finance.
+              Manage farmer and enterprise profiles across agriculture and allied sectors, alongside specialized poultry operations and finance.
             </p>
           </div>
 
@@ -636,3 +635,4 @@ export default function BodhiFarmDashboardPage() {
     </main>
   );
 }
+

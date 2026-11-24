@@ -11,6 +11,8 @@ type Farm = {
   farm_name: string | null;
   farm_type: string | null;
   shed_capacity: number | null;
+  land_area: number | null;
+  land_unit: string | null;
   status: string | null;
 };
 
@@ -103,7 +105,7 @@ export default function Farm360Page() {
       await supabase
         .from('farms')
         .select(
-          'id, farmer_id, farm_name, farm_type, shed_capacity, status'
+          'id, farmer_id, farm_name, farm_type, shed_capacity, land_area, land_unit, status'
         )
         .eq('id', farmId)
         .limit(1);
@@ -569,10 +571,8 @@ export default function Farm360Page() {
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 md:grid-cols-4 md:divide-y-0">
 
             <Summary
-              label="Shed Capacity"
-              value={Number(
-                farm.shed_capacity || 0
-              ).toLocaleString('en-IN')}
+              label="Land / pond area"
+              value={farm.land_area != null ? `${farm.land_area} ${farm.land_unit || 'acres'}` : 'Not recorded'}
             />
 
             <Summary
@@ -696,10 +696,8 @@ export default function Farm360Page() {
               />
 
               <InfoItem
-                label="Shed Capacity"
-                value={Number(
-                  farm.shed_capacity || 0
-                ).toLocaleString('en-IN')}
+                label="Land / pond area"
+                value={farm.land_area != null ? `${farm.land_area} ${farm.land_unit || 'acres'}` : 'Not recorded'}
               />
 
               <InfoItem
@@ -1199,3 +1197,4 @@ function EmptyState({
     </div>
   );
 }
+

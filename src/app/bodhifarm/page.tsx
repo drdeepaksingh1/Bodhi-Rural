@@ -621,8 +621,7 @@ export default function BodhiFarmPage() {
             </h1>
 
             <p className="mt-1 max-w-3xl text-sm text-slate-500">
-              Manage farmers, farms, bird batches, production,
-              feed, veterinary records and flock performance.
+              Manage farmer profiles and farm enterprises across crops, livestock, dairy, fisheries and allied activities. Poultry tools cover batches, eggs, feed, health and flock performance.
             </p>
           </div>
 
@@ -650,8 +649,7 @@ export default function BodhiFarmPage() {
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Live overview of farmers, farms, birds,
-              eggs, feed and veterinary operations.
+              Farmer and farm overview with dedicated poultry production, egg, feed and veterinary records.
             </p>
           </div>
 
@@ -811,7 +809,7 @@ export default function BodhiFarmPage() {
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Register farms and manage farm capacity.
+                Register crop, livestock, dairy, fishery and allied activity profiles.
               </p>
             </Link>
 
@@ -872,11 +870,11 @@ export default function BodhiFarmPage() {
               className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm transition hover:bg-emerald-100"
             >
               <p className="font-bold text-emerald-800">
-                Bird Batch Management
+                Poultry Batch Management
               </p>
 
               <p className="mt-1 text-sm text-emerald-700">
-                Register and manage poultry batches.
+                Manage poultry batches as one specialized farm activity.
               </p>
             </a>
 
@@ -1011,7 +1009,7 @@ export default function BodhiFarmPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Register a new poultry batch under a farmer and farm.
+                  Record a poultry batch for a farmer's poultry or duck enterprise.
                 </p>
               </div>
 
@@ -1726,3 +1724,4 @@ export default function BodhiFarmPage() {
     </main>
   );
 }
+
