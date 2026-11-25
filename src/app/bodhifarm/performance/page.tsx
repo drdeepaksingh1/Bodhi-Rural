@@ -195,7 +195,7 @@ export default function PerformancePage() {
     setActivityRecords(activityResponse.data || []);
 
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, fromDate, toDate]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadData(); }, 0);
