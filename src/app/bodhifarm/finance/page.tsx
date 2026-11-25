@@ -51,6 +51,9 @@ type Farmer = {
   farmer_id: string;
   full_name: string;
 };
+type FarmFinanceRecord = { id: string; record_type: string; activity_date: string; amount: number; quantity: number | null; unit: string | null; item_name: string };
+type MarketplaceOverview = { order_count: number; gross_order_value: number; paid_order_count: number; paid_order_value: number; pending_order_count: number; pending_order_value: number; buyer_count: number; seller_count: number };
+type MarketplaceSellerTotal = { seller_id: string; seller_name: string; seller_order_count: number; seller_order_value: number; paid_order_value: number; unpaid_order_value: number };
 
 export default function FinanceDashboardPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -60,6 +63,9 @@ export default function FinanceDashboardPage() {
   const [procurements, setProcurements] = useState<Procurement[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [farmFinanceRecords, setFarmFinanceRecords] = useState<FarmFinanceRecord[]>([]);
+  const [marketplaceOverview, setMarketplaceOverview] = useState<MarketplaceOverview | null>(null);
+  const [marketplaceSellers, setMarketplaceSellers] = useState<MarketplaceSellerTotal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
@@ -73,16 +79,14 @@ export default function FinanceDashboardPage() {
 
   const loadData = useCallback(async () => {
 
-    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes] =
+    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes, farmActivityRes, marketplaceRes, marketplaceSellersRes] =
       await Promise.all([
         supabase
           .from('farmer_finance_summary')
           .select('*')
           .order('farmer_code'),
         supabase
-          .from('farmers')
-          .select('id, farmer_id, full_name')
-          .order('farmer_id'),
+          .rpc('finance_farmer_identifiers'),
         supabase
           .from('egg_procurement')
           .select(
@@ -99,6 +103,12 @@ export default function FinanceDashboardPage() {
           .from('farmer_payments')
           .select('id, farmer_id, payment_date, amount, payment_mode, status')
           .order('payment_date', { ascending: false }),
+        supabase
+          .from('farm_activity_records')
+          .select('id, record_type, activity_date, amount, quantity, unit, item_name')
+          .order('activity_date', { ascending: false }),
+        supabase.rpc('finance_marketplace_overview'),
+        supabase.rpc('finance_marketplace_seller_totals'),
       ]);
 
     const firstError =
@@ -106,7 +116,10 @@ export default function FinanceDashboardPage() {
       farmersRes.error ||
       procurementRes.error ||
       expenseRes.error ||
-      paymentRes.error;
+      paymentRes.error ||
+      farmActivityRes.error ||
+      marketplaceRes.error ||
+      marketplaceSellersRes.error;
 
     if (firstError) {
       setError(firstError.message);
@@ -119,6 +132,9 @@ export default function FinanceDashboardPage() {
     setProcurements((procurementRes.data || []) as Procurement[]);
     setExpenses((expenseRes.data || []) as Expense[]);
     setPayments((paymentRes.data || []) as Payment[]);
+    setFarmFinanceRecords((farmActivityRes.data || []) as FarmFinanceRecord[]);
+    setMarketplaceOverview(((marketplaceRes.data || [])[0] || null) as MarketplaceOverview | null);
+    setMarketplaceSellers((marketplaceSellersRes.data || []) as MarketplaceSellerTotal[]);
     setLoading(false);
   }, [supabase]);
 
@@ -213,6 +229,17 @@ export default function FinanceDashboardPage() {
 
     return { eggs, procurement, expense, paymentsMade };
   }, [approvedProcurements, approvedExpenses, paidPayments]);
+
+  const enterpriseActivity = useMemo(() => {
+    const rows = farmFinanceRecords.filter((row) => inPeriod(row.activity_date));
+    return {
+      records: rows.length,
+      inputCost: rows.filter((row) => row.record_type === 'INPUT').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      sales: rows.filter((row) => row.record_type === 'SALE').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      otherCosts: rows.filter((row) => row.record_type === 'EXPENSE').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      productionEntries: rows.filter((row) => row.record_type === 'PRODUCTION').length,
+    };
+  }, [farmFinanceRecords, inPeriod]);
 
   const financeTotals = useMemo(
     () =>
@@ -412,10 +439,10 @@ export default function FinanceDashboardPage() {
           <div>
             <div className="text-sm font-semibold text-green-700">BodhiFarm</div>
             <h1 className="text-3xl font-bold text-slate-900">
-              Finance Dashboard
+              Enterprise-wide Finance Dashboard
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Procurement, expenses, credit recovery, farmer payments and outstanding liability.
+              Farm activity, marketplace buyers and sellers, farmer settlements, credit recovery and operating costs.
             </p>
           </div>
 
@@ -469,6 +496,40 @@ export default function FinanceDashboardPage() {
           </div>
         ) : (
           <>
+            <section className="mt-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-slate-900">All Enterprise & Marketplace Finance</h2>
+                <p className="mt-1 text-sm text-slate-600">Includes farm inputs, production, sales and costs across crops, livestock, dairy, fisheries, mushrooms, poultry and allied activities. Marketplace figures cover buyer orders and seller order values.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl bg-emerald-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Farm input costs</p><p className="mt-2 text-2xl font-bold text-emerald-800">{money(enterpriseActivity.inputCost)}</p><p className="mt-1 text-xs text-slate-500">Seeds, fertilizer, feed, medicine and other inputs</p></div>
+                <div className="rounded-xl bg-blue-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Farm sales recorded</p><p className="mt-2 text-2xl font-bold text-blue-800">{money(enterpriseActivity.sales)}</p><p className="mt-1 text-xs text-slate-500">Across all registered farm enterprises</p></div>
+                <div className="rounded-xl bg-amber-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Other farm costs</p><p className="mt-2 text-2xl font-bold text-amber-800">{money(enterpriseActivity.otherCosts)}</p><p className="mt-1 text-xs text-slate-500">Operating expenses entered by farmers</p></div>
+                <div className="rounded-xl bg-purple-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Activity records</p><p className="mt-2 text-2xl font-bold text-purple-800">{enterpriseActivity.records}</p><p className="mt-1 text-xs text-slate-500">{enterpriseActivity.productionEntries} production entries in this period</p></div>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Marketplace orders</p><p className="mt-2 text-xl font-bold text-slate-900">{Number(marketplaceOverview?.order_count || 0).toLocaleString('en-IN')}</p><p className="text-xs text-slate-500">Gross order value {money(Number(marketplaceOverview?.gross_order_value || 0))}</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Buyer payments recorded</p><p className="mt-2 text-xl font-bold text-green-700">{money(Number(marketplaceOverview?.paid_order_value || 0))}</p><p className="text-xs text-slate-500">{Number(marketplaceOverview?.paid_order_count || 0)} orders marked paid</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Awaiting buyer payment</p><p className="mt-2 text-xl font-bold text-amber-700">{money(Number(marketplaceOverview?.pending_order_value || 0))}</p><p className="text-xs text-slate-500">{Number(marketplaceOverview?.pending_order_count || 0)} orders unpaid or pending</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Marketplace participants</p><p className="mt-2 text-xl font-bold text-slate-900">{Number(marketplaceOverview?.buyer_count || 0)} buyers · {Number(marketplaceOverview?.seller_count || 0)} sellers</p><p className="text-xs text-slate-500">Counts from recorded marketplace orders</p></div>
+              </div>
+              <div className="mt-6 overflow-x-auto">
+                <h3 className="mb-3 font-bold text-slate-900">Seller order activity</h3>
+                <table className="min-w-full text-sm">
+                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Seller</th><th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Order value</th><th className="px-3 py-2 text-right">Paid order value</th><th className="px-3 py-2 text-right">Unpaid order value</th></tr></thead>
+                  <tbody>
+                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td></tr>) : <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-xs text-slate-500">Seller amounts are marketplace order values, not payout confirmations. A seller settlement is only complete after the transfer is verified and recorded.</p>
+              </div>
+              <div className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <h3 className="font-bold text-sky-950">Online payments and settlements</h3>
+                <p className="mt-1 text-sm text-sky-900">The current checkout records manual / pay-on-delivery payments. Online UPI, cards and netbanking, plus automated farmer, seller and staff payouts, need an activated payment provider and secured production credentials before these can be enabled.</p>
+                <p className="mt-2 text-xs text-sky-800">No card, UPI PIN, netbanking password or bank-account credentials are collected by this dashboard.</p>
+              </div>
+            </section>
+
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
@@ -785,7 +846,7 @@ export default function FinanceDashboardPage() {
 
             <section className="mt-6 rounded-xl border bg-white p-5 shadow-sm">
               <h2 className="text-xl font-bold text-slate-900">
-                Recent Egg Procurement
+                Recent Egg Procurement (Poultry Specialist)
               </h2>
 
               <div className="mt-4 overflow-x-auto">
@@ -859,7 +920,7 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-900">
-                  Recent Payments
+                  Recent Farmer Payments
                 </h2>
                 <div className="mt-4 space-y-3">
                   {paidPayments.slice(0, 10).map((row) => {
