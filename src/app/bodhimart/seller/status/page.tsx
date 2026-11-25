@@ -85,7 +85,8 @@ export default function SellerApplicationStatusPage() {
   }, [router, supabase]);
 
   useEffect(() => {
-    void loadApplication();
+    const timer = window.setTimeout(() => void loadApplication(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadApplication]);
 
   const state = application ? statusDetails[application.status] : null;
