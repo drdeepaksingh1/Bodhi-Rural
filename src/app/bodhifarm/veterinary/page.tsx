@@ -27,7 +27,7 @@ type BirdBatch = {
 type VeterinaryRecord = {
   id: string;
   farmer_id: string;
-  batch_id: string;
+  batch_id: string | null;
   record_date: string;
   record_type: string;
   mortality_quantity: number;
@@ -324,7 +324,7 @@ export default function VeterinaryPage() {
           record_date: recordDate,
           record_type: recordType,
           mortality_quantity:
-            recordType === 'MORTALITY'
+            recordType === 'MORTALITY' && selectedBatch
               ? mortality
               : 0,
           cause: cause || null,
@@ -372,7 +372,8 @@ export default function VeterinaryPage() {
     return `${farmer.farmer_id} — ${farmer.full_name}`;
   }
 
-  function getBatchName(batchId: string) {
+  function getBatchName(batchId: string | null) {
+    if (!batchId) return 'General farm record';
     const batch = batches.find(
       (item) => item.id === batchId
     );
@@ -879,7 +880,7 @@ export default function VeterinaryPage() {
                     <tr>
                       <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
                       <th className="min-w-[180px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Farmer</th>
-                      <th className="min-w-[190px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Batch</th>
+                      <th className="min-w-[190px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Enterprise / batch</th>
                       <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Type</th>
                       <th className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Mortality</th>
                       <th className="min-w-[130px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cause</th>
@@ -893,9 +894,9 @@ export default function VeterinaryPage() {
                       <tr key={record.id} className="align-top hover:bg-gray-50">
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_date}</td>
                         <td className="px-4 py-4 text-sm font-medium text-gray-900">{getFarmerName(record.farmer_id)}</td>
-                        <td className="px-4 py-4 text-sm text-gray-700">{getBatchName(record.batch_id)}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700">{record.animal_type || '—'}{record.batch_id ? ` · ${getBatchName(record.batch_id)}` : ''}</td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_type.replaceAll('_', ' ')}</td>
-                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-bold text-red-600">{record.mortality_quantity}</td>
+                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-bold text-red-600">{record.affected_quantity ?? record.mortality_quantity}</td>
                         <td className="px-4 py-4 text-sm text-gray-700">{record.cause || '—'}</td>
                         <td className="px-4 py-4 text-sm text-gray-700">
                           {record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}
@@ -922,13 +923,13 @@ export default function VeterinaryPage() {
                       </div>
                       <div className="rounded-lg bg-red-50 px-3 py-2 text-center">
                         <p className="text-[10px] font-semibold uppercase text-red-500">Mortality</p>
-                        <p className="text-lg font-bold text-red-600">{record.mortality_quantity}</p>
+                        <p className="text-lg font-bold text-red-600">{record.affected_quantity ?? record.mortality_quantity}</p>
                       </div>
                     </div>
 
                     <dl className="mt-4 grid grid-cols-1 gap-3 text-sm">
                       <div><dt className="font-medium text-gray-500">Farmer</dt><dd className="mt-1 text-gray-900">{getFarmerName(record.farmer_id)}</dd></div>
-                      <div><dt className="font-medium text-gray-500">Batch</dt><dd className="mt-1 text-gray-900">{getBatchName(record.batch_id)}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Animal / enterprise</dt><dd className="mt-1 text-gray-900">{record.animal_type || '—'}{record.batch_id ? ` · ${getBatchName(record.batch_id)}` : ''}</dd></div>
                       <div><dt className="font-medium text-gray-500">Cause</dt><dd className="mt-1 text-gray-900">{record.cause || '—'}</dd></div>
                       <div><dt className="font-medium text-gray-500">Veterinary</dt><dd className="mt-1 text-gray-900">{record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}</dd></div>
                       <div><dt className="font-medium text-gray-500">Diagnosis</dt><dd className="mt-1 break-words text-gray-900">{record.diagnosis || '—'}</dd></div>
