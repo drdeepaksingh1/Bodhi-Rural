@@ -21,6 +21,7 @@ type Product = {
   name: string;
   slug: string | null;
   image_url: string | null;
+  external_url: string | null;
   image_gallery: string[];
   description: string | null;
   brand: string | null;
@@ -81,6 +82,7 @@ export default function EditProductPage() {
     sku: '',
     category_id: '',
     image_url: '',
+    external_url: '',
     description: '',
     brand: '',
     unit: '',
@@ -163,6 +165,7 @@ export default function EditProductPage() {
                 name,
                 slug,
                 image_url,
+                external_url,
                 image_gallery,
                 description,
                 brand,
@@ -217,6 +220,7 @@ export default function EditProductPage() {
         sku: p.sku || '',
         category_id: p.category_id || '',
         image_url: p.image_url || '',
+        external_url: p.external_url || '',
         description: p.description || '',
         brand: p.brand || '',
         unit: p.unit || '',
@@ -381,6 +385,11 @@ export default function EditProductPage() {
       return 'Product photos must be 5 MB or smaller.';
     }
 
+    if (form.external_url.trim()) {
+      try { const referenceUrl = new URL(form.external_url.trim()); if (referenceUrl.protocol !== 'https:') return 'Product or reference links must use HTTPS.'; }
+      catch { return 'Please enter a valid product or reference URL.'; }
+    }
+
     if (galleryUrls.length + galleryFiles.length > 4) {
       return 'A product can have up to four additional photos.';
     }
@@ -516,6 +525,7 @@ export default function EditProductPage() {
             category_id: form.category_id,
             name: form.name.trim(),
             image_url: productImageUrl,
+            external_url: form.external_url.trim() || null,
             image_gallery: nextGalleryUrls,
             description:
               form.description.trim() || null,
@@ -1022,6 +1032,11 @@ export default function EditProductPage() {
                   ))}
                 </div>
               )}
+            </Field>
+
+            <Field label="Product or reference link">
+              <input type="url" value={form.external_url} onChange={(e) => updateField('external_url', e.target.value)} placeholder="https://your-site.example/product" maxLength={2000} style={inputStyle} />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>Optional HTTPS link to product details, a demonstration video, or supporting information. It will appear on the public listing.</p>
             </Field>
 
             <Field label="Description *">

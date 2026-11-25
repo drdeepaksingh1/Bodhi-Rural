@@ -47,6 +47,7 @@ export default function AddProductPage() {
     sku: '',
     category_id: '',
     image_url: '',
+    external_url: '',
     description: '',
     brand: '',
     unit: '',
@@ -255,6 +256,11 @@ export default function AddProductPage() {
       }
     }
 
+    if (form.external_url.trim()) {
+      try { const referenceUrl = new URL(form.external_url.trim()); if (referenceUrl.protocol !== 'https:') return 'Product or reference links must use HTTPS.'; }
+      catch { return 'Please enter a valid product or reference URL.'; }
+    }
+
     const mrp = Number(form.mrp);
     const sellingPrice = Number(form.selling_price);
     const tax = Number(form.tax_percent);
@@ -389,6 +395,7 @@ export default function AddProductPage() {
             name: form.name.trim(),
             slug,
             image_url: productImageUrl,
+            external_url: form.external_url.trim() || null,
             image_gallery: galleryUrls,
             description:
               form.description.trim() || null,
@@ -437,6 +444,7 @@ export default function AddProductPage() {
         sku: '',
         category_id: '',
         image_url: '',
+        external_url: '',
         description: '',
         brand: '',
         unit: '',
@@ -795,6 +803,11 @@ export default function AddProductPage() {
                   }}
                 />
               )}
+            </Field>
+
+            <Field label="Product or reference link">
+              <input type="url" value={form.external_url} onChange={(e) => updateField('external_url', e.target.value)} placeholder="https://your-site.example/product" maxLength={2000} style={inputStyle} />
+              <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>Optional HTTPS link to product details, a demonstration video, or supporting information. It will appear on the public listing.</p>
             </Field>
 
             <Field label="Description *">
