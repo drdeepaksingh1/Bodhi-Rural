@@ -36,7 +36,7 @@ export default function BodhiMartBusinessEnquiryPage() {
 
     setPrepared(true);
     window.location.href =
-      `mailto:ceo@brlps.co.in?subject=${encodeURIComponent('BodhiMart bulk sourcing enquiry')}&body=${encodeURIComponent(buildEmailBody(form))}`;
+      `mailto:bodhirural@gmail.com?subject=${encodeURIComponent('BodhiMart bulk sourcing enquiry')}&body=${encodeURIComponent(buildEmailBody(form))}`;
   }
 
   async function copyEmailDetails(event: React.MouseEvent<HTMLButtonElement>) {
@@ -45,9 +45,9 @@ export default function BodhiMartBusinessEnquiryPage() {
 
     try {
       await navigator.clipboard.writeText(buildEmailBody(form));
-      setCopyMessage('Enquiry details copied. Paste them into an email to ceo@brlps.co.in.');
+      setCopyMessage('Enquiry details copied. Paste them into an email to bodhirural@gmail.com.');
     } catch {
-      setCopyMessage('Copy was unavailable in this browser. Please use “Continue to email BodhiMart” or email ceo@brlps.co.in directly.');
+      setCopyMessage('Copy was unavailable in this browser. Please use “Continue to email BodhiMart” or email bodhirural@gmail.com directly.');
     }
   }
 
@@ -152,7 +152,8 @@ export default function BodhiMartBusinessEnquiryPage() {
           </ol>
           <div className="mt-7 border-t border-[#d1dfd1] pt-5 text-sm leading-6 text-[#43594a]">
             Prefer to call? <a className="font-bold text-[#176b3a] hover:underline" href="tel:+917667979679">+91 76679 79679</a>
-            <br />Email: <a className="font-bold text-[#176b3a] hover:underline" href="mailto:ceo@brlps.co.in">ceo@brlps.co.in</a>
+            <br />Email: <a className="font-bold text-[#176b3a] hover:underline" href="mailto:bodhirural@gmail.com">bodhirural@gmail.com</a>
+            <br />Website: <a className="font-bold text-[#176b3a] hover:underline" href="https://www.brlps.co.in">www.brlps.co.in</a>
           </div>
           <Link href="/bodhimart/products" className="mt-6 inline-flex text-sm font-bold text-[#176b3a] hover:underline">
             Browse the catalogue →
@@ -162,3 +163,4 @@ export default function BodhiMartBusinessEnquiryPage() {
     </main>
   );
 }
+
