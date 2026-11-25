@@ -122,11 +122,12 @@ function TrackingForm() {
 
   const status = application?.status.toUpperCase() || '';
   const stage = application?.current_stage?.toUpperCase() || '';
-  const terminal = status === 'APPROVED' || status === 'REJECTED';
+  const rejected = status === 'REJECTED' || status.endsWith('_REJECTED');
+  const terminal = status === 'APPROVED' || rejected;
   const currentStep = status === 'APPROVED' ? 3 : stage.includes('CEO') ? 1 : stage.includes('CHAIRMAN') || stage.includes('MD') ? 2 : 0;
   const statusLabel = status === 'APPROVED'
     ? 'Approved'
-    : status === 'REJECTED'
+    : rejected
       ? 'Application closed'
       : stage.includes('CEO')
         ? 'CEO review'
@@ -171,11 +172,11 @@ function TrackingForm() {
               <p className="mt-1 text-2xl font-bold tracking-wide text-slate-900">{application.application_number}</p>
               <p className="mt-2 text-sm text-slate-600">{[application.proposed_designation, application.proposed_department].filter(Boolean).join(' · ') || 'Staff application'}</p>
             </div>
-            <span className={`rounded-full px-3 py-1.5 text-sm font-bold ${status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : status === 'REJECTED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-900'}`}>{statusLabel}</span>
+            <span className={`rounded-full px-3 py-1.5 text-sm font-bold ${status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : rejected ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-900'}`}>{statusLabel}</span>
           </div>
           <div className="p-6">
             <h2 className="font-bold text-slate-900">Review progress</h2>
-            {status === 'REJECTED' ? <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">This application has been closed. For assistance, contact Bodhi Rural and quote your tracking ID.</p> : <ol className="mt-5 grid gap-3 sm:grid-cols-3">
+            {rejected ? <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">This application has been closed. For assistance, contact Bodhi Rural and quote your tracking ID.</p> : <ol className="mt-5 grid gap-3 sm:grid-cols-3">
               {['HR review', 'CEO review', 'Final review'].map((label, index) => {
                 const complete = terminal || index < currentStep;
                 const active = !terminal && index === currentStep;
