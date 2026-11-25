@@ -723,7 +723,7 @@ export default function BodhiMartProductsPage() {
                       ? "The current catalogue has no matching items. Matching products will appear here once sellers list them."
                       : "Try changing your search or category filter."}
               </p>
-{products.length > 0 && (search.trim() || category !== "ALL" || stockFilter !== "ALL") && (
+              {products.length > 0 && (search.trim() || category !== "ALL" || stockFilter !== "ALL") && (
                 <button
                   type="button"
                   onClick={() => {
