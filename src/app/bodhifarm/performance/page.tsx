@@ -299,7 +299,7 @@ export default function PerformancePage() {
     return {
       farms: new Set(genericActivity.map((record) => record.farm_id)).size,
       inputCost: inputs.reduce((sum, record) => sum + Number(record.amount || 0), 0),
-      productionQuantity: production.reduce((sum, record) => sum + Number(record.quantity || 0), 0),
+      productionEntries: production.length,
       sales: sales.reduce((sum, record) => sum + Number(record.amount || 0), 0),
       expenses: expenses.reduce((sum, record) => sum + Number(record.amount || 0), 0),
       records: genericActivity.length,
@@ -642,10 +642,10 @@ export default function PerformancePage() {
         {/* All enterprise KPIs */}
         <section>
           <h2 className="mb-4 text-lg font-bold text-gray-900">All Enterprise Activity</h2>
-          <p className="mb-4 text-sm text-gray-600">Crops, fish, mushrooms, dairy, livestock and allied activity for the selected reporting period. Quantities keep their original units and are not combined into a misleading total.</p>
+          <p className="mb-4 text-sm text-gray-600">Crops, fish, mushrooms, dairy, livestock and allied activity for the selected reporting period.</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Farm activity records</p><p className="mt-2 text-3xl font-bold text-gray-900">{farmMetrics.records}</p><p className="mt-1 text-xs text-gray-500">Across {farmMetrics.farms} enterprise farms</p></div>
-            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Production quantity</p><p className="mt-2 text-3xl font-bold text-green-700">{formatNumber(farmMetrics.productionQuantity)}</p><p className="mt-1 text-xs text-gray-500">See farm records for each unit and product</p></div>
+            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Production entries</p><p className="mt-2 text-3xl font-bold text-green-700">{farmMetrics.productionEntries}</p><p className="mt-1 text-xs text-gray-500">Each farm keeps its own units and products</p></div>
             <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Input cost</p><p className="mt-2 text-3xl font-bold text-orange-600">₹{formatNumber(farmMetrics.inputCost)}</p><p className="mt-1 text-xs text-gray-500">Seeds, fertilizer, feed, medicine and other inputs</p></div>
             <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Sales / other expenses</p><p className="mt-2 text-2xl font-bold text-blue-700">₹{formatNumber(farmMetrics.sales)}</p><p className="mt-1 text-xs text-gray-500">Other costs: ₹{formatNumber(farmMetrics.expenses)}</p></div>
           </div>
