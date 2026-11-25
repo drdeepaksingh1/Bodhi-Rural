@@ -5,6 +5,12 @@ import printStyles from "./bodhimart-print.module.css";
 import {
   ArrowRight,
   BadgeCheck,
+  Carrot,
+  Droplets,
+  Hammer,
+  HeartHandshake,
+  NotebookPen,
+  Shirt,
   Leaf,
   PackageSearch,
   ShoppingBasket,
@@ -73,6 +79,54 @@ const categories = [
     href: "/bodhimart/products?search=grocery",
     action: "Shop groceries",
   },
+  {
+    name: "Fresh produce",
+    detail: "Seasonal vegetables, fruit and leafy greens.",
+    icon: Carrot,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=vegetable",
+    action: "Shop fresh produce",
+  },
+  {
+    name: "Clothing & footwear",
+    detail: "Everyday clothing, school uniforms and footwear.",
+    icon: Shirt,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=clothing",
+    action: "Shop clothing",
+  },
+  {
+    name: "Stationery & school supplies",
+    detail: "Notebooks, pens, school bags and classroom supplies.",
+    icon: NotebookPen,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=stationery",
+    action: "Shop stationery",
+  },
+  {
+    name: "Household & personal care",
+    detail: "Cleaning products, cookware and personal care essentials.",
+    icon: Droplets,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=household",
+    action: "Shop household essentials",
+  },
+  {
+    name: "Hardware & electrical",
+    detail: "Bulbs, switches, fittings and tools.",
+    icon: Hammer,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=hardware",
+    action: "Shop hardware",
+  },
+  {
+    name: "Made locally",
+    detail: "Products from local farmers, self-help groups and artisans.",
+    icon: HeartHandshake,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=local",
+    action: "Shop local products",
+  },
 ];
 
 const features = [
@@ -113,14 +167,26 @@ export default function BodhiMartPage() {
               Bodhi Rural marketplace
             </div>
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[64px]">
-              Source smarter.
-              <span className="block text-[#e5c56d]">Grow together.</span>
+              Shop for home,
+              <span className="block text-[#e5c56d]">school and farm.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
-              A marketplace for farmers, households and rural businesses to
-              discover agricultural essentials and connect with approved sellers.
+              Find groceries, clothing, school supplies, farm essentials and products
+              made by local producers.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <form action="/bodhimart/products" className="mt-6 flex max-w-xl flex-wrap gap-2 sm:flex-nowrap">
+              <label htmlFor="mart-search" className="sr-only">Search BodhiMart products</label>
+              <input
+                id="mart-search"
+                name="search"
+                type="search"
+                maxLength={100}
+                placeholder="Sugar, notebooks, seeds"
+                className="min-h-12 min-w-0 flex-1 rounded-xl bg-white px-4 text-[#183426]"
+              />
+              <button className="min-h-12 rounded-xl bg-[#e1bd59] px-5 text-sm font-bold text-[#183426]">Search</button>
+            </form>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/bodhimart/products"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#e1bd59] px-6 py-3 text-sm font-bold text-[#183426] shadow-lg shadow-black/10 transition hover:bg-[#edd17e] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#103a27]"
@@ -168,11 +234,10 @@ export default function BodhiMartPage() {
               Shop by need
             </p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Essentials for work on the land
+              Essentials for village life
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-[#69766d]">
-              Explore the catalogue for products that support farms and rural
-              enterprises at every stage.
+              Browse the catalogue by what you need for your home, school or farm.
             </p>
           </div>
           <Link
@@ -183,7 +248,7 @@ export default function BodhiMartPage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div className={`${printStyles.categoryGrid} mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-5`}>
+        <div className={`${printStyles.categoryGrid} mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
           {categories.map(
             ({
               name,
