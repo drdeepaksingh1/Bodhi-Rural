@@ -323,11 +323,11 @@ export default function EggProductionPage() {
             </a>
 
             <h1 className="mt-2 text-2xl font-bold text-gray-900">
-              Egg Production
+              Poultry & Duck Egg Production
             </h1>
 
             <p className="text-sm text-gray-500">
-              Daily egg production management
+              Specialist egg records for poultry and duck batches. For crops, fish, dairy, mushrooms and other output, use the general farm activity tracker.
             </p>
           </div>
 

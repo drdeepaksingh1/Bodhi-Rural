@@ -83,6 +83,12 @@ const breeds = [
   'RIR (Rhode Island Red)',
   'Black Australorp',
   'Ginni',
+  'Khaki Campbell (duck)',
+  'Indian Runner (duck)',
+  'White Pekin (duck)',
+  'Muscovy (duck)',
+  'Nageswari (duck)',
+  'Desi / local duck',
   'Other',
 ];
 
@@ -91,6 +97,9 @@ const birdTypes = [
   'Broiler',
   'Dual Purpose',
   'Breeder',
+  'Duck — egg purpose',
+  'Duck — meat purpose',
+  'Duck — dual purpose',
   'Other',
 ];
 
@@ -886,28 +895,28 @@ export default function BodhiFarmPage() {
             </Link>
 
             <a
-              href="/bodhifarm/egg-production"
+              href="/bodhifarm/farms"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
               <p className="font-bold text-slate-900">
-                Egg Production
+                Production & Harvest
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Record and monitor egg production.
+                Track crops, fish, mushrooms, dairy, livestock, poultry and other farm output.
               </p>
             </a>
 
             <a
-              href="/bodhifarm/feed"
+              href="/bodhifarm/farms"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
               <p className="font-bold text-slate-900">
-                Feed Management
+                Farm Inputs & Feed
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Feed issue, consumption and cost.
+                Track animal and fish feed, seeds, fertilizer, medicines and other inputs.
               </p>
             </a>
 
@@ -916,11 +925,11 @@ export default function BodhiFarmPage() {
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
               <p className="font-bold text-slate-900">
-                Veterinary & Mortality
+                Livestock Health & Mortality
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Health events and mortality management.
+                Record veterinary visits, treatment and mortality for livestock, fish and birds.
               </p>
             </a>
 
@@ -929,11 +938,11 @@ export default function BodhiFarmPage() {
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
               <p className="font-bold text-slate-900">
-                Performance Dashboard
+                All Farm Performance
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Bird, egg and feed performance.
+                Review enterprise-wide inputs, production, sales, and costs alongside poultry indicators.
               </p>
             </a>
 
@@ -942,7 +951,7 @@ export default function BodhiFarmPage() {
               className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm transition hover:bg-emerald-100"
             >
               <p className="font-bold text-emerald-800">
-                Poultry & duck batch management
+                Poultry & Duck Batch Records
               </p>
 
               <p className="mt-1 text-sm text-emerald-700">

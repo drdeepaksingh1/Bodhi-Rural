@@ -27,7 +27,7 @@ type BirdBatch = {
 type VeterinaryRecord = {
   id: string;
   farmer_id: string;
-  batch_id: string;
+  batch_id: string | null;
   record_date: string;
   record_type: string;
   mortality_quantity: number;
@@ -41,7 +41,11 @@ type VeterinaryRecord = {
   veterinary_name: string | null;
   follow_up_date: string | null;
   remarks: string | null;
+  animal_type: string | null;
+  affected_quantity: number | null;
 };
+
+const ANIMAL_TYPES = ['Cattle / cow', 'Buffalo', 'Goat', 'Sheep', 'Pig', 'Poultry / chicken', 'Duck', 'Fish / aquaculture', 'Bee / sericulture', 'Other'];
 
 const RECORD_TYPES = [
   'MORTALITY',
@@ -78,6 +82,7 @@ export default function VeterinaryPage() {
 
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('');
+  const [animalType, setAnimalType] = useState('');
 
   const [recordDate, setRecordDate] = useState(getIndiaDate());
   const [recordType, setRecordType] = useState('MORTALITY');
@@ -183,7 +188,9 @@ export default function VeterinaryPage() {
           veterinary_visit,
           veterinary_name,
           follow_up_date,
-          remarks
+          remarks,
+          animal_type,
+          affected_quantity
           `
         )
         .order('record_date', {
@@ -213,6 +220,7 @@ export default function VeterinaryPage() {
 
   function resetForm() {
     setRecordType('MORTALITY');
+    setAnimalType('');
     setMortalityQuantity('');
     setCause('');
     setSymptoms('');
@@ -235,6 +243,7 @@ export default function VeterinaryPage() {
 
   function handleBatchChange(value: string) {
     setSelectedBatch(value);
+    if (value && !animalType) setAnimalType('Poultry / chicken');
     setMessage('');
     setError('');
   }
@@ -248,8 +257,8 @@ export default function VeterinaryPage() {
       return;
     }
 
-    if (!selectedBatch) {
-      setError('Please select a bird batch.');
+    if (!animalType) {
+      setError('Please select the animal, bird or aquaculture type.');
       return;
     }
 
@@ -274,7 +283,7 @@ export default function VeterinaryPage() {
         return;
       }
 
-      if (mortality > currentLiveBirds) {
+      if (selectedBatch && mortality > currentLiveBirds) {
         setError(
           `Mortality cannot exceed current live birds (${currentLiveBirds}).`
         );
@@ -309,11 +318,13 @@ export default function VeterinaryPage() {
         .from('veterinary_records')
         .insert({
           farmer_id: selectedFarmer,
-          batch_id: selectedBatch,
+          batch_id: selectedBatch || null,
+          animal_type: animalType,
+          affected_quantity: recordType === 'MORTALITY' ? mortality : null,
           record_date: recordDate,
           record_type: recordType,
           mortality_quantity:
-            recordType === 'MORTALITY'
+            recordType === 'MORTALITY' && selectedBatch
               ? mortality
               : 0,
           cause: cause || null,
@@ -361,7 +372,8 @@ export default function VeterinaryPage() {
     return `${farmer.farmer_id} — ${farmer.full_name}`;
   }
 
-  function getBatchName(batchId: string) {
+  function getBatchName(batchId: string | null) {
+    if (!batchId) return 'General farm record';
     const batch = batches.find(
       (item) => item.id === batchId
     );
@@ -387,11 +399,11 @@ export default function VeterinaryPage() {
             </a>
 
             <h1 className="mt-2 text-2xl font-bold text-gray-900">
-              Veterinary & Mortality
+              Livestock Health & Mortality
             </h1>
 
             <p className="text-sm text-gray-500">
-              Bird health, mortality and veterinary management
+              Health and mortality records for livestock, poultry, fish and other farm animals.
             </p>
           </div>
 
@@ -467,11 +479,11 @@ export default function VeterinaryPage() {
 
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900">
-              Record Bird Health / Mortality
+              Record Animal Health / Mortality
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Record mortality, veterinary visits, treatment and health events.
+              Record health checks, veterinary visits, treatment and mortality across livestock, birds and aquaculture. A batch is optional for other enterprises.
             </p>
           </div>
 
@@ -521,7 +533,7 @@ export default function VeterinaryPage() {
             {/* Batch */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Bird Batch
+                Batch (optional)
               </label>
 
               <select
@@ -534,7 +546,7 @@ export default function VeterinaryPage() {
               >
                 <option value="">
                   {selectedFarmer
-                    ? 'Select Bird Batch'
+                    ? 'Optional: link a poultry / duck batch'
                     : 'Select Farmer First'}
                 </option>
 
@@ -548,6 +560,14 @@ export default function VeterinaryPage() {
                     {batch.current_quantity} live
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Animal, bird or enterprise type</label>
+              <select value={animalType} onChange={(e) => setAnimalType(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm">
+                <option value="">Select type</option>
+                {ANIMAL_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
 
@@ -602,14 +622,14 @@ export default function VeterinaryPage() {
                   type="number"
                   min="1"
                   step="1"
-                  max={currentLiveBirds}
+                  max={selectedBatch ? currentLiveBirds : undefined}
                   value={mortalityQuantity}
                   onChange={(e) =>
                     setMortalityQuantity(
                       e.target.value
                     )
                   }
-                  placeholder={`Maximum ${currentLiveBirds}`}
+                  placeholder={selectedBatch ? `Maximum ${currentLiveBirds}` : 'Enter number affected'}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm"
                 />
               </div>
@@ -860,7 +880,7 @@ export default function VeterinaryPage() {
                     <tr>
                       <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
                       <th className="min-w-[180px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Farmer</th>
-                      <th className="min-w-[190px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Batch</th>
+                      <th className="min-w-[190px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Enterprise / batch</th>
                       <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Type</th>
                       <th className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Mortality</th>
                       <th className="min-w-[130px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cause</th>
@@ -874,9 +894,9 @@ export default function VeterinaryPage() {
                       <tr key={record.id} className="align-top hover:bg-gray-50">
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_date}</td>
                         <td className="px-4 py-4 text-sm font-medium text-gray-900">{getFarmerName(record.farmer_id)}</td>
-                        <td className="px-4 py-4 text-sm text-gray-700">{getBatchName(record.batch_id)}</td>
+                        <td className="px-4 py-4 text-sm text-gray-700">{record.animal_type || '—'}{record.batch_id ? ` · ${getBatchName(record.batch_id)}` : ''}</td>
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700">{record.record_type.replaceAll('_', ' ')}</td>
-                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-bold text-red-600">{record.mortality_quantity}</td>
+                        <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-bold text-red-600">{record.affected_quantity ?? record.mortality_quantity}</td>
                         <td className="px-4 py-4 text-sm text-gray-700">{record.cause || '—'}</td>
                         <td className="px-4 py-4 text-sm text-gray-700">
                           {record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}
@@ -903,13 +923,13 @@ export default function VeterinaryPage() {
                       </div>
                       <div className="rounded-lg bg-red-50 px-3 py-2 text-center">
                         <p className="text-[10px] font-semibold uppercase text-red-500">Mortality</p>
-                        <p className="text-lg font-bold text-red-600">{record.mortality_quantity}</p>
+                        <p className="text-lg font-bold text-red-600">{record.affected_quantity ?? record.mortality_quantity}</p>
                       </div>
                     </div>
 
                     <dl className="mt-4 grid grid-cols-1 gap-3 text-sm">
                       <div><dt className="font-medium text-gray-500">Farmer</dt><dd className="mt-1 text-gray-900">{getFarmerName(record.farmer_id)}</dd></div>
-                      <div><dt className="font-medium text-gray-500">Batch</dt><dd className="mt-1 text-gray-900">{getBatchName(record.batch_id)}</dd></div>
+                      <div><dt className="font-medium text-gray-500">Animal / enterprise</dt><dd className="mt-1 text-gray-900">{record.animal_type || '—'}{record.batch_id ? ` · ${getBatchName(record.batch_id)}` : ''}</dd></div>
                       <div><dt className="font-medium text-gray-500">Cause</dt><dd className="mt-1 text-gray-900">{record.cause || '—'}</dd></div>
                       <div><dt className="font-medium text-gray-500">Veterinary</dt><dd className="mt-1 text-gray-900">{record.veterinary_visit ? record.veterinary_name || 'Visit recorded' : 'No'}</dd></div>
                       <div><dt className="font-medium text-gray-500">Diagnosis</dt><dd className="mt-1 break-words text-gray-900">{record.diagnosis || '—'}</dd></div>

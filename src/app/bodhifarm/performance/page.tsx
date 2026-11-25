@@ -69,6 +69,8 @@ export default function PerformancePage() {
   const [batches, setBatches] = useState<BirdBatch[]>([]);
   const [feedRecords, setFeedRecords] = useState<FeedRecord[]>([]);
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([]);
+  const [farms, setFarms] = useState<{ id: string; farmer_id: string }[]>([]);
+  const [activityRecords, setActivityRecords] = useState<{ id: string; farm_id: string; record_type: string; activity_date: string; quantity: number | null; unit: string | null; amount: number }[]>([]);
 
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('');
@@ -91,6 +93,8 @@ export default function PerformancePage() {
       batchesResponse,
       feedResponse,
       eggResponse,
+      farmsResponse,
+      activityResponse,
     ] = await Promise.all([
       supabase
         .from('farmers')
@@ -153,6 +157,16 @@ export default function PerformancePage() {
         .order('production_date', {
           ascending: false,
         }),
+
+      supabase
+        .from('farms')
+        .select('id, farmer_id'),
+
+      supabase
+        .from('farm_activity_records')
+        .select('id, farm_id, record_type, activity_date, quantity, unit, amount')
+        .gte('activity_date', fromDate)
+        .lte('activity_date', toDate),
     ]);
 
     if (farmersResponse.error) {
@@ -170,14 +184,18 @@ export default function PerformancePage() {
     if (eggResponse.error) {
       setError(eggResponse.error.message);
     }
+    if (farmsResponse.error) setError(farmsResponse.error.message);
+    if (activityResponse.error) setError(activityResponse.error.message);
 
     setFarmers(farmersResponse.data || []);
     setBatches(batchesResponse.data || []);
     setFeedRecords(feedResponse.data || []);
     setEggRecords(eggResponse.data || []);
+    setFarms(farmsResponse.data || []);
+    setActivityRecords(activityResponse.data || []);
 
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, fromDate, toDate]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadData(); }, 0);
@@ -267,6 +285,26 @@ export default function PerformancePage() {
     fromDate,
     toDate,
   ]);
+
+  const genericActivity = useMemo(() => {
+    const farmerFarmIds = new Set(farms.filter((farm) => !selectedFarmer || farm.farmer_id === selectedFarmer).map((farm) => farm.id));
+    return activityRecords.filter((record) => farmerFarmIds.has(record.farm_id) && !selectedBatch);
+  }, [activityRecords, farms, selectedFarmer, selectedBatch]);
+
+  const farmMetrics = useMemo(() => {
+    const inputs = genericActivity.filter((record) => record.record_type === 'INPUT');
+    const production = genericActivity.filter((record) => record.record_type === 'PRODUCTION');
+    const sales = genericActivity.filter((record) => record.record_type === 'SALE');
+    const expenses = genericActivity.filter((record) => record.record_type === 'EXPENSE');
+    return {
+      farms: new Set(genericActivity.map((record) => record.farm_id)).size,
+      inputCost: inputs.reduce((sum, record) => sum + Number(record.amount || 0), 0),
+      productionEntries: production.length,
+      sales: sales.reduce((sum, record) => sum + Number(record.amount || 0), 0),
+      expenses: expenses.reduce((sum, record) => sum + Number(record.amount || 0), 0),
+      records: genericActivity.length,
+    };
+  }, [genericActivity]);
 
   const metrics = useMemo(() => {
     const feedKg = filteredFeed.reduce(
@@ -428,11 +466,11 @@ export default function PerformancePage() {
             </a>
 
             <h1 className="mt-2 text-2xl font-bold text-gray-900">
-              BodhiFarm Performance
+              All Farm Performance
             </h1>
 
             <p className="text-sm text-gray-500">
-              Bird, feed and egg production performance
+              Cross-enterprise performance with specialist poultry indicators.
             </p>
           </div>
 
@@ -486,7 +524,7 @@ export default function PerformancePage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Bird Batch
+                Poultry / Duck Batch
               </label>
 
               <select
@@ -599,6 +637,19 @@ export default function PerformancePage() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* All enterprise KPIs */}
+        <section>
+          <h2 className="mb-4 text-lg font-bold text-gray-900">All Enterprise Activity</h2>
+          <p className="mb-4 text-sm text-gray-600">Crops, fish, mushrooms, dairy, livestock and allied activity for the selected reporting period.</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Farm activity records</p><p className="mt-2 text-3xl font-bold text-gray-900">{farmMetrics.records}</p><p className="mt-1 text-xs text-gray-500">Across {farmMetrics.farms} enterprise farms</p></div>
+            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Production entries</p><p className="mt-2 text-3xl font-bold text-green-700">{farmMetrics.productionEntries}</p><p className="mt-1 text-xs text-gray-500">Each farm keeps its own units and products</p></div>
+            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Input cost</p><p className="mt-2 text-3xl font-bold text-orange-600">₹{formatNumber(farmMetrics.inputCost)}</p><p className="mt-1 text-xs text-gray-500">Seeds, fertilizer, feed, medicine and other inputs</p></div>
+            <div className="rounded-xl border bg-white p-5 shadow-sm"><p className="text-sm text-gray-500">Sales / other expenses</p><p className="mt-2 text-2xl font-bold text-blue-700">₹{formatNumber(farmMetrics.sales)}</p><p className="mt-1 text-xs text-gray-500">Other costs: ₹{formatNumber(farmMetrics.expenses)}</p></div>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Farm-wide figures are hidden when one poultry batch is selected. Use Farm Management to review activity by enterprise.</p>
         </section>
 
         {/* Bird KPIs */}
