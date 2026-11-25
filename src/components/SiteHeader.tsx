@@ -159,6 +159,13 @@ export default function SiteHeader() {
           </NavLink>
 
           <NavLink
+            href="/careers"
+            active={isActive('/careers')}
+          >
+            Careers
+          </NavLink>
+
+          <NavLink
             href="/contact"
             active={isActive('/contact')}
           >
@@ -257,6 +264,14 @@ export default function SiteHeader() {
             active={isActive('/projects')}
           >
             Projects
+          </MobileLink>
+
+          <MobileLink
+            href="/careers"
+            onClick={closeMenu}
+            active={isActive('/careers')}
+          >
+            Careers
           </MobileLink>
 
           <MobileLink
