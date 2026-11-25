@@ -198,7 +198,7 @@ export default function BodhiMartProductsPage() {
     let result = [...products];
 
     const normalizeSearchText = (value: string) =>
-      value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery");
+      value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery").replace(/चीनी/g, "sugar");
     const searchText = normalizeSearchText(search);
 
     if (searchText) {
