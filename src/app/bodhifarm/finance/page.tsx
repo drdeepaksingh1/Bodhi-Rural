@@ -51,38 +51,59 @@ type Farmer = {
   farmer_id: string;
   full_name: string;
 };
+type FarmFinanceRecord = { id: string; record_type: string; activity_date: string; amount: number; quantity: number | null; unit: string | null; item_name: string };
+type MarketplaceOverview = { order_count: number; gross_order_value: number; paid_order_count: number; paid_order_value: number; pending_order_count: number; pending_order_value: number; buyer_count: number; seller_count: number };
+type MarketplaceSellerTotal = { seller_id: string; seller_name: string; seller_order_count: number; seller_order_value: number; paid_order_value: number; unpaid_order_value: number };
+type StaffIdentifier = { id: string; staff_code: string; full_name: string; designation: string | null; department: string | null; employment_status: string };
+type StaffPayroll = { id: string; staff_id: string; staff_code: string; full_name: string; designation: string | null; department: string | null; pay_period: string; base_pay: number; allowances: number; deductions: number; net_pay: number; status: string; payment_method: string | null; transaction_reference: string | null; paid_at: string | null };
 
 export default function FinanceDashboardPage() {
   const supabase = useMemo(() => createClient(), []);
+  const todayISO = new Date().toLocaleDateString('en-CA');
+  const monthISO = `${todayISO.slice(0, 7)}-01`;
 
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [procurements, setProcurements] = useState<Procurement[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [farmFinanceRecords, setFarmFinanceRecords] = useState<FarmFinanceRecord[]>([]);
+  const [marketplaceOverview, setMarketplaceOverview] = useState<MarketplaceOverview | null>(null);
+  const [marketplaceSellers, setMarketplaceSellers] = useState<MarketplaceSellerTotal[]>([]);
+  const [staff, setStaff] = useState<StaffIdentifier[]>([]);
+  const [staffPayroll, setStaffPayroll] = useState<StaffPayroll[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [payPeriod, setPayPeriod] = useState(monthISO.slice(0, 7));
+  const [basePay, setBasePay] = useState('');
+  const [allowances, setAllowances] = useState('0');
+  const [deductions, setDeductions] = useState('0');
+  const [paymentMethod, setPaymentMethod] = useState('NEFT');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [printPayrollId, setPrintPayrollId] = useState<string | null>(null);
+  const [printSellerId, setPrintSellerId] = useState<string | null>(null);
+  const [printIdentity, setPrintIdentity] = useState<{ kind: 'farmer' | 'staff'; id: string } | null>(null);
+  const [payrollMessage, setPayrollMessage] = useState('');
+  const [payrollError, setPayrollError] = useState('');
+  const [payrollSaving, setPayrollSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
   const [farmerSearch, setFarmerSearch] = useState('');
   const [expandedFarmerId, setExpandedFarmerId] = useState<string | null>(null);
   const [printFarmerId, setPrintFarmerId] = useState<string | null>(null);
-  const todayISO = new Date().toLocaleDateString('en-CA');
-  const monthISO = `${todayISO.slice(0, 7)}-01`;
   const [statementFrom, setStatementFrom] = useState(monthISO);
   const [statementTo, setStatementTo] = useState(todayISO);
 
   const loadData = useCallback(async () => {
 
-    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes] =
+    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes, farmActivityRes, marketplaceRes, marketplaceSellersRes, staffRes, payrollRes] =
       await Promise.all([
         supabase
           .from('farmer_finance_summary')
           .select('*')
           .order('farmer_code'),
         supabase
-          .from('farmers')
-          .select('id, farmer_id, full_name')
-          .order('farmer_id'),
+          .rpc('finance_farmer_identifiers'),
         supabase
           .from('egg_procurement')
           .select(
@@ -99,6 +120,14 @@ export default function FinanceDashboardPage() {
           .from('farmer_payments')
           .select('id, farmer_id, payment_date, amount, payment_mode, status')
           .order('payment_date', { ascending: false }),
+        supabase
+          .from('farm_activity_records')
+          .select('id, record_type, activity_date, amount, quantity, unit, item_name')
+          .order('activity_date', { ascending: false }),
+        supabase.rpc('finance_marketplace_overview'),
+        supabase.rpc('finance_marketplace_seller_totals'),
+        supabase.rpc('finance_staff_identifiers'),
+        supabase.rpc('finance_staff_payroll_list'),
       ]);
 
     const firstError =
@@ -106,7 +135,12 @@ export default function FinanceDashboardPage() {
       farmersRes.error ||
       procurementRes.error ||
       expenseRes.error ||
-      paymentRes.error;
+      paymentRes.error ||
+      farmActivityRes.error ||
+      marketplaceRes.error ||
+      marketplaceSellersRes.error ||
+      staffRes.error ||
+      payrollRes.error;
 
     if (firstError) {
       setError(firstError.message);
@@ -115,10 +149,15 @@ export default function FinanceDashboardPage() {
     }
 
     setSummaries((summaryRes.data || []) as Summary[]);
-    setFarmers((farmersRes.data || []) as Farmer[]);
+    setFarmers((farmersRes.data || []).map((row: { id: string; farmer_code: string; full_name: string }) => ({ id: row.id, farmer_id: row.farmer_code, full_name: row.full_name })) as Farmer[]);
     setProcurements((procurementRes.data || []) as Procurement[]);
     setExpenses((expenseRes.data || []) as Expense[]);
     setPayments((paymentRes.data || []) as Payment[]);
+    setFarmFinanceRecords((farmActivityRes.data || []) as FarmFinanceRecord[]);
+    setMarketplaceOverview(((marketplaceRes.data || [])[0] || null) as MarketplaceOverview | null);
+    setMarketplaceSellers((marketplaceSellersRes.data || []) as MarketplaceSellerTotal[]);
+    setStaff((staffRes.data || []) as StaffIdentifier[]);
+    setStaffPayroll((payrollRes.data || []) as StaffPayroll[]);
     setLoading(false);
   }, [supabase]);
 
@@ -128,15 +167,15 @@ export default function FinanceDashboardPage() {
   }, [loadData]);
 
   useEffect(() => {
-    if (!printFarmerId) return;
+    if (!printFarmerId && !printPayrollId && !printSellerId && !printIdentity) return;
     const timer = window.setTimeout(() => window.print(), 300);
-    const clearPrintSelection = () => setPrintFarmerId(null);
+    const clearPrintSelection = () => { setPrintFarmerId(null); setPrintPayrollId(null); setPrintSellerId(null); setPrintIdentity(null); };
     window.addEventListener('afterprint', clearPrintSelection);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('afterprint', clearPrintSelection);
     };
-  }, [printFarmerId]);
+  }, [printFarmerId, printPayrollId, printSellerId, printIdentity]);
 
   const farmerMap = useMemo(() => {
     const map = new Map<string, Farmer>();
@@ -214,6 +253,17 @@ export default function FinanceDashboardPage() {
     return { eggs, procurement, expense, paymentsMade };
   }, [approvedProcurements, approvedExpenses, paidPayments]);
 
+  const enterpriseActivity = useMemo(() => {
+    const rows = farmFinanceRecords.filter((row) => inPeriod(row.activity_date));
+    return {
+      records: rows.length,
+      inputCost: rows.filter((row) => row.record_type === 'INPUT').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      sales: rows.filter((row) => row.record_type === 'SALE').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      otherCosts: rows.filter((row) => row.record_type === 'EXPENSE').reduce((sum, row) => sum + Number(row.amount || 0), 0),
+      productionEntries: rows.filter((row) => row.record_type === 'PRODUCTION').length,
+    };
+  }, [farmFinanceRecords, inPeriod]);
+
   const financeTotals = useMemo(
     () =>
       summaries.reduce(
@@ -273,6 +323,61 @@ export default function FinanceDashboardPage() {
     })}`;
   }
 
+  async function createPayroll(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPayrollError('');
+    setPayrollMessage('');
+    if (!selectedStaffId || !payPeriod || !basePay) {
+      setPayrollError('Select an active staff member, pay month and base salary.');
+      return;
+    }
+    const gross = Number(basePay) + Number(allowances || 0);
+    const deductionsValue = Number(deductions || 0);
+    if (![Number(basePay), Number(allowances || 0), deductionsValue].every(Number.isFinite) || Number(basePay) < 0 || Number(allowances || 0) < 0 || deductionsValue < 0 || deductionsValue > gross) {
+      setPayrollError('Enter valid non-negative salary amounts. Deductions cannot exceed gross pay.');
+      return;
+    }
+    setPayrollSaving(true);
+    const { error: saveError } = await supabase.rpc('finance_create_staff_payroll', {
+      p_staff_id: selectedStaffId,
+      p_pay_period: `${payPeriod}-01`,
+      p_base_pay: Number(basePay),
+      p_allowances: Number(allowances || 0),
+      p_deductions: deductionsValue,
+    });
+    if (saveError) {
+      setPayrollError(saveError.message);
+    } else {
+      setPayrollMessage('Payroll record created. Print the payslip, then record payment only after the transfer is verified.');
+      setBasePay('');
+      setAllowances('0');
+      setDeductions('0');
+      await loadData();
+    }
+    setPayrollSaving(false);
+  }
+
+  async function markPayrollPaid(payrollId: string) {
+    setPayrollError('');
+    setPayrollMessage('');
+    if (paymentMethod !== 'CASH' && !paymentReference.trim()) {
+      setPayrollError('Enter the verified transfer reference before recording payment.');
+      return;
+    }
+    const { error: paidError } = await supabase.rpc('finance_mark_staff_payroll_paid', {
+      p_payroll_id: payrollId,
+      p_payment_method: paymentMethod,
+      p_transaction_reference: paymentReference.trim() || null,
+    });
+    if (paidError) {
+      setPayrollError(paidError.message);
+      return;
+    }
+    setPaymentReference('');
+    setPayrollMessage('Verified salary payment recorded.');
+    await loadData();
+  }
+
   function exportFarmerStatement() {
     const headers = [
       'Farmer Code', 'Farmer Name', 'Egg Earnings', 'Approved Expenses',
@@ -303,6 +408,10 @@ export default function FinanceDashboardPage() {
   }
 
   const printFarmer = summaries.find((row) => row.farmer_id === printFarmerId) || null;
+  const printPayroll = staffPayroll.find((row) => row.id === printPayrollId) || null;
+  const printSeller = marketplaceSellers.find((row) => row.seller_id === printSellerId) || null;
+  const printFarmerIdentity = printIdentity?.kind === 'farmer' ? farmers.find((row) => row.id === printIdentity.id) || null : null;
+  const printStaffIdentity = printIdentity?.kind === 'staff' ? staff.find((row) => row.id === printIdentity.id) || null : null;
   const withinStatementRange = (value: string) => value >= statementFrom && value <= statementTo;
   const printProcurements = printFarmerId
     ? procurements.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED' && withinStatementRange(row.collection_date))
@@ -333,16 +442,21 @@ export default function FinanceDashboardPage() {
     <style jsx global>{`
       @media print {
         body * { visibility: hidden !important; }
-        .farmer-print-report, .farmer-print-report * { visibility: visible !important; }
-        .farmer-print-report { display: block !important; position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: #111827; }
+        .farmer-print-report, .farmer-print-report *, .payroll-print-report, .payroll-print-report *, .id-card-print-report, .id-card-print-report * { visibility: visible !important; }
+        .farmer-print-report, .payroll-print-report { display: block !important; position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: #111827; }
         @page { size: A4; margin: 12mm; }
-        .farmer-print-report table { width: 100%; border-collapse: collapse; }
-        .farmer-print-report th, .farmer-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
+        .farmer-print-report table, .payroll-print-report table { width: 100%; border-collapse: collapse; }
+        .farmer-print-report th, .farmer-print-report td, .payroll-print-report th, .payroll-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
+        .payroll-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .payroll-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
         .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
+        .payroll-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
+        .id-card-print-report { display: block !important; position: absolute; inset: 0; }
+        .farmer-id-card, .staff-id-card { width: 86mm; height: 54mm; border: 2px solid #14532d; border-radius: 12px; padding: 9mm; margin: 12mm auto; color: #111827; }
         .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
       }
-      @media screen { .farmer-print-report { display: none; } }
+      @media screen { .farmer-print-report, .payroll-print-report, .id-card-print-report { display: none; } }
     `}</style>
     {printFarmer && (
       <div className="farmer-print-report">
@@ -406,16 +520,68 @@ export default function FinanceDashboardPage() {
         <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>BodhiFarm · System-generated financial statement · Verify against the official farmer ledger before payment or settlement.</footer>
       </div>
     )}
+    {printPayroll && (
+      <div className="payroll-print-report">
+        <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHI RURAL</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Staff Payslip</h1>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Pay period: {new Date(`${printPayroll.pay_period}T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })} · Generated {new Date().toLocaleDateString('en-IN')}</div>
+        </header>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Staff Details</h2>
+          <div className="print-grid">
+            <div className="print-metric"><b>Staff ID</b><div>{printPayroll.staff_code}</div></div>
+            <div className="print-metric"><b>Name</b><div>{printPayroll.full_name}</div></div>
+            <div className="print-metric"><b>Department / Designation</b><div>{printPayroll.department || '—'} · {printPayroll.designation || '—'}</div></div>
+          </div>
+        </section>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Earnings and Deductions</h2>
+          <table><tbody>
+            <tr><th>Base pay</th><td>{money(printPayroll.base_pay)}</td></tr>
+            <tr><th>Allowances</th><td>{money(printPayroll.allowances)}</td></tr>
+            <tr><th>Deductions</th><td>{money(printPayroll.deductions)}</td></tr>
+            <tr><th>Net pay</th><td><b>{money(printPayroll.net_pay)}</b></td></tr>
+            <tr><th>Payment status</th><td>{printPayroll.status === 'PAID' ? `Paid via ${printPayroll.payment_method || '—'} · Ref ${printPayroll.transaction_reference || '—'}` : 'Pending'}</td></tr>
+          </tbody></table>
+        </section>
+        <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>System-generated payroll record. This payslip is not proof of a bank transfer unless the status is Paid and the transfer reference has been verified.</footer>
+      </div>
+    )}
+    {printSeller && (
+      <div className="payroll-print-report">
+        <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHIMART</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Seller Order-Value Statement</h1>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Generated on {new Date().toLocaleDateString('en-IN')} · All recorded order history</div>
+        </header>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Seller Details</h2><div className="print-grid">
+          <div className="print-metric"><b>Seller / Shop</b><div>{printSeller.seller_name}</div></div>
+          <div className="print-metric"><b>Seller ID</b><div>{printSeller.seller_id}</div></div>
+          <div className="print-metric"><b>Order count</b><div>{Number(printSeller.seller_order_count).toLocaleString('en-IN')}</div></div>
+        </div></section>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Order Values</h2><table><tbody>
+          <tr><th>Total seller order value</th><td>{money(printSeller.seller_order_value)}</td></tr>
+          <tr><th>Order value for buyer-paid orders</th><td>{money(printSeller.paid_order_value)}</td></tr>
+          <tr><th>Order value for pending buyer payments</th><td>{money(printSeller.unpaid_order_value)}</td></tr>
+        </tbody></table></section>
+        <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>This is an order-value statement, not a tax invoice or proof that a seller payout was made. Reconcile it with order details and bank settlements.</footer>
+      </div>
+    )}
+    {(printFarmerIdentity || printStaffIdentity) && (
+      <div className="id-card-print-report">
+        {printFarmerIdentity && <article className="farmer-id-card"><div style={{ color: '#15803d', fontWeight: 800, letterSpacing: 1 }}>BODHI RURAL · FARMER</div><h1 style={{ marginTop: 14, fontSize: 20, fontWeight: 800 }}>{printFarmerIdentity.full_name}</h1><p style={{ marginTop: 8, fontSize: 12 }}>Farmer ID: <b>{printFarmerIdentity.farmer_id}</b></p><p style={{ marginTop: 12, fontSize: 10, color: '#4b5563' }}>Identity card · Verify against the registered farmer record.</p></article>}
+        {printStaffIdentity && <article className="staff-id-card"><div style={{ color: '#15803d', fontWeight: 800, letterSpacing: 1 }}>BODHI RURAL · STAFF</div><h1 style={{ marginTop: 14, fontSize: 20, fontWeight: 800 }}>{printStaffIdentity.full_name}</h1><p style={{ marginTop: 8, fontSize: 12 }}>Staff ID: <b>{printStaffIdentity.staff_code}</b></p><p style={{ marginTop: 6, fontSize: 11 }}>{printStaffIdentity.department || 'Team'} · {printStaffIdentity.designation || 'Staff'}</p><p style={{ marginTop: 12, fontSize: 10, color: '#4b5563' }}>Identity card · Return if found to Bodhi Rural.</p></article>}
+      </div>
+    )}
     <main className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="text-sm font-semibold text-green-700">BodhiFarm</div>
             <h1 className="text-3xl font-bold text-slate-900">
-              Finance Dashboard
+              Enterprise-wide Finance Dashboard
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Procurement, expenses, credit recovery, farmer payments and outstanding liability.
+              Farm activity, marketplace buyers and sellers, farmer settlements, credit recovery and operating costs.
             </p>
           </div>
 
@@ -469,10 +635,76 @@ export default function FinanceDashboardPage() {
           </div>
         ) : (
           <>
+            <section className="mt-6 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-slate-900">All Enterprise & Marketplace Finance</h2>
+                <p className="mt-1 text-sm text-slate-600">Includes farm inputs, production, sales and costs across crops, livestock, dairy, fisheries, mushrooms, poultry and allied activities. Marketplace figures cover buyer orders and seller order values.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl bg-emerald-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Farm input costs</p><p className="mt-2 text-2xl font-bold text-emerald-800">{money(enterpriseActivity.inputCost)}</p><p className="mt-1 text-xs text-slate-500">Seeds, fertilizer, feed, medicine and other inputs</p></div>
+                <div className="rounded-xl bg-blue-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Farm sales recorded</p><p className="mt-2 text-2xl font-bold text-blue-800">{money(enterpriseActivity.sales)}</p><p className="mt-1 text-xs text-slate-500">Across all registered farm enterprises</p></div>
+                <div className="rounded-xl bg-amber-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Other farm costs</p><p className="mt-2 text-2xl font-bold text-amber-800">{money(enterpriseActivity.otherCosts)}</p><p className="mt-1 text-xs text-slate-500">Operating expenses entered by farmers</p></div>
+                <div className="rounded-xl bg-purple-50 p-4"><p className="text-xs font-semibold uppercase text-slate-600">Activity records</p><p className="mt-2 text-2xl font-bold text-purple-800">{enterpriseActivity.records}</p><p className="mt-1 text-xs text-slate-500">{enterpriseActivity.productionEntries} production entries in this period</p></div>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Marketplace orders</p><p className="mt-2 text-xl font-bold text-slate-900">{Number(marketplaceOverview?.order_count || 0).toLocaleString('en-IN')}</p><p className="text-xs text-slate-500">Gross order value {money(Number(marketplaceOverview?.gross_order_value || 0))}</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Buyer payments recorded</p><p className="mt-2 text-xl font-bold text-green-700">{money(Number(marketplaceOverview?.paid_order_value || 0))}</p><p className="text-xs text-slate-500">{Number(marketplaceOverview?.paid_order_count || 0)} orders marked paid</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Awaiting buyer payment</p><p className="mt-2 text-xl font-bold text-amber-700">{money(Number(marketplaceOverview?.pending_order_value || 0))}</p><p className="text-xs text-slate-500">{Number(marketplaceOverview?.pending_order_count || 0)} orders unpaid or pending</p></div>
+                <div className="rounded-xl border p-4"><p className="text-xs font-semibold uppercase text-slate-500">Marketplace participants</p><p className="mt-2 text-xl font-bold text-slate-900">{Number(marketplaceOverview?.buyer_count || 0)} buyers · {Number(marketplaceOverview?.seller_count || 0)} sellers</p><p className="text-xs text-slate-500">Counts from recorded marketplace orders</p></div>
+              </div>
+              <div className="mt-6 overflow-x-auto">
+                <h3 className="mb-3 font-bold text-slate-900">Seller order activity</h3>
+                <table className="min-w-full text-sm">
+                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Seller</th><th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Order value</th><th className="px-3 py-2 text-right">Paid order value</th><th className="px-3 py-2 text-right">Unpaid order value</th><th className="px-3 py-2">Statement</th></tr></thead>
+                  <tbody>
+                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintSellerId(seller.seller_id)} className="rounded border px-2 py-1 text-xs font-semibold">Print statement</button></td></tr>) : <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-xs text-slate-500">Seller amounts are marketplace order values, not payout confirmations. A seller settlement is only complete after the transfer is verified and recorded.</p>
+              </div>
+              <div className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <h3 className="font-bold text-sky-950">Online payments and settlements</h3>
+                <p className="mt-1 text-sm text-sky-900">The current checkout records manual / pay-on-delivery payments. Online UPI, cards and netbanking, plus automated farmer, seller and staff payouts, need an activated payment provider and secured production credentials before these can be enabled.</p>
+                <p className="mt-2 text-xs text-sky-800">No card, UPI PIN, netbanking password or bank-account credentials are collected by this dashboard.</p>
+              </div>
+            </section>
+
+            <section className="mt-6 rounded-xl border bg-white p-5 shadow-sm">
+              <div className="mb-4"><h2 className="text-xl font-bold text-slate-900">Staff payroll, payslips & identity cards</h2><p className="mt-1 text-sm text-slate-600">Create monthly payroll records, print payslips, and print basic farmer or staff ID cards. Record a salary as paid only after verifying the transfer.</p></div>
+              {payrollMessage && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{payrollMessage}</div>}
+              {payrollError && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{payrollError}</div>}
+              <form onSubmit={createPayroll} className="grid gap-4 md:grid-cols-5">
+                <label className="text-xs font-semibold text-slate-600">Staff member<select value={selectedStaffId} onChange={(e) => setSelectedStaffId(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select active staff</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.staff_code} · {person.full_name}</option>)}</select></label>
+                <label className="text-xs font-semibold text-slate-600">Pay month<input type="month" value={payPeriod} onChange={(e) => setPayPeriod(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required /></label>
+                <label className="text-xs font-semibold text-slate-600">Base pay (₹)<input type="number" min="0" step="0.01" value={basePay} onChange={(e) => setBasePay(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required /></label>
+                <label className="text-xs font-semibold text-slate-600">Allowances (₹)<input type="number" min="0" step="0.01" value={allowances} onChange={(e) => setAllowances(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+                <label className="text-xs font-semibold text-slate-600">Deductions (₹)<input type="number" min="0" step="0.01" value={deductions} onChange={(e) => setDeductions(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+                <div className="md:col-span-5"><button type="submit" disabled={payrollSaving} className="rounded-lg bg-green-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{payrollSaving ? 'Saving…' : 'Create payroll record'}</button></div>
+              </form>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-600">Farmer ID card<select id="farmer-card-select" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select farmer</option>{farmers.map((person) => <option key={person.id} value={person.id}>{person.farmer_id} · {person.full_name}</option>)}</select></label>
+                <label className="text-xs font-semibold text-slate-600">Staff ID card<select id="staff-card-select" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select staff</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.staff_code} · {person.full_name}</option>)}</select></label>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => { const el = document.getElementById('farmer-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'farmer', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print farmer ID card</button>
+                <button type="button" onClick={() => { const el = document.getElementById('staff-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'staff', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print staff ID card</button>
+                <a href="/bodhimart/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Buyer order receipts</a>
+                <a href="/bodhifarm/seller/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Seller orders</a>
+              </div>
+              <div className="mt-5 overflow-x-auto">
+                <h3 className="mb-2 font-bold text-slate-900">Monthly payroll records</h3>
+                <p className="mb-3 text-xs text-slate-500">Payslips are internal payroll records, not proof of transfer. Online salary payment is not enabled; record payment only after confirming it through your bank.</p>
+                <table className="min-w-full text-sm">
+                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Pay period · Staff</th><th className="px-3 py-2 text-right">Base + allowances</th><th className="px-3 py-2 text-right">Deductions</th><th className="px-3 py-2 text-right">Net pay</th><th className="px-3 py-2">Status / reference</th><th className="px-3 py-2">Actions</th></tr></thead>
+                  <tbody>{staffPayroll.length ? staffPayroll.map((record) => <tr key={record.id} className="border-b"><td className="px-3 py-3"><b>{record.staff_code} · {record.full_name}</b><div className="text-xs text-slate-500">{new Date(`${record.pay_period}T00:00:00`).toLocaleDateString('en-IN',{month:'long',year:'numeric'})} · {record.department || '—'}</div></td><td className="px-3 py-3 text-right">{money(Number(record.base_pay)+Number(record.allowances))}</td><td className="px-3 py-3 text-right">{money(record.deductions)}</td><td className="px-3 py-3 text-right font-semibold">{money(record.net_pay)}</td><td className="px-3 py-3">{record.status}{record.transaction_reference && <div className="text-xs text-slate-500">{record.payment_method} · {record.transaction_reference}</div>}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintPayrollId(record.id)} className="rounded border px-2 py-1 text-xs font-semibold">Print payslip</button>{record.status === 'PENDING' && <div className="mt-2 flex flex-wrap gap-1"><select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="rounded border px-2 py-1 text-xs"><option>NEFT</option><option>RTGS</option><option>IMPS</option><option>UPI</option><option>CHEQUE</option><option>CASH</option><option>OTHER</option></select><input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} placeholder="Verified ref." className="w-28 rounded border px-2 py-1 text-xs" /><button type="button" onClick={() => void markPayrollPaid(record.id)} className="rounded bg-green-700 px-2 py-1 text-xs font-semibold text-white">Record paid</button></div>}</td></tr>) : <tr><td colSpan={6} className="px-3 py-8 text-center text-slate-500">No payroll records yet.</td></tr>}</tbody>
+                </table>
+              </div>
+            </section>
+
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Saleable Eggs
+                  Poultry · Saleable Eggs
                 </div>
                 <div className="mt-2 text-2xl font-bold text-slate-900">
                   {kpis.eggs.toLocaleString('en-IN')}
@@ -481,7 +713,7 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Egg Procurement
+                  Poultry · Egg Procurement
                 </div>
                 <div className="mt-2 text-2xl font-bold text-green-700">
                   {money(kpis.procurement)}
@@ -785,7 +1017,7 @@ export default function FinanceDashboardPage() {
 
             <section className="mt-6 rounded-xl border bg-white p-5 shadow-sm">
               <h2 className="text-xl font-bold text-slate-900">
-                Recent Egg Procurement
+                Recent Egg Procurement (Poultry Specialist)
               </h2>
 
               <div className="mt-4 overflow-x-auto">
@@ -859,7 +1091,7 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <h2 className="text-xl font-bold text-slate-900">
-                  Recent Payments
+                  Recent Farmer Payments
                 </h2>
                 <div className="mt-4 space-y-3">
                   {paidPayments.slice(0, 10).map((row) => {
