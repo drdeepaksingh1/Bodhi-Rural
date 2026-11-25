@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { useEffect, useEffectEvent, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
@@ -1194,7 +1195,7 @@ export default function StaffRegistrationPage() {
             <div className="mt-6 rounded-xl bg-green-50 p-5">
 
               <p className="text-sm font-semibold text-green-800">
-                Application Number
+                Application Tracking ID
               </p>
 
               <p className="mt-2 text-2xl font-bold tracking-wide text-green-900">
@@ -1202,10 +1203,15 @@ export default function StaffRegistrationPage() {
               </p>
 
               <p className="mt-3 text-sm text-green-800">
-                Keep this application number safely for future
-                communication with Bodhi Rural Livelihood & Agri
-                Private Limited.
+                Save this tracking ID. You will need it and access to the verified email address to check your application status.
               </p>
+
+              <Link
+                href={`/staff/application/track?trackingId=${encodeURIComponent(applicationNumber)}`}
+                className="mt-5 inline-flex rounded-lg border border-green-700 px-6 py-3 font-semibold text-green-800 hover:bg-green-100"
+              >
+                Track application status →
+              </Link>
 
               {applicationId && (
                 <button
@@ -1216,7 +1222,7 @@ export default function StaffRegistrationPage() {
                       '_blank'
                     )
                   }
-                  className="mt-5 rounded-lg bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
+                  className="mt-3 block w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
                 >
                   Print / Save Application PDF
                 </button>
