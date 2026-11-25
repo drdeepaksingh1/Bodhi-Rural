@@ -303,6 +303,7 @@ function LoginForm() {
           </div>
         )}
 
+
         {/* Back to login */}
         {isForgotPassword && (
           <div className="mt-6 text-center">
