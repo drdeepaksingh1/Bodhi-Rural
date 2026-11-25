@@ -36,15 +36,23 @@ export default function CareersPage() {
             <p className="text-[11px] font-extrabold uppercase tracking-[.14em] text-[#70501f]">Current opportunities</p>
             <h2 className="mt-3 font-serif text-3xl font-medium tracking-[-.025em] text-[#123d2b]">No open positions are listed right now.</h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[#617067]">
-              Please check back for future openings. If your experience aligns with our work, you can introduce yourself by email; we will be in touch if a suitable opportunity becomes available.
+              There are no advertised roles at the moment. You can still submit a general staff application through our email-verified form; it will enter the existing HR review process.
             </p>
           </div>
-          <a
-            href="mailto:ceo@brlps.co.in?subject=Career%20enquiry%20-%20Bodhi%20Rural"
-            className="inline-flex min-h-12 items-center justify-center gap-3 bg-[#123d2b] px-6 text-sm font-bold text-white no-underline transition hover:bg-[#1c6844]"
-          >
-            Send a career enquiry <span aria-hidden="true">→</span>
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/staff/register"
+              className="inline-flex min-h-12 items-center justify-center gap-3 bg-[#123d2b] px-6 text-sm font-bold text-white no-underline transition hover:bg-[#1c6844]"
+            >
+              Apply through HR <span aria-hidden="true">→</span>
+            </Link>
+            <a
+              href="mailto:ceo@brlps.co.in?subject=Career%20enquiry%20-%20Bodhi%20Rural"
+              className="inline-flex min-h-12 items-center justify-center border border-[#cbd5ca] px-5 text-sm font-bold text-[#123d2b] no-underline transition hover:bg-[#f7f7f2]"
+            >
+              Ask a question
+            </a>
+          </div>
         </div>
       </section>
 
