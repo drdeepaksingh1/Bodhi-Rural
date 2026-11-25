@@ -52,6 +52,12 @@ export default function CareersPage() {
             >
               Ask a question
             </a>
+            <Link
+              href="/staff/application/track"
+              className="inline-flex min-h-12 items-center justify-center border border-[#cbd5ca] px-5 text-sm font-bold text-[#123d2b] no-underline transition hover:bg-[#f7f7f2]"
+            >
+              Track an application
+            </Link>
           </div>
         </div>
       </section>
