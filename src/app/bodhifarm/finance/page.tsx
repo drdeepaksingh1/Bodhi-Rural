@@ -704,7 +704,7 @@ export default function FinanceDashboardPage() {
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Saleable Eggs
+                  Poultry · Saleable Eggs
                 </div>
                 <div className="mt-2 text-2xl font-bold text-slate-900">
                   {kpis.eggs.toLocaleString('en-IN')}
@@ -713,7 +713,7 @@ export default function FinanceDashboardPage() {
 
               <div className="rounded-xl border bg-white p-5 shadow-sm">
                 <div className="text-xs font-semibold uppercase text-slate-500">
-                  Egg Procurement
+                  Poultry · Egg Procurement
                 </div>
                 <div className="mt-2 text-2xl font-bold text-green-700">
                   {money(kpis.procurement)}
