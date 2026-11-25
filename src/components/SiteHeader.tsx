@@ -176,21 +176,6 @@ export default function SiteHeader() {
             Skills &amp; Training
           </NavLink>
 
-          <details style={{ position: 'relative' }}>
-            <summary style={{ cursor: 'pointer', color: '#fff', fontWeight: 600, padding: '8px 10px', whiteSpace: 'nowrap' }}>Quick links</summary>
-            <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 50, display: 'grid', gap: 2, minWidth: 240, padding: 10, borderRadius: 10, background: '#fff', boxShadow: '0 12px 30px rgba(0,0,0,.18)' }}>
-              <HeaderQuickLink href="/about">About</HeaderQuickLink>
-              <HeaderQuickLink href="/bodhifarm">BodhiFarm</HeaderQuickLink>
-              <HeaderQuickLink href="/bodhimart">BodhiMart</HeaderQuickLink>
-              <HeaderQuickLink href="/farmer-network">Rural Network</HeaderQuickLink>
-              <HeaderQuickLink href="/projects">Projects</HeaderQuickLink>
-              <HeaderQuickLink href="/careers">Careers</HeaderQuickLink>
-              <HeaderQuickLink href="/contact">Contact</HeaderQuickLink>
-              <HeaderQuickLink href="/skills-training">Skills &amp; Training</HeaderQuickLink>
-              <a href="mailto:bodhirural@gmail.com" style={{ color: 'var(--green2)', padding: '8px 10px', textDecoration: 'none', fontSize: 13 }}>bodhirural@gmail.com</a>
-              <a href="mailto:ceo@brlps.co.in" style={{ color: 'var(--green2)', padding: '8px 10px', textDecoration: 'none', fontSize: 13 }}>ceo@brlps.co.in</a>
-            </div>
-          </details>
 
           <Link
             href={loginHref}
@@ -305,8 +290,6 @@ export default function SiteHeader() {
           <MobileLink href="/skills-training" onClick={closeMenu} active={isActive('/skills-training')}>
             Skills &amp; Training
           </MobileLink>
-          <a href="mailto:bodhirural@gmail.com" onClick={closeMenu} className="mobileQuickEmail">bodhirural@gmail.com</a>
-          <a href="mailto:ceo@brlps.co.in" onClick={closeMenu} className="mobileQuickEmail">ceo@brlps.co.in</a>
 
           <Link
             href={loginHref}
@@ -350,7 +333,7 @@ export default function SiteHeader() {
         }
 
         @media (max-width: 600px) {
-          .mobileQuickEmail { display:block; padding:9px 8px; color:#fff; text-decoration:underline; text-underline-offset:3px; font-size:14px; }
+
           .container {
             padding-left: 15px;
             padding-right: 15px;
@@ -365,9 +348,6 @@ export default function SiteHeader() {
   );
 }
 
-function HeaderQuickLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return <Link href={href} style={{ color: 'var(--green2)', padding: '8px 10px', borderRadius: 6, textDecoration: 'none', fontSize: 13 }}>{children}</Link>;
-}
 
 function NavLink({
   href,
