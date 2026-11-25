@@ -2,33 +2,17 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useBodhiMartLanguage } from '../../language';
 import { createClient } from '../../../../lib/supabase/client';
 
 export default function SellerRegistrationPage() {
   const supabase = useMemo(() => createClient(), []);
 
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const language = useBodhiMartLanguage();
   const [shopLocation, setShopLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<'denied' | 'unavailable' | null>(null);
   const t = (english: string, hindi: string) => language === 'hi' ? hindi : english;
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem('bodhimart-language') === 'hi') setLanguage('hi');
-    } catch {
-      // The selector also works when browser storage is unavailable.
-    }
-  }, []);
-
-  function changeLanguage(value: 'en' | 'hi') {
-    setLanguage(value);
-    try {
-      window.localStorage.setItem('bodhimart-language', value);
-    } catch {
-      // Keep the selection for this page.
-    }
-  }
 
   function captureShopLocation() {
     setShopLocation(null);
@@ -296,13 +280,6 @@ export default function SellerRegistrationPage() {
           margin: '0 auto',
         }}
       >
-        <label className="mb-4 flex items-center justify-end gap-3 text-sm font-semibold">
-          {t('Language', 'भाषा')}
-          <select className="rounded-lg border border-gray-300 bg-white px-3 py-2" value={language} onChange={(event) => changeLanguage(event.target.value === 'hi' ? 'hi' : 'en')}>
-            <option value="en" lang="en">English</option>
-            <option value="hi" lang="hi">हिन्दी</option>
-          </select>
-        </label>
         {/* HEADER */}
         <div
           style={{
