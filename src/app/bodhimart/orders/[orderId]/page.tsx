@@ -154,7 +154,7 @@ export default function BodhiMartOrderReceiptPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-6 py-4 text-sm sm:px-8">
               <p className="text-gray-600">Need help with delivery or payment?</p>
               <a
-                href={`mailto:ceo@brlps.co.in?subject=${encodeURIComponent(`BodhiMart order ${order.order_number}`)}`}
+                href={`mailto:bodhirural@gmail.com?subject=${encodeURIComponent(`BodhiMart order ${order.order_number}`)}`}
                 className="font-semibold text-green-800 underline underline-offset-2 hover:text-green-950"
               >
                 Contact Bodhi Rural about this order
@@ -248,3 +248,4 @@ export default function BodhiMartOrderReceiptPage() {
     </main>
   );
 }
+
