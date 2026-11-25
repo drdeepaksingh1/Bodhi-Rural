@@ -337,11 +337,11 @@ export default function FeedManagementPage() {
             </a>
 
             <h1 className="mt-2 text-2xl font-bold text-gray-900">
-              Feed Management
+              Poultry & Duck Feed Records
             </h1>
 
             <p className="text-sm text-gray-500">
-              Feed issue and consumption management
+              Specialist bird-feed records. For livestock, fish feed, seeds, fertilizer and other farm inputs, use the general farm activity tracker.
             </p>
           </div>
 
