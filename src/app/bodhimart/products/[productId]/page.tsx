@@ -17,6 +17,7 @@ type Product = {
   name: string;
   slug: string | null;
   image_url: string | null;
+  external_url: string | null;
   image_gallery: string[] | null;
   description: string | null;
   brand: string | null;
@@ -104,7 +105,7 @@ export default function ProductDetailsPage() {
       try {
         const { data: productData, error: productError } = await supabase
           .from('marketplace_public_products')
-          .select('id, product_id, sku, category_id, name, slug, image_url, image_gallery, description, brand, unit, weight, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, delivery_available, status')
+          .select('id, product_id, sku, category_id, name, slug, image_url, image_gallery, external_url, description, brand, unit, weight, mrp, selling_price, tax_percent, minimum_order_quantity, maximum_order_quantity, delivery_available, status')
           .eq('product_id', productId)
           .eq('status', 'ACTIVE')
           .maybeSingle();
@@ -690,6 +691,11 @@ export default function ProductDetailsPage() {
                 <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-gray-600">
                   {product.description || 'The seller has not added a product description yet.'}
                 </p>
+                {product.external_url && (
+                  <a href={product.external_url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-green-800 px-4 py-2 text-sm font-bold text-green-900 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700">
+                    View product link <span className="ml-2" aria-hidden="true">↗</span>
+                  </a>
+                )}
               </article>
 
               <article className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
