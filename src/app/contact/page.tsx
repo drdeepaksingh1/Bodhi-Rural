@@ -86,11 +86,15 @@ export default function Page() {
               <div className="br-contact-methods">
                 <div className="br-contact-method">
                   <small>Email</small>
-                  <a href="mailto:ceo@brlps.co.in">ceo@brlps.co.in</a>
+                  <a href="mailto:bodhirural@gmail.com">bodhirural@gmail.com</a>
                 </div>
                 <div className="br-contact-method">
                   <small>Phone</small>
                   <a href="tel:+917667979679">+91 76679 79679</a>
+                </div>
+                <div className="br-contact-method">
+                  <small>Website</small>
+                  <a href="https://www.brlps.co.in">www.brlps.co.in</a>
                 </div>
               </div>
             </div>
@@ -113,3 +117,4 @@ export default function Page() {
     </>
   );
 }
+
