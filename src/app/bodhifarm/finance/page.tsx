@@ -59,6 +59,8 @@ type StaffPayroll = { id: string; staff_id: string; staff_code: string; full_nam
 
 export default function FinanceDashboardPage() {
   const supabase = useMemo(() => createClient(), []);
+  const todayISO = new Date().toLocaleDateString('en-CA');
+  const monthISO = `${todayISO.slice(0, 7)}-01`;
 
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [farmers, setFarmers] = useState<Farmer[]>([]);
@@ -89,8 +91,6 @@ export default function FinanceDashboardPage() {
   const [farmerSearch, setFarmerSearch] = useState('');
   const [expandedFarmerId, setExpandedFarmerId] = useState<string | null>(null);
   const [printFarmerId, setPrintFarmerId] = useState<string | null>(null);
-  const todayISO = new Date().toLocaleDateString('en-CA');
-  const monthISO = `${todayISO.slice(0, 7)}-01`;
   const [statementFrom, setStatementFrom] = useState(monthISO);
   const [statementTo, setStatementTo] = useState(todayISO);
 
