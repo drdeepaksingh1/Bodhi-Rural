@@ -1081,7 +1081,7 @@ export default function BodhiFarmPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Record a poultry batch for a farmer's poultry or duck enterprise.
+                  Record a poultry batch for a farmer&apos;s poultry or duck enterprise.
                 </p>
               </div>
 
