@@ -180,13 +180,13 @@ export default function Footer() {
               <br />
               Email:{' '}
               <a
-                href="mailto:bodhirural@gmail.com"
+                href="mailto:bodhirural@gmail.com,ceo@brlps.co.in"
                 style={{
                   color: '#ffffff',
                   textDecoration: 'none',
                 }}
               >
-                bodhirural@gmail.com
+                bodhirural@gmail.com · ceo@brlps.co.in
               </a>
               <br />
               Website:{' '}
