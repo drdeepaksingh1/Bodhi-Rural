@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../../language';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -274,7 +275,7 @@ export default function SellerProductsPage() {
                   fontWeight: 800,
                 }}
               >
-                My Products
+                <Copy en="My Products" hi="मेरे उत्पाद" />
               </h1>
 
               {seller && (
@@ -307,7 +308,7 @@ export default function SellerProductsPage() {
                   fontWeight: 600,
                 }}
               >
-                Dashboard
+                <Copy en="Dashboard" hi="डैशबोर्ड" />
               </Link>
 
               <Link
@@ -406,10 +407,10 @@ export default function SellerProductsPage() {
               }
               style={inputStyle}
             >
-              <option value="ALL">All Status</option>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="DRAFT">Draft</option>
+              <option value="ALL"><Copy en="All Status" hi="सभी स्थितियाँ" /></option>
+              <option value="ACTIVE"><Copy en="Active" hi="सक्रिय" /></option>
+              <option value="INACTIVE"><Copy en="Inactive" hi="निष्क्रिय" /></option>
+              <option value="DRAFT"><Copy en="Draft" hi="मसौदा" /></option>
             </select>
 
             <select
@@ -419,7 +420,7 @@ export default function SellerProductsPage() {
               }
               style={inputStyle}
             >
-              <option value="ALL">All Categories</option>
+              <option value="ALL"><Copy en="All Categories" hi="सभी श्रेणियाँ" /></option>
 
               {categories.map((category) => (
                 <option
@@ -489,7 +490,7 @@ export default function SellerProductsPage() {
                 fontWeight: 600,
               }}
             >
-              Refresh
+              <Copy en="Refresh" hi="फिर से लोड करें" />
             </button>
           </div>
 
@@ -567,15 +568,15 @@ export default function SellerProductsPage() {
                       textAlign: 'left',
                     }}
                   >
-                    <th style={thStyle}>Product</th>
-                    <th style={thStyle}>Category</th>
+                    <th style={thStyle}><Copy en="Product" hi="उत्पाद" /></th>
+                    <th style={thStyle}><Copy en="Category" hi="श्रेणी" /></th>
                     <th style={thStyle}>SKU</th>
                     <th style={thStyle}>MRP</th>
-                    <th style={thStyle}>Selling Price</th>
-                    <th style={thStyle}>Tax</th>
-                    <th style={thStyle}>Delivery</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Action</th>
+                    <th style={thStyle}><Copy en="Selling Price" hi="बिक्री मूल्य" /></th>
+                    <th style={thStyle}><Copy en="Tax" hi="कर" /></th>
+                    <th style={thStyle}><Copy en="Delivery" hi="डिलीवरी" /></th>
+                    <th style={thStyle}><Copy en="Status" hi="स्थिति" /></th>
+                    <th style={thStyle}><Copy en="Action" hi="कार्रवाई" /></th>
                   </tr>
                 </thead>
 
@@ -774,14 +775,14 @@ export default function SellerProductsPage() {
               href="/bodhimart/seller/orders"
               style={bottomLinkStyle}
             >
-              Orders
+              <Copy en="Orders" hi="ऑर्डर" />
             </Link>
 
             <Link
               href="/bodhimart/seller/sales"
               style={bottomLinkStyle}
             >
-              Sales
+              <Copy en="Sales" hi="बिक्री" />
             </Link>
           </div>
         </div>
