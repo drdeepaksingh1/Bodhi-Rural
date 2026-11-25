@@ -1534,4 +1534,3 @@ export default function StaffApplicationPrintPage() {
     </>
   );
 }
-
