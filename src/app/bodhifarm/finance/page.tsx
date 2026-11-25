@@ -54,6 +54,8 @@ type Farmer = {
 type FarmFinanceRecord = { id: string; record_type: string; activity_date: string; amount: number; quantity: number | null; unit: string | null; item_name: string };
 type MarketplaceOverview = { order_count: number; gross_order_value: number; paid_order_count: number; paid_order_value: number; pending_order_count: number; pending_order_value: number; buyer_count: number; seller_count: number };
 type MarketplaceSellerTotal = { seller_id: string; seller_name: string; seller_order_count: number; seller_order_value: number; paid_order_value: number; unpaid_order_value: number };
+type StaffIdentifier = { id: string; staff_code: string; full_name: string; designation: string | null; department: string | null; employment_status: string };
+type StaffPayroll = { id: string; staff_id: string; staff_code: string; full_name: string; designation: string | null; department: string | null; pay_period: string; base_pay: number; allowances: number; deductions: number; net_pay: number; status: string; payment_method: string | null; transaction_reference: string | null; paid_at: string | null };
 
 export default function FinanceDashboardPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -66,6 +68,20 @@ export default function FinanceDashboardPage() {
   const [farmFinanceRecords, setFarmFinanceRecords] = useState<FarmFinanceRecord[]>([]);
   const [marketplaceOverview, setMarketplaceOverview] = useState<MarketplaceOverview | null>(null);
   const [marketplaceSellers, setMarketplaceSellers] = useState<MarketplaceSellerTotal[]>([]);
+  const [staff, setStaff] = useState<StaffIdentifier[]>([]);
+  const [staffPayroll, setStaffPayroll] = useState<StaffPayroll[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [payPeriod, setPayPeriod] = useState(monthISO.slice(0, 7));
+  const [basePay, setBasePay] = useState('');
+  const [allowances, setAllowances] = useState('0');
+  const [deductions, setDeductions] = useState('0');
+  const [paymentMethod, setPaymentMethod] = useState('NEFT');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [printPayrollId, setPrintPayrollId] = useState<string | null>(null);
+  const [printIdentity, setPrintIdentity] = useState<{ kind: 'farmer' | 'staff'; id: string } | null>(null);
+  const [payrollMessage, setPayrollMessage] = useState('');
+  const [payrollError, setPayrollError] = useState('');
+  const [payrollSaving, setPayrollSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'ALL' | 'MONTH'>('ALL');
@@ -79,7 +95,7 @@ export default function FinanceDashboardPage() {
 
   const loadData = useCallback(async () => {
 
-    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes, farmActivityRes, marketplaceRes, marketplaceSellersRes] =
+    const [summaryRes, farmersRes, procurementRes, expenseRes, paymentRes, farmActivityRes, marketplaceRes, marketplaceSellersRes, staffRes, payrollRes] =
       await Promise.all([
         supabase
           .from('farmer_finance_summary')
@@ -109,6 +125,8 @@ export default function FinanceDashboardPage() {
           .order('activity_date', { ascending: false }),
         supabase.rpc('finance_marketplace_overview'),
         supabase.rpc('finance_marketplace_seller_totals'),
+        supabase.rpc('finance_staff_identifiers'),
+        supabase.rpc('finance_staff_payroll_list'),
       ]);
 
     const firstError =
@@ -119,7 +137,9 @@ export default function FinanceDashboardPage() {
       paymentRes.error ||
       farmActivityRes.error ||
       marketplaceRes.error ||
-      marketplaceSellersRes.error;
+      marketplaceSellersRes.error ||
+      staffRes.error ||
+      payrollRes.error;
 
     if (firstError) {
       setError(firstError.message);
@@ -128,13 +148,15 @@ export default function FinanceDashboardPage() {
     }
 
     setSummaries((summaryRes.data || []) as Summary[]);
-    setFarmers((farmersRes.data || []) as Farmer[]);
+    setFarmers((farmersRes.data || []).map((row: { id: string; farmer_code: string; full_name: string }) => ({ id: row.id, farmer_id: row.farmer_code, full_name: row.full_name })) as Farmer[]);
     setProcurements((procurementRes.data || []) as Procurement[]);
     setExpenses((expenseRes.data || []) as Expense[]);
     setPayments((paymentRes.data || []) as Payment[]);
     setFarmFinanceRecords((farmActivityRes.data || []) as FarmFinanceRecord[]);
     setMarketplaceOverview(((marketplaceRes.data || [])[0] || null) as MarketplaceOverview | null);
     setMarketplaceSellers((marketplaceSellersRes.data || []) as MarketplaceSellerTotal[]);
+    setStaff((staffRes.data || []) as StaffIdentifier[]);
+    setStaffPayroll((payrollRes.data || []) as StaffPayroll[]);
     setLoading(false);
   }, [supabase]);
 
@@ -144,15 +166,15 @@ export default function FinanceDashboardPage() {
   }, [loadData]);
 
   useEffect(() => {
-    if (!printFarmerId) return;
+    if (!printFarmerId && !printPayrollId && !printIdentity) return;
     const timer = window.setTimeout(() => window.print(), 300);
-    const clearPrintSelection = () => setPrintFarmerId(null);
+    const clearPrintSelection = () => { setPrintFarmerId(null); setPrintPayrollId(null); setPrintIdentity(null); };
     window.addEventListener('afterprint', clearPrintSelection);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('afterprint', clearPrintSelection);
     };
-  }, [printFarmerId]);
+  }, [printFarmerId, printPayrollId, printIdentity]);
 
   const farmerMap = useMemo(() => {
     const map = new Map<string, Farmer>();
@@ -300,6 +322,61 @@ export default function FinanceDashboardPage() {
     })}`;
   }
 
+  async function createPayroll(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPayrollError('');
+    setPayrollMessage('');
+    if (!selectedStaffId || !payPeriod || !basePay) {
+      setPayrollError('Select an active staff member, pay month and base salary.');
+      return;
+    }
+    const gross = Number(basePay) + Number(allowances || 0);
+    const deductionsValue = Number(deductions || 0);
+    if (![Number(basePay), Number(allowances || 0), deductionsValue].every(Number.isFinite) || Number(basePay) < 0 || Number(allowances || 0) < 0 || deductionsValue < 0 || deductionsValue > gross) {
+      setPayrollError('Enter valid non-negative salary amounts. Deductions cannot exceed gross pay.');
+      return;
+    }
+    setPayrollSaving(true);
+    const { error: saveError } = await supabase.rpc('finance_create_staff_payroll', {
+      p_staff_id: selectedStaffId,
+      p_pay_period: `${payPeriod}-01`,
+      p_base_pay: Number(basePay),
+      p_allowances: Number(allowances || 0),
+      p_deductions: deductionsValue,
+    });
+    if (saveError) {
+      setPayrollError(saveError.message);
+    } else {
+      setPayrollMessage('Payroll record created. Print the payslip, then record payment only after the transfer is verified.');
+      setBasePay('');
+      setAllowances('0');
+      setDeductions('0');
+      await loadData();
+    }
+    setPayrollSaving(false);
+  }
+
+  async function markPayrollPaid(payrollId: string) {
+    setPayrollError('');
+    setPayrollMessage('');
+    if (paymentMethod !== 'CASH' && !paymentReference.trim()) {
+      setPayrollError('Enter the verified transfer reference before recording payment.');
+      return;
+    }
+    const { error: paidError } = await supabase.rpc('finance_mark_staff_payroll_paid', {
+      p_payroll_id: payrollId,
+      p_payment_method: paymentMethod,
+      p_transaction_reference: paymentReference.trim() || null,
+    });
+    if (paidError) {
+      setPayrollError(paidError.message);
+      return;
+    }
+    setPaymentReference('');
+    setPayrollMessage('Verified salary payment recorded.');
+    await loadData();
+  }
+
   function exportFarmerStatement() {
     const headers = [
       'Farmer Code', 'Farmer Name', 'Egg Earnings', 'Approved Expenses',
@@ -330,6 +407,9 @@ export default function FinanceDashboardPage() {
   }
 
   const printFarmer = summaries.find((row) => row.farmer_id === printFarmerId) || null;
+  const printPayroll = staffPayroll.find((row) => row.id === printPayrollId) || null;
+  const printFarmerIdentity = printIdentity?.kind === 'farmer' ? farmers.find((row) => row.id === printIdentity.id) || null : null;
+  const printStaffIdentity = printIdentity?.kind === 'staff' ? staff.find((row) => row.id === printIdentity.id) || null : null;
   const withinStatementRange = (value: string) => value >= statementFrom && value <= statementTo;
   const printProcurements = printFarmerId
     ? procurements.filter((row) => row.farmer_id === printFarmerId && row.status === 'APPROVED' && withinStatementRange(row.collection_date))
@@ -360,16 +440,16 @@ export default function FinanceDashboardPage() {
     <style jsx global>{`
       @media print {
         body * { visibility: hidden !important; }
-        .farmer-print-report, .farmer-print-report * { visibility: visible !important; }
-        .farmer-print-report { display: block !important; position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: #111827; }
+        .farmer-print-report, .farmer-print-report *, .payroll-print-report, .payroll-print-report *, .id-card-print-report, .id-card-print-report * { visibility: visible !important; }
+        .farmer-print-report, .payroll-print-report { display: block !important; position: absolute; inset: 0; width: 100%; padding: 24px; background: white; color: #111827; }
         @page { size: A4; margin: 12mm; }
-        .farmer-print-report table { width: 100%; border-collapse: collapse; }
-        .farmer-print-report th, .farmer-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
-        .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
-        .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
+        .farmer-print-report table, .payroll-print-report table { width: 100%; border-collapse: collapse; }
+        .farmer-print-report th, .farmer-print-report td, .payroll-print-report th, .payroll-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
+        .payroll-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }\n        .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .payroll-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }\n        .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
+        .payroll-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }\n        .id-card-print-report { display: block !important; position: absolute; inset: 0; }\n        .farmer-id-card, .staff-id-card { width: 86mm; height: 54mm; border: 2px solid #14532d; border-radius: 12px; padding: 9mm; margin: 12mm auto; color: #111827; }\n        .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
       }
-      @media screen { .farmer-print-report { display: none; } }
+      @media screen { .farmer-print-report, .payroll-print-report, .id-card-print-report { display: none; } }
     `}</style>
     {printFarmer && (
       <div className="farmer-print-report">
