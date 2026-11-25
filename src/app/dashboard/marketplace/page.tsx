@@ -98,6 +98,15 @@ const modules = [
   },
   {
     number: '06',
+    title: 'Skills & Training',
+    description:
+      'Publish farmer learning resources, video lessons, and scheduled online training sessions.',
+    href: '/dashboard/marketplace/training',
+    status: 'Available',
+    available: true,
+  },
+  {
+    number: '07',
     title: 'Marketplace Reports',
     description:
       'View marketplace performance, seller activity, sales, and operational reports.',
