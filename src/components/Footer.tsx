@@ -127,6 +127,10 @@ export default function Footer() {
               <Link href="/contact" style={linkStyle}>
                 Contact
               </Link>
+
+              <Link href="/skills-training" style={linkStyle}>
+                Skills &amp; Training
+              </Link>
             </div>
           </div>
 
