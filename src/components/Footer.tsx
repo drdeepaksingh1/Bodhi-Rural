@@ -246,4 +246,3 @@ const linkStyle = {
   fontSize: '14px',
   opacity: 0.9,
 };
-
