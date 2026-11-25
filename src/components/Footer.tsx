@@ -180,13 +180,18 @@ export default function Footer() {
               <br />
               Email:{' '}
               <a
-                href="mailto:ceo@brlps.co.in"
+                href="mailto:bodhirural@gmail.com"
                 style={{
                   color: '#ffffff',
                   textDecoration: 'none',
                 }}
               >
-                ceo@brlps.co.in
+                bodhirural@gmail.com
+              </a>
+              <br />
+              Website:{' '}
+              <a href="https://www.brlps.co.in" style={{ color: '#ffffff', textDecoration: 'none' }}>
+                www.brlps.co.in
               </a>
             </p>
           </div>
@@ -241,3 +246,4 @@ const linkStyle = {
   fontSize: '14px',
   opacity: 0.9,
 };
+
