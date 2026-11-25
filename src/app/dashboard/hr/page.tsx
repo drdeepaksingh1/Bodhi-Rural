@@ -336,22 +336,24 @@ export default async function HRDashboard() {
 
             </Link>
 
-            <div className="rounded-2xl border bg-white p-6 shadow-sm">
+            <Link
+              href="/staff/admin/applications"
+              className="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
 
               <h3 className="text-lg font-bold text-slate-900">
-                HR Applications
+                Staff Applications
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Staff recruitment and application workflow
-                can be connected here.
+                Review email-verified career applications, record HR decisions and forward approved candidates to CEO review.
               </p>
 
-              <div className="mt-4 font-semibold text-slate-400">
-                HR Workflow →
+              <div className="mt-4 font-semibold text-emerald-700">
+                Open HR Review Queue →
               </div>
 
-            </div>
+            </Link>
 
           </div>
 
