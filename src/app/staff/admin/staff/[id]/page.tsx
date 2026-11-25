@@ -560,7 +560,7 @@ export default function StaffProfilePage() {
           </p>
 
           <p className="mt-1 text-xs text-slate-500">
-            ceo@brlps.co.in · www.brlps.co.in
+            bodhirural@gmail.com · www.brlps.co.in
           </p>
 
         </footer>

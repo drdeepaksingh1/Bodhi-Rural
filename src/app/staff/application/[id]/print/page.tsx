@@ -80,7 +80,7 @@ const WEBSITE =
   'www.brlps.co.in';
 
 const EMAIL =
-  'ceo@brlps.co.in';
+  'bodhirural@gmail.com';
 
 const LOGO =
   '/branding/bodhi-rural-logo.png';

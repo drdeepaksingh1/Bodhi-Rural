@@ -40,7 +40,8 @@ const valueChain = [
 const companyDetails = [
   ['Legal name', 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED'],
   ['Registered office', 'Islampur, Nalanda, Bihar – 801303'],
-  ['Email', 'ceo@brlps.co.in'],
+  ['Email', 'bodhirural@gmail.com'],
+  ['Website', 'www.brlps.co.in'],
 ];
 
 export default function Page() {
@@ -133,7 +134,10 @@ export default function Page() {
                 {companyDetails.map(([label, value]) => (
                   <div className="br-about-detail" key={label}>
                     <dt>{label}</dt>
-                    <dd>{label === 'Email' ? <a href="mailto:ceo@brlps.co.in">{value}</a> : value}</dd>
+                    <dd>
+                      {label === 'Email' ? <a href="mailto:bodhirural@gmail.com">{value}</a> :
+                        label === 'Website' ? <a href="https://www.brlps.co.in">{value}</a> : value}
+                    </dd>
                   </div>
                 ))}
               </dl>
