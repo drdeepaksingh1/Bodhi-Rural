@@ -40,7 +40,7 @@ const valueChain = [
 const companyDetails = [
   ['Legal name', 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED'],
   ['Registered office', 'Islampur, Nalanda, Bihar – 801303'],
-  ['Email', 'bodhirural@gmail.com'],
+  ['Email', 'bodhirural@gmail.com · ceo@brlps.co.in'],
   ['Website', 'www.brlps.co.in'],
 ];
 
@@ -135,7 +135,7 @@ export default function Page() {
                   <div className="br-about-detail" key={label}>
                     <dt>{label}</dt>
                     <dd>
-                      {label === 'Email' ? <a href="mailto:bodhirural@gmail.com">{value}</a> :
+                      {label === 'Email' ? <a href="mailto:bodhirural@gmail.com,ceo@brlps.co.in">{value}</a> :
                         label === 'Website' ? <a href="https://www.brlps.co.in">{value}</a> : value}
                     </dd>
                   </div>
