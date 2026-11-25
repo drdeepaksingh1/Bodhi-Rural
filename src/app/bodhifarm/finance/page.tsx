@@ -447,9 +447,14 @@ export default function FinanceDashboardPage() {
         @page { size: A4; margin: 12mm; }
         .farmer-print-report table, .payroll-print-report table { width: 100%; border-collapse: collapse; }
         .farmer-print-report th, .farmer-print-report td, .payroll-print-report th, .payroll-print-report td { border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-align: left; }
-        .payroll-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }\n        .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .payroll-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }\n        .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
-        .payroll-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }\n        .id-card-print-report { display: block !important; position: absolute; inset: 0; }\n        .farmer-id-card, .staff-id-card { width: 86mm; height: 54mm; border: 2px solid #14532d; border-radius: 12px; padding: 9mm; margin: 12mm auto; color: #111827; }\n        .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
+        .payroll-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .farmer-print-report .print-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .payroll-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
+        .farmer-print-report .print-metric { border: 1px solid #d1d5db; padding: 8px; }
+        .payroll-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
+        .id-card-print-report { display: block !important; position: absolute; inset: 0; }
+        .farmer-id-card, .staff-id-card { width: 86mm; height: 54mm; border: 2px solid #14532d; border-radius: 12px; padding: 9mm; margin: 12mm auto; color: #111827; }
+        .farmer-print-report .print-section { margin-top: 18px; page-break-inside: avoid; }
       }
       @media screen { .farmer-print-report, .payroll-print-report, .id-card-print-report { display: none; } }
     `}</style>
@@ -652,7 +657,7 @@ export default function FinanceDashboardPage() {
                 <table className="min-w-full text-sm">
                   <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Seller</th><th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Order value</th><th className="px-3 py-2 text-right">Paid order value</th><th className="px-3 py-2 text-right">Unpaid order value</th><th className="px-3 py-2">Statement</th></tr></thead>
                   <tbody>
-                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintSellerId(seller.seller_id)} className="rounded border px-2 py-1 text-xs font-semibold">Print statement</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
+                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintSellerId(seller.seller_id)} className="rounded border px-2 py-1 text-xs font-semibold">Print statement</button></td></tr>) : <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
                   </tbody>
                 </table>
                 <p className="mt-2 text-xs text-slate-500">Seller amounts are marketplace order values, not payout confirmations. A seller settlement is only complete after the transfer is verified and recorded.</p>
