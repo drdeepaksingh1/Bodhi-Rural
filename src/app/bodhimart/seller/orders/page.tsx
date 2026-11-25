@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../../language';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../../../../lib/supabase/client';
@@ -255,19 +256,19 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
     <main className="orders-page">
       <div className="orders-shell">
         <nav className="breadcrumbs" aria-label="Breadcrumb">
-          <Link href="/bodhimart/seller/dashboard">Seller dashboard</Link>
+          <Link href="/bodhimart/seller/dashboard"><Copy en="Seller dashboard" hi="विक्रेता डैशबोर्ड" /></Link>
           <span aria-hidden="true">/</span>
-          <span>Orders</span>
+          <span><Copy en="Orders" hi="ऑर्डर" /></span>
         </nav>
 
         <header className="page-header">
           <div>
             <p className="eyebrow">BODHIMART SELLER CENTER</p>
-            <h1>Customer orders</h1>
+            <h1><Copy en="Customer orders" hi="ग्राहकों के ऑर्डर" /></h1>
             <p>{seller ? seller.shop_name : 'View orders placed for your products.'}</p>
           </div>
           <div className="header-actions">
-            <Link className="secondary" href="/bodhimart/seller/dashboard">Dashboard</Link>
+            <Link className="secondary" href="/bodhimart/seller/dashboard"><Copy en="Dashboard" hi="डैशबोर्ड" /></Link>
             <button className="primary" type="button" onClick={() => void loadOrders()} disabled={loading}>
               {loading ? 'Refreshing…' : '↻ Refresh'}
             </button>
@@ -278,29 +279,29 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
 
         {error ? (
           <section className="message-card" role="alert">
-            <h2>Orders unavailable</h2>
+            <h2><Copy en="Orders unavailable" hi="ऑर्डर उपलब्ध नहीं हैं" /></h2>
             <p>{error}</p>
             <div className="error-actions">
-              <button className="primary" type="button" onClick={() => void loadOrders()}>Try again</button>
-              {needsLogin && <Link className="secondary" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard">Sign in</Link>}
+              <button className="primary" type="button" onClick={() => void loadOrders()}><Copy en="Try again" hi="फिर कोशिश करें" /></button>
+              {needsLogin && <Link className="secondary" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard"><Copy en="Sign in" hi="साइन इन करें" /></Link>}
             </div>
           </section>
         ) : loading ? (
           <section className="message-card" aria-live="polite">
-            <p>Loading your orders…</p>
+            <p><Copy en="Loading your orders…" hi="आपके ऑर्डर लोड हो रहे हैं…" /></p>
           </section>
         ) : orders.length === 0 ? (
           <section className="message-card">
             <div className="empty-icon" aria-hidden="true">🛍️</div>
-            <h2>No orders yet</h2>
+            <h2><Copy en="No orders yet" hi="अभी कोई ऑर्डर नहीं है" /></h2>
             <p>When customers order your products, they will appear here.</p>
-            <Link className="secondary" href="/bodhimart/seller/inventory">Check inventory</Link>
+            <Link className="secondary" href="/bodhimart/seller/inventory"><Copy en="Check inventory" hi="स्टॉक देखें" /></Link>
           </section>
         ) : (
           <>
             <section className="filters" aria-label="Filter orders">
               <label>
-                <span>Search orders</span>
+                <span><Copy en="Search orders" hi="ऑर्डर खोजें" /></span>
                 <input
                   type="search"
                   value={search}
@@ -309,9 +310,9 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
                 />
               </label>
               <label>
-                <span>Order status</span>
+                <span><Copy en="Order status" hi="ऑर्डर की स्थिति" /></span>
                 <select value={filter} onChange={(event) => setFilter(event.target.value)}>
-                  <option value="ALL">All statuses</option>
+                  <option value="ALL"><Copy en="All statuses" hi="सभी स्थितियाँ" /></option>
                   {statuses.map((status) => <option key={status} value={status}>{readable(status)}</option>)}
                 </select>
               </label>
@@ -320,7 +321,7 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
 
             {filteredOrders.length === 0 ? (
               <section className="message-card">
-                <h2>No matching orders</h2>
+                <h2><Copy en="No matching orders" hi="कोई मिलता-जुलता ऑर्डर नहीं मिला" /></h2>
                 <p>Try a different search or status filter.</p>
               </section>
 
@@ -400,14 +401,14 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
                       </div>
 
                       <div className="order-meta">
-                        <div><span>Fulfilment</span><strong>{readable(market?.delivery_method)}</strong></div>
-                        <div><span>Items subtotal</span><strong>{money(order.subtotal)}</strong></div>
-                        <div><span>Seller amount</span><strong>{money(order.seller_amount)}</strong></div>
-                        <div><span>Order total</span><strong>{money(market?.total_amount)}</strong></div>
+                        <div><span><Copy en="Fulfilment" hi="ऑर्डर पूरा करने का तरीका" /></span><strong>{readable(market?.delivery_method)}</strong></div>
+                        <div><span><Copy en="Items subtotal" hi="सामान का उप-योग" /></span><strong>{money(order.subtotal)}</strong></div>
+                        <div><span><Copy en="Seller amount" hi="विक्रेता की राशि" /></span><strong>{money(order.seller_amount)}</strong></div>
+                        <div><span><Copy en="Order total" hi="ऑर्डर का कुल" /></span><strong>{money(market?.total_amount)}</strong></div>
                       </div>
 
                       <div className="items">
-                        <h3>Items</h3>
+                        <h3><Copy en="Items" hi="सामान" /></h3>
                         {items.length ? (
                           <ul>
                             {items.map((item, index) => (
@@ -425,7 +426,7 @@ const statuses = useMemo(() => orders.map((order) => order.status).filter((statu
 
                       {market?.customer_notes && (
                         <div className="seller-note">
-                          <strong>Note for seller</strong>
+                          <strong><Copy en="Note for seller" hi="विक्रेता के लिए संदेश" /></strong>
                           <p>{market.customer_notes}</p>
                         </div>
                       )}
