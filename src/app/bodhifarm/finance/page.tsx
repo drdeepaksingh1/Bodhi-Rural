@@ -78,6 +78,7 @@ export default function FinanceDashboardPage() {
   const [paymentMethod, setPaymentMethod] = useState('NEFT');
   const [paymentReference, setPaymentReference] = useState('');
   const [printPayrollId, setPrintPayrollId] = useState<string | null>(null);
+  const [printSellerId, setPrintSellerId] = useState<string | null>(null);
   const [printIdentity, setPrintIdentity] = useState<{ kind: 'farmer' | 'staff'; id: string } | null>(null);
   const [payrollMessage, setPayrollMessage] = useState('');
   const [payrollError, setPayrollError] = useState('');
@@ -166,15 +167,15 @@ export default function FinanceDashboardPage() {
   }, [loadData]);
 
   useEffect(() => {
-    if (!printFarmerId && !printPayrollId && !printIdentity) return;
+    if (!printFarmerId && !printPayrollId && !printSellerId && !printIdentity) return;
     const timer = window.setTimeout(() => window.print(), 300);
-    const clearPrintSelection = () => { setPrintFarmerId(null); setPrintPayrollId(null); setPrintIdentity(null); };
+    const clearPrintSelection = () => { setPrintFarmerId(null); setPrintPayrollId(null); setPrintSellerId(null); setPrintIdentity(null); };
     window.addEventListener('afterprint', clearPrintSelection);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('afterprint', clearPrintSelection);
     };
-  }, [printFarmerId, printPayrollId, printIdentity]);
+  }, [printFarmerId, printPayrollId, printSellerId, printIdentity]);
 
   const farmerMap = useMemo(() => {
     const map = new Map<string, Farmer>();
@@ -408,6 +409,7 @@ export default function FinanceDashboardPage() {
 
   const printFarmer = summaries.find((row) => row.farmer_id === printFarmerId) || null;
   const printPayroll = staffPayroll.find((row) => row.id === printPayrollId) || null;
+  const printSeller = marketplaceSellers.find((row) => row.seller_id === printSellerId) || null;
   const printFarmerIdentity = printIdentity?.kind === 'farmer' ? farmers.find((row) => row.id === printIdentity.id) || null : null;
   const printStaffIdentity = printIdentity?.kind === 'staff' ? staff.find((row) => row.id === printIdentity.id) || null : null;
   const withinStatementRange = (value: string) => value >= statementFrom && value <= statementTo;
@@ -539,6 +541,26 @@ export default function FinanceDashboardPage() {
         <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>System-generated payroll record. This payslip is not proof of a bank transfer unless the status is Paid and the transfer reference has been verified.</footer>
       </div>
     )}
+    {printSeller && (
+      <div className="payroll-print-report">
+        <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHIMART</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Seller Order-Value Statement</h1>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Generated on {new Date().toLocaleDateString('en-IN')} · All recorded order history</div>
+        </header>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Seller Details</h2><div className="print-grid">
+          <div className="print-metric"><b>Seller / Shop</b><div>{printSeller.seller_name}</div></div>
+          <div className="print-metric"><b>Seller ID</b><div>{printSeller.seller_id}</div></div>
+          <div className="print-metric"><b>Order count</b><div>{Number(printSeller.seller_order_count).toLocaleString('en-IN')}</div></div>
+        </div></section>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Order Values</h2><table><tbody>
+          <tr><th>Total seller order value</th><td>{money(printSeller.seller_order_value)}</td></tr>
+          <tr><th>Order value for buyer-paid orders</th><td>{money(printSeller.paid_order_value)}</td></tr>
+          <tr><th>Order value for pending buyer payments</th><td>{money(printSeller.unpaid_order_value)}</td></tr>
+        </tbody></table></section>
+        <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>This is an order-value statement, not a tax invoice or proof that a seller payout was made. Reconcile it with order details and bank settlements.</footer>
+      </div>
+    )}
     {(printFarmerIdentity || printStaffIdentity) && (
       <div className="id-card-print-report">
         {printFarmerIdentity && <article className="farmer-id-card"><div style={{ color: '#15803d', fontWeight: 800, letterSpacing: 1 }}>BODHI RURAL · FARMER</div><h1 style={{ marginTop: 14, fontSize: 20, fontWeight: 800 }}>{printFarmerIdentity.full_name}</h1><p style={{ marginTop: 8, fontSize: 12 }}>Farmer ID: <b>{printFarmerIdentity.farmer_id}</b></p><p style={{ marginTop: 12, fontSize: 10, color: '#4b5563' }}>Identity card · Verify against the registered farmer record.</p></article>}
@@ -628,9 +650,9 @@ export default function FinanceDashboardPage() {
               <div className="mt-6 overflow-x-auto">
                 <h3 className="mb-3 font-bold text-slate-900">Seller order activity</h3>
                 <table className="min-w-full text-sm">
-                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Seller</th><th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Order value</th><th className="px-3 py-2 text-right">Paid order value</th><th className="px-3 py-2 text-right">Unpaid order value</th></tr></thead>
+                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Seller</th><th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Order value</th><th className="px-3 py-2 text-right">Paid order value</th><th className="px-3 py-2 text-right">Unpaid order value</th><th className="px-3 py-2">Statement</th></tr></thead>
                   <tbody>
-                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td></tr>) : <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
+                    {marketplaceSellers.length ? marketplaceSellers.map((seller) => <tr key={seller.seller_id} className="border-b"><td className="px-3 py-3 font-medium">{seller.seller_name}</td><td className="px-3 py-3 text-right">{Number(seller.seller_order_count).toLocaleString('en-IN')}</td><td className="px-3 py-3 text-right">{money(seller.seller_order_value)}</td><td className="px-3 py-3 text-right text-green-700">{money(seller.paid_order_value)}</td><td className="px-3 py-3 text-right text-amber-700">{money(seller.unpaid_order_value)}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintSellerId(seller.seller_id)} className="rounded border px-2 py-1 text-xs font-semibold">Print statement</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">No seller orders recorded yet.</td></tr>}
                   </tbody>
                 </table>
                 <p className="mt-2 text-xs text-slate-500">Seller amounts are marketplace order values, not payout confirmations. A seller settlement is only complete after the transfer is verified and recorded.</p>
