@@ -333,7 +333,6 @@ export default function SiteHeader() {
         }
 
         @media (max-width: 600px) {
-
           .container {
             padding-left: 15px;
             padding-right: 15px;
