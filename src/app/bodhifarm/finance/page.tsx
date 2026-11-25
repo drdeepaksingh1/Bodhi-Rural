@@ -513,6 +513,38 @@ export default function FinanceDashboardPage() {
         <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>BodhiFarm · System-generated financial statement · Verify against the official farmer ledger before payment or settlement.</footer>
       </div>
     )}
+    {printPayroll && (
+      <div className="payroll-print-report">
+        <header style={{ borderBottom: '3px solid #15803d', paddingBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', letterSpacing: 2 }}>BODHI RURAL</div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0' }}>Staff Payslip</h1>
+          <div style={{ fontSize: 11, color: '#4b5563' }}>Pay period: {new Date(`${printPayroll.pay_period}T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })} · Generated {new Date().toLocaleDateString('en-IN')}</div>
+        </header>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Staff Details</h2>
+          <div className="print-grid">
+            <div className="print-metric"><b>Staff ID</b><div>{printPayroll.staff_code}</div></div>
+            <div className="print-metric"><b>Name</b><div>{printPayroll.full_name}</div></div>
+            <div className="print-metric"><b>Department / Designation</b><div>{printPayroll.department || '—'} · {printPayroll.designation || '—'}</div></div>
+          </div>
+        </section>
+        <section className="print-section"><h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Earnings and Deductions</h2>
+          <table><tbody>
+            <tr><th>Base pay</th><td>{money(printPayroll.base_pay)}</td></tr>
+            <tr><th>Allowances</th><td>{money(printPayroll.allowances)}</td></tr>
+            <tr><th>Deductions</th><td>{money(printPayroll.deductions)}</td></tr>
+            <tr><th>Net pay</th><td><b>{money(printPayroll.net_pay)}</b></td></tr>
+            <tr><th>Payment status</th><td>{printPayroll.status === 'PAID' ? `Paid via ${printPayroll.payment_method || '—'} · Ref ${printPayroll.transaction_reference || '—'}` : 'Pending'}</td></tr>
+          </tbody></table>
+        </section>
+        <footer style={{ marginTop: 24, borderTop: '1px solid #9ca3af', paddingTop: 10, fontSize: 10, color: '#4b5563' }}>System-generated payroll record. This payslip is not proof of a bank transfer unless the status is Paid and the transfer reference has been verified.</footer>
+      </div>
+    )}
+    {(printFarmerIdentity || printStaffIdentity) && (
+      <div className="id-card-print-report">
+        {printFarmerIdentity && <article className="farmer-id-card"><div style={{ color: '#15803d', fontWeight: 800, letterSpacing: 1 }}>BODHI RURAL · FARMER</div><h1 style={{ marginTop: 14, fontSize: 20, fontWeight: 800 }}>{printFarmerIdentity.full_name}</h1><p style={{ marginTop: 8, fontSize: 12 }}>Farmer ID: <b>{printFarmerIdentity.farmer_id}</b></p><p style={{ marginTop: 12, fontSize: 10, color: '#4b5563' }}>Identity card · Verify against the registered farmer record.</p></article>}
+        {printStaffIdentity && <article className="staff-id-card"><div style={{ color: '#15803d', fontWeight: 800, letterSpacing: 1 }}>BODHI RURAL · STAFF</div><h1 style={{ marginTop: 14, fontSize: 20, fontWeight: 800 }}>{printStaffIdentity.full_name}</h1><p style={{ marginTop: 8, fontSize: 12 }}>Staff ID: <b>{printStaffIdentity.staff_code}</b></p><p style={{ marginTop: 6, fontSize: 11 }}>{printStaffIdentity.department || 'Team'} · {printStaffIdentity.designation || 'Staff'}</p><p style={{ marginTop: 12, fontSize: 10, color: '#4b5563' }}>Identity card · Return if found to Bodhi Rural.</p></article>}
+      </div>
+    )}
     <main className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -607,6 +639,38 @@ export default function FinanceDashboardPage() {
                 <h3 className="font-bold text-sky-950">Online payments and settlements</h3>
                 <p className="mt-1 text-sm text-sky-900">The current checkout records manual / pay-on-delivery payments. Online UPI, cards and netbanking, plus automated farmer, seller and staff payouts, need an activated payment provider and secured production credentials before these can be enabled.</p>
                 <p className="mt-2 text-xs text-sky-800">No card, UPI PIN, netbanking password or bank-account credentials are collected by this dashboard.</p>
+              </div>
+            </section>
+
+            <section className="mt-6 rounded-xl border bg-white p-5 shadow-sm">
+              <div className="mb-4"><h2 className="text-xl font-bold text-slate-900">Staff payroll, payslips & identity cards</h2><p className="mt-1 text-sm text-slate-600">Create monthly payroll records, print payslips, and print basic farmer or staff ID cards. Record a salary as paid only after verifying the transfer.</p></div>
+              {payrollMessage && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{payrollMessage}</div>}
+              {payrollError && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{payrollError}</div>}
+              <form onSubmit={createPayroll} className="grid gap-4 md:grid-cols-5">
+                <label className="text-xs font-semibold text-slate-600">Staff member<select value={selectedStaffId} onChange={(e) => setSelectedStaffId(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select active staff</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.staff_code} · {person.full_name}</option>)}</select></label>
+                <label className="text-xs font-semibold text-slate-600">Pay month<input type="month" value={payPeriod} onChange={(e) => setPayPeriod(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required /></label>
+                <label className="text-xs font-semibold text-slate-600">Base pay (₹)<input type="number" min="0" step="0.01" value={basePay} onChange={(e) => setBasePay(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" required /></label>
+                <label className="text-xs font-semibold text-slate-600">Allowances (₹)<input type="number" min="0" step="0.01" value={allowances} onChange={(e) => setAllowances(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+                <label className="text-xs font-semibold text-slate-600">Deductions (₹)<input type="number" min="0" step="0.01" value={deductions} onChange={(e) => setDeductions(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+                <div className="md:col-span-5"><button type="submit" disabled={payrollSaving} className="rounded-lg bg-green-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{payrollSaving ? 'Saving…' : 'Create payroll record'}</button></div>
+              </form>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-600">Farmer ID card<select id="farmer-card-select" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select farmer</option>{farmers.map((person) => <option key={person.id} value={person.id}>{person.farmer_id} · {person.full_name}</option>)}</select></label>
+                <label className="text-xs font-semibold text-slate-600">Staff ID card<select id="staff-card-select" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Select staff</option>{staff.map((person) => <option key={person.id} value={person.id}>{person.staff_code} · {person.full_name}</option>)}</select></label>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => { const el = document.getElementById('farmer-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'farmer', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print farmer ID card</button>
+                <button type="button" onClick={() => { const el = document.getElementById('staff-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'staff', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print staff ID card</button>
+                <a href="/bodhimart/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Buyer order receipts</a>
+                <a href="/bodhifarm/seller/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Seller orders</a>
+              </div>
+              <div className="mt-5 overflow-x-auto">
+                <h3 className="mb-2 font-bold text-slate-900">Monthly payroll records</h3>
+                <p className="mb-3 text-xs text-slate-500">Payslips are internal payroll records, not proof of transfer. Online salary payment is not enabled; record payment only after confirming it through your bank.</p>
+                <table className="min-w-full text-sm">
+                  <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-3 py-2">Pay period · Staff</th><th className="px-3 py-2 text-right">Base + allowances</th><th className="px-3 py-2 text-right">Deductions</th><th className="px-3 py-2 text-right">Net pay</th><th className="px-3 py-2">Status / reference</th><th className="px-3 py-2">Actions</th></tr></thead>
+                  <tbody>{staffPayroll.length ? staffPayroll.map((record) => <tr key={record.id} className="border-b"><td className="px-3 py-3"><b>{record.staff_code} · {record.full_name}</b><div className="text-xs text-slate-500">{new Date(`${record.pay_period}T00:00:00`).toLocaleDateString('en-IN',{month:'long',year:'numeric'})} · {record.department || '—'}</div></td><td className="px-3 py-3 text-right">{money(Number(record.base_pay)+Number(record.allowances))}</td><td className="px-3 py-3 text-right">{money(record.deductions)}</td><td className="px-3 py-3 text-right font-semibold">{money(record.net_pay)}</td><td className="px-3 py-3">{record.status}{record.transaction_reference && <div className="text-xs text-slate-500">{record.payment_method} · {record.transaction_reference}</div>}</td><td className="px-3 py-3"><button type="button" onClick={() => setPrintPayrollId(record.id)} className="rounded border px-2 py-1 text-xs font-semibold">Print payslip</button>{record.status === 'PENDING' && <div className="mt-2 flex flex-wrap gap-1"><select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="rounded border px-2 py-1 text-xs"><option>NEFT</option><option>RTGS</option><option>IMPS</option><option>UPI</option><option>CHEQUE</option><option>CASH</option><option>OTHER</option></select><input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} placeholder="Verified ref." className="w-28 rounded border px-2 py-1 text-xs" /><button type="button" onClick={() => void markPayrollPaid(record.id)} className="rounded bg-green-700 px-2 py-1 text-xs font-semibold text-white">Record paid</button></div>}</td></tr>) : <tr><td colSpan={6} className="px-3 py-8 text-center text-slate-500">No payroll records yet.</td></tr>}</tbody>
+                </table>
               </div>
             </section>
 
