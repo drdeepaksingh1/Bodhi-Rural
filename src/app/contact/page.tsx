@@ -86,7 +86,7 @@ export default function Page() {
               <div className="br-contact-methods">
                 <div className="br-contact-method">
                   <small>Email</small>
-                  <a href="mailto:bodhirural@gmail.com">bodhirural@gmail.com</a>
+                  <a href="mailto:bodhirural@gmail.com,ceo@brlps.co.in">bodhirural@gmail.com · ceo@brlps.co.in</a>
                 </div>
                 <div className="br-contact-method">
                   <small>Phone</small>

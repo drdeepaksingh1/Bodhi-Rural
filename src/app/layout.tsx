@@ -11,7 +11,7 @@ const organizationSchema = {
   legalName: 'BODHI RURAL LIVELIHOOD & AGRI PRIVATE LIMITED',
   url: 'https://www.brlps.co.in',
   logo: 'https://www.brlps.co.in/branding/bodhi-rural-logo.png',
-  email: 'bodhirural@gmail.com',
+  email: ['bodhirural@gmail.com', 'ceo@brlps.co.in'],
   address: {
     '@type': 'PostalAddress',
     streetAddress: 'Islampur',
