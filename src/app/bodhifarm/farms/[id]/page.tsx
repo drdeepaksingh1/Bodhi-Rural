@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/client';
+import FarmActivityTracker from '../../../../components/bodhifarm/FarmActivityTracker';
 
 type Farm = {
   id: string;
@@ -90,6 +91,8 @@ export default function Farm360Page() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const isPoultryActivity = /poultry|duckery/i.test(farm?.farm_type || '');
 
   async function loadFarm360() {
     if (!farmId) {
@@ -488,7 +491,7 @@ export default function Farm360Page() {
               </div>
 
               <p className="mt-2 text-sm text-slate-500">
-                Complete profile and operational view of the farm.
+                Activity-specific profile, input use, production, sales and operating costs.
               </p>
 
             </div>
@@ -504,12 +507,14 @@ export default function Farm360Page() {
                 </Link>
               )}
 
-              <Link
-                href="/bodhifarm"
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Bird Batch Management
-              </Link>
+              {isPoultryActivity && (
+                <Link
+                  href="/bodhifarm"
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Poultry & duck tools
+                </Link>
+              )}
 
               <button
                 onClick={loadFarm360}
@@ -575,25 +580,17 @@ export default function Farm360Page() {
               value={farm.land_area != null ? `${farm.land_area} ${farm.land_unit || 'acres'}` : 'Not recorded'}
             />
 
-            <Summary
-              label="Live Birds"
-              value={totalLiveBirds.toLocaleString('en-IN')}
-            />
-
-            <Summary
-              label="Mortality"
-              value={totalMortality.toLocaleString('en-IN')}
-            />
-
-            <Summary
-              label="Batches"
-              value={batches.length}
-            />
+            {isPoultryActivity && <>
+              <Summary label="Live Birds" value={totalLiveBirds.toLocaleString('en-IN')} />
+              <Summary label="Mortality" value={totalMortality.toLocaleString('en-IN')} />
+              <Summary label="Batches" value={batches.length} />
+            </>}
 
           </div>
 
         </section>
 
+        {isPoultryActivity && <>
         {/* KPI */}
 
         <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -627,6 +624,8 @@ export default function Farm360Page() {
           />
 
         </section>
+
+        </>}
 
         {/* FARMER */}
 
@@ -711,6 +710,9 @@ export default function Farm360Page() {
 
         </section>
 
+        <FarmActivityTracker farmId={farm.id} farmType={farm.farm_type || 'Other agriculture & allied activity'} />
+
+        {isPoultryActivity && <>
         {/* BIRD BATCHES */}
 
         <section className="mb-6 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -1092,6 +1094,7 @@ export default function Farm360Page() {
           </div>
 
         </section>
+        </>}
 
       </div>
     </main>
@@ -1197,4 +1200,3 @@ function EmptyState({
     </div>
   );
 }
-
