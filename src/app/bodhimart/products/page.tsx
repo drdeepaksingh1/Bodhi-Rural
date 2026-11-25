@@ -723,23 +723,7 @@ export default function BodhiMartProductsPage() {
                       ? "The current catalogue has no matching items. Matching products will appear here once sellers list them."
                       : "Try changing your search or category filter."}
               </p>
-              {products.length === 0 && (
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <Link
-                    href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard"
-                    className="rounded-lg bg-green-700 px-5 py-3 text-sm font-semibold text-white hover:bg-green-800"
-                  >
-                    Seller login
-                  </Link>
-                  <Link
-                    href="/bodhimart/seller/register"
-                    className="rounded-lg border border-green-700 px-5 py-3 text-sm font-semibold text-green-800 hover:bg-green-50"
-                  >
-                    Apply to sell
-                  </Link>
-                </div>
-              )}
-              {products.length > 0 && (search.trim() || category !== "ALL" || stockFilter !== "ALL") && (
+{products.length > 0 && (search.trim() || category !== "ALL" || stockFilter !== "ALL") && (
                 <button
                   type="button"
                   onClick={() => {
