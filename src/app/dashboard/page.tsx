@@ -172,6 +172,12 @@ function getNavigation(
     'MARKETPLACE_ADMIN',
   ];
 
+  const trainingManagementRoles: RoleCode[] = [
+    'SUPER_ADMIN',
+    'CEO',
+    'CORPORATE_ADMIN',
+  ];
+
   if (hasRole(roleCode, farmRoles)) {
     items.push({
       label: 'BodhiFarm',
@@ -214,6 +220,14 @@ function getNavigation(
       href: '/dashboard/marketplace',
       description:
         'Marketplace products, sellers, orders and inventory',
+    });
+  }
+
+  if (hasRole(roleCode, trainingManagementRoles)) {
+    items.push({
+      label: 'Skills & Training',
+      href: '/dashboard/marketplace/training',
+      description: 'Manage farmer video lessons and live training sessions',
     });
   }
 
