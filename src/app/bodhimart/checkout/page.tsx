@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy } from '../language';
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -200,23 +201,23 @@ export default function BodhiMartCheckoutPage() {
     } finally { setSubmitting(false); }
   }
 
-  if (loading) return <main className="min-h-screen bg-gray-50 p-12 text-center text-gray-600">Preparing checkout…</main>;
+  if (loading) return <main className="min-h-screen bg-gray-50 p-12 text-center text-gray-600"><Copy en="Preparing checkout…" hi="चेकआउट तैयार हो रहा है…" /></main>;
 
   if (order) return (
     <main className="min-h-screen bg-gray-50 px-4 py-16">
       <section className="mx-auto max-w-2xl rounded-2xl bg-white p-8 text-center shadow-sm">
         <div className="text-5xl text-green-700">✓</div>
-        <h1 className="mt-4 text-2xl font-bold">Order placed</h1>
-        <p className="mt-3 text-gray-600">Order number: <strong>{order.order_number}</strong></p>
+        <h1 className="mt-4 text-2xl font-bold"><Copy en="Order placed" hi="ऑर्डर हो गया" /></h1>
+        <p className="mt-3 text-gray-600"><Copy en="Order number:" hi="ऑर्डर संख्या:" /> <strong>{order.order_number}</strong></p>
         <p className="mt-2">Total: {money(order.total_amount)}</p>
         <p className="mt-3 text-sm text-amber-800">
           {order.delivery_method === "PICKUP" ? "Pay the seller when you collect your order." : "Pay the seller when your order is delivered."}
           {" "}Payment remains pending until an administrator confirms it was received.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href={`/bodhimart/orders/${order.order_id}`}>View / print summary</Link>
-          <Link className="inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/orders">View my orders</Link>
-          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/products">Continue shopping</Link>
+          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href={`/bodhimart/orders/${order.order_id}`}><Copy en="View / print summary" hi="सारांश देखें या प्रिंट करें" /></Link>
+          <Link className="inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/orders"><Copy en="View my orders" hi="मेरे ऑर्डर देखें" /></Link>
+          <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href="/bodhimart/products"><Copy en="Continue shopping" hi="खरीदारी जारी रखें" /></Link>
         </div>
       </section>
     </main>
@@ -224,9 +225,9 @@ export default function BodhiMartCheckoutPage() {
 
   if (!items.length) return (
     <main className="min-h-screen bg-gray-50 px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold">Your cart is empty</h1>
+      <h1 className="text-2xl font-bold"><Copy en="Your cart is empty" hi="आपकी टोकरी खाली है" /></h1>
       {error && <p className="mt-3 text-red-700">{error}</p>}
-      <Link className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 text-white" href="/bodhimart/cart">Return to cart</Link>
+      <Link className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 text-white" href="/bodhimart/cart"><Copy en="Return to cart" hi="टोकरी पर लौटें" /></Link>
     </main>
   );
 
@@ -235,46 +236,46 @@ export default function BodhiMartCheckoutPage() {
     <main className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-6xl">
         <Link href="/bodhimart/cart" className="text-sm font-semibold text-green-800 hover:underline">← Back to cart</Link>
-        <h1 className="mt-4 text-3xl font-bold text-gray-900">Checkout</h1>
-        <p className="mt-2 text-gray-600">Confirm delivery details and current prices.</p>
+        <h1 className="mt-4 text-3xl font-bold text-gray-900"><Copy en="Checkout" hi="चेकआउट" /></h1>
+        <p className="mt-2 text-gray-600"><Copy en="Confirm delivery details and current prices." hi="डिलीवरी की जानकारी और मौजूदा कीमतों की पुष्टि करें।" /></p>
         {error && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
         {invalidItems && <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Some items no longer meet the seller’s quantity, stock, or price requirements. Review your cart before ordering.</div>}
 
         <form onSubmit={(event) => void placeOrder(event)} className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <section className="space-y-6">
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold">Delivery method</h2>
+              <h2 className="text-lg font-bold"><Copy en="Delivery method" hi="डिलीवरी का तरीका" /></h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
-                  <span><strong>Standard delivery</strong><small className="mt-1 block text-gray-500">Pay the seller when the order is delivered. Current delivery charge: ₹0.</small></span>
+                  <span><strong><Copy en="Standard delivery" hi="सामान्य डिलीवरी" /></strong><small className="mt-1 block text-gray-500">Pay the seller when the order is delivered. Current delivery charge: ₹0.</small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "PICKUP"} onChange={() => setDeliveryMethod("PICKUP")} />
-                  <span><strong>Pickup</strong><small className="mt-1 block text-gray-500">Pay the seller when you collect the order.</small></span>
+                  <span><strong><Copy en="Pickup" hi="खुद ले जाएँ" /></strong><small className="mt-1 block text-gray-500">Pay the seller when you collect the order.</small></span>
                 </label>
               </div>
             </div>
 
             {deliveryMethod !== "PICKUP" && <div className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-lg font-bold">Delivery address</h2>
-                  <Link href="/bodhimart/addresses" className="text-sm font-semibold text-green-800 hover:underline">Manage saved addresses</Link>
+                  <h2 className="text-lg font-bold"><Copy en="Delivery address" hi="डिलीवरी का पता" /></h2>
+                  <Link href="/bodhimart/addresses" className="text-sm font-semibold text-green-800 hover:underline"><Copy en="Manage saved addresses" hi="सहेजे गए पते बदलें" /></Link>
                 </div>
               {addresses.length > 0 && <label className="mt-4 block text-sm font-medium">
-                Saved address
+                <Copy en="Saved address" hi="सहेजा गया पता" />
                 <select value={addressId} onChange={(event) => setAddressId(event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3">
                   {addresses.map((item) => <option key={item.id} value={item.id}>{(item.address_name || item.recipient_name) + " — " + item.address_line1}</option>)}
-                  <option value="NEW">Add a new address</option>
+                  <option value="NEW"><Copy en="Add a new address" hi="नया पता जोड़ें" /></option>
                 </select>
               </label>}
               {addressId === "NEW" ? <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">Recipient name<input required value={addressForm.recipient_name} onChange={(e) => setAddress("recipient_name", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">Mobile number<input required inputMode="tel" value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium sm:col-span-2">Address line 1<input required value={addressForm.address_line1} onChange={(e) => setAddress("address_line1", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">Address line 2<input value={addressForm.address_line2} onChange={(e) => setAddress("address_line2", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">Landmark<input value={addressForm.landmark} onChange={(e) => setAddress("landmark", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium">PIN code<input inputMode="numeric" value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="Recipient name" hi="प्राप्तकर्ता का नाम" /><input required value={addressForm.recipient_name} onChange={(e) => setAddress("recipient_name", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="Mobile number" hi="मोबाइल नंबर" /><input required inputMode="tel" value={addressForm.mobile} onChange={(e) => setAddress("mobile", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium sm:col-span-2"><Copy en="Address line 1" hi="पते की पहली पंक्ति" /><input required value={addressForm.address_line1} onChange={(e) => setAddress("address_line1", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="Address line 2" hi="पते की दूसरी पंक्ति" /><input value={addressForm.address_line2} onChange={(e) => setAddress("address_line2", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="Landmark" hi="नज़दीकी पहचान" /><input value={addressForm.landmark} onChange={(e) => setAddress("landmark", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="PIN code" hi="पिन कोड" /><input inputMode="numeric" value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
               </div> : selectedAddress && <div className="mt-4 rounded-xl bg-gray-50 p-4 text-sm">
                 <strong>{selectedAddress.recipient_name}</strong><div>{selectedAddress.mobile}</div><div>{selectedAddress.address_line1}</div>
                 {selectedAddress.address_line2 && <div>{selectedAddress.address_line2}</div>}
@@ -289,22 +290,22 @@ export default function BodhiMartCheckoutPage() {
           </section>
 
           <aside className="h-fit rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">Order summary</h2>
+            <h2 className="text-lg font-bold"><Copy en="Order summary" hi="ऑर्डर का सारांश" /></h2>
             <div className="mt-4 space-y-3">
               {items.map((item) => <div key={item.id} className="flex justify-between gap-4 text-sm">
                 <span>{item.product?.name || "Unavailable product"} × {item.quantity}</span>
                 <span>{money(Number(item.product?.selling_price || 0) * Number(item.quantity))}</span>
               </div>)}
-              <div className="flex justify-between border-t pt-3 text-sm"><span>Subtotal</span><span>{money(subtotal)}</span></div>
-              <div className="flex justify-between text-sm"><span>Tax</span><span>{money(tax)}</span></div>
-              <div className="flex justify-between text-sm"><span>Delivery</span><span>{money(0)}</span></div>
-              <div className="flex justify-between border-t pt-3 text-lg font-bold"><span>Total</span><span className="text-green-800">{money(total)}</span></div>
+              <div className="flex justify-between border-t pt-3 text-sm"><span><Copy en="Subtotal" hi="उप-योग" /></span><span>{money(subtotal)}</span></div>
+              <div className="flex justify-between text-sm"><span><Copy en="Tax" hi="कर" /></span><span>{money(tax)}</span></div>
+              <div className="flex justify-between text-sm"><span><Copy en="Delivery" hi="डिलीवरी" /></span><span>{money(0)}</span></div>
+              <div className="flex justify-between border-t pt-3 text-lg font-bold"><span><Copy en="Total" hi="कुल" /></span><span className="text-green-800">{money(total)}</span></div>
             </div>
             <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
               {deliveryMethod === "PICKUP" ? "Manual payment at pickup." : "Manual payment on delivery."} The order stays pending until BodhiMart confirms payment was received.
             </p>
             <button type="submit" disabled={submitting || invalidItems || !items.length} className="mt-5 w-full rounded-xl bg-green-700 px-5 py-3 font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600">
-              {submitting ? "Placing order…" : "Place order"}
+              {submitting ? <Copy en="Placing order…" hi="ऑर्डर भेजा जा रहा है…" /> : <Copy en="Place order" hi="ऑर्डर करें" />}
             </button>
           </aside>
         </form>
