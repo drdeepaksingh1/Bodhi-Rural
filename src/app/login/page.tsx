@@ -2,6 +2,7 @@
 'use client';
 
 import { FormEvent, Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
@@ -289,6 +290,18 @@ function LoginForm() {
           </button>
 
         </form>
+
+        {!isForgotPassword && !isBodhiMartLogin && (
+          <div className="mt-5 rounded-xl border border-green-100 bg-green-50 px-4 py-4 text-center">
+            <p className="text-sm text-gray-700">Are you a farmer?</p>
+            <Link
+              href="/farmer/register"
+              className="mt-1 inline-block text-sm font-bold text-green-800 underline underline-offset-4 hover:text-green-950"
+            >
+              Register as a farmer →
+            </Link>
+          </div>
+        )}
 
         {/* Back to login */}
         {isForgotPassword && (
