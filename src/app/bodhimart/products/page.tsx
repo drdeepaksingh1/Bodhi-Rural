@@ -749,6 +749,7 @@ export default function BodhiMartProductsPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Link href="/bodhimart/account" className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800"><Copy en="My account" hi="मेरा खाता" /></Link>
             <Link
               href="/bodhimart/orders"
               className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
