@@ -9,7 +9,10 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +34,7 @@ public final class MainActivity extends Activity {
     private enum Screen { HOME, FARM, MART, FARMER, FIELD_TEAM, MANAGEMENT, BUYER, SELLER, DELIVERY }
     private Screen screen = Screen.HOME;
     private boolean hindi;
+    private OnBackInvokedCallback backCallback;
 
     @Override
     public void onCreate(Bundle state) {
@@ -67,7 +71,22 @@ public final class MainActivity extends Activity {
         render();
     }
 
+    private void updateBackCallback() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        if (screen == Screen.HOME) {
+            if (backCallback != null) {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCallback);
+                backCallback = null;
+            }
+        } else if (backCallback == null) {
+            backCallback = () -> show(parentScreen());
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback);
+        }
+    }
+
     private void render() {
+        updateBackCallback();
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(CREAM);
@@ -105,25 +124,26 @@ public final class MainActivity extends Activity {
                 addButton(content, text("Management", "प्रबंधन"), true, () -> show(Screen.MANAGEMENT));
                 break;
             case MART:
+                addButton(content, text("Browse products without signing in", "बिना लॉग इन के उत्पाद देखें"), true,
+                    () -> openPage("/bodhimart/products"));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
-                addButton(content, text("Buyer", "खरीदार"), true, () -> show(Screen.BUYER));
-                addButton(content, text("Seller", "विक्रेता"), true, () -> show(Screen.SELLER));
-                addButton(content, text("Delivery Partner", "डिलीवरी पार्टनर"), true, () -> show(Screen.DELIVERY));
-                addButton(content, text("Browse products", "उत्पाद देखें"), false, () -> openWebsite(Uri.parse(WEBSITE + "/bodhimart/products")));
+                addButton(content, text("Buyer", "खरीदार"), false, () -> show(Screen.BUYER));
+                addButton(content, text("Seller", "विक्रेता"), false, () -> show(Screen.SELLER));
+                addButton(content, text("Delivery Partner", "डिलीवरी पार्टनर"), false, () -> show(Screen.DELIVERY));
                 break;
             case FARMER:
                 addHeading(content, text("Farmer", "किसान"), 24);
-                addSignIn(content, () -> openFarmSignIn("/bodhifarm"));
+                addSignIn(content, () -> openWebsiteSignIn("/bodhifarm"));
                 addButton(content, text("Apply as a farmer", "किसान के रूप में आवेदन करें"), false,
                     () -> openPage("/farmer/register"));
                 break;
             case FIELD_TEAM:
                 addHeading(content, text("Field Team", "फील्ड टीम"), 24);
-                addSignIn(content, () -> openFarmSignIn("/bodhifarm"));
+                addSignIn(content, () -> openWebsiteSignIn("/bodhifarm"));
                 break;
             case MANAGEMENT:
                 addHeading(content, text("Management", "प्रबंधन"), 24);
-                addSignIn(content, () -> openFarmSignIn("/dashboard"));
+                addSignIn(content, () -> openWebsiteSignIn("/dashboard"));
                 break;
             case BUYER:
                 addHeading(content, text("Buyer", "खरीदार"), 24);
@@ -143,7 +163,7 @@ public final class MainActivity extends Activity {
                 break;
             case DELIVERY:
                 addHeading(content, text("Delivery Partner", "डिलीवरी पार्टनर"), 24);
-                addSignIn(content, () -> openFarmSignIn("/bodhimart/delivery"));
+                addSignIn(content, () -> openWebsiteSignIn("/bodhimart/delivery"));
                 break;
         }
     }
@@ -194,7 +214,7 @@ public final class MainActivity extends Activity {
         addButton(content, text("Sign in on Bodhi Rural", "बोधि रूरल पर लॉग इन करें"), true, action);
     }
 
-    private void openFarmSignIn(String destination) {
+    private void openWebsiteSignIn(String destination) {
         openWebsite(Uri.parse(WEBSITE + "/login").buildUpon()
             .appendQueryParameter("redirect", destination).build());
     }
