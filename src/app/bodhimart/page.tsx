@@ -1,4 +1,5 @@
 import { Copy } from './language';
+import ShopProducts from './ShopProducts';
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
@@ -190,6 +191,8 @@ export default function BodhiMartPage() {
             <Copy en="Browse all products" hi="सभी उत्पाद देखें" /><ArrowRight size={16} aria-hidden="true" />
           </Link>
         </section>
+
+        <ShopProducts />
 
         <section aria-labelledby="departments-title">
           <h2 id="departments-title" className="mb-3 text-xl font-bold"><Copy en="Explore departments" hi="श्रेणियाँ देखें" /></h2>
