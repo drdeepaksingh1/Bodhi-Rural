@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Copy } from '../app/bodhimart/language';
 
 export default function Footer() {
   return (
@@ -63,9 +64,7 @@ export default function Footer() {
                 maxWidth: '460px',
               }}
             >
-              Bodhi Rural Livelihood & Agri Private Limited works toward
-              building sustainable agricultural and rural livelihood
-              ecosystems across India.
+              <Copy en="Bodhi Rural Livelihood & Agri Private Limited works toward building sustainable agricultural and rural livelihood ecosystems across India." hi="बोधि रूरल लाइवलीहुड एंड एग्री प्राइवेट लिमिटेड भारत में टिकाऊ कृषि और ग्रामीण आजीविका को बढ़ावा देने के लिए काम करती है।" />
             </p>
 
             <p
@@ -94,7 +93,7 @@ export default function Footer() {
                 color: '#ffffff',
               }}
             >
-              QUICK LINKS
+              <Copy en="QUICK LINKS" hi="महत्वपूर्ण लिंक" />
             </h3>
 
             <div
@@ -105,7 +104,7 @@ export default function Footer() {
               }}
             >
               <Link href="/about" style={linkStyle}>
-                About
+                <Copy en="About" hi="हमारे बारे में" />
               </Link>
 
               <Link href="/bodhifarm" style={linkStyle}>
@@ -117,19 +116,19 @@ export default function Footer() {
               </Link>
 
               <Link href="/farmer-network" style={linkStyle}>
-                Rural Network
+                <Copy en="Rural Network" hi="ग्रामीण नेटवर्क" />
               </Link>
 
               <Link href="/projects" style={linkStyle}>
-                Projects
+                <Copy en="Projects" hi="परियोजनाएँ" />
               </Link>
 
               <Link href="/contact" style={linkStyle}>
-                Contact
+                <Copy en="Contact" hi="संपर्क" />
               </Link>
 
               <Link href="/skills-training" style={linkStyle}>
-                Skills &amp; Training
+                <Copy en="Skills & Training" hi="कौशल और प्रशिक्षण" />
               </Link>
             </div>
           </div>
@@ -148,7 +147,7 @@ export default function Footer() {
                 color: '#ffffff',
               }}
             >
-              GET IN TOUCH
+              <Copy en="GET IN TOUCH" hi="संपर्क करें" />
             </h3>
 
             <p
@@ -168,9 +167,9 @@ export default function Footer() {
                 fontSize: '14px',
               }}
             >
-              Islampur, Nalanda
+              <Copy en="Islampur, Nalanda" hi="इस्लामपुर, नालंदा" />
               <br />
-              Bihar, India – 801303
+              <Copy en="Bihar, India – 801303" hi="बिहार, भारत – 801303" />
             </p>
 
             <p
@@ -180,9 +179,9 @@ export default function Footer() {
                 fontSize: '14px',
               }}
             >
-              Phone: <a href="tel:+917667979679" style={{ color: '#ffffff', textDecoration: 'none' }}>+91 76679 79679</a>
+              <Copy en="Phone:" hi="फ़ोन:" /> <a href="tel:+917667979679" style={{ color: '#ffffff', textDecoration: 'none' }}>+91 76679 79679</a>
               <br />
-              Email:{' '}
+              <Copy en="Email:" hi="ईमेल:" />{' '}
               <a
                 href="mailto:bodhirural@gmail.com,ceo@brlps.co.in"
                 style={{
@@ -193,7 +192,7 @@ export default function Footer() {
                 bodhirural@gmail.com · ceo@brlps.co.in
               </a>
               <br />
-              Website:{' '}
+              <Copy en="Website:" hi="वेबसाइट:" />{' '}
               <a href="https://www.brlps.co.in" style={{ color: '#ffffff', textDecoration: 'none' }}>
                 www.brlps.co.in
               </a>
@@ -235,7 +234,7 @@ export default function Footer() {
                 opacity: 0.8,
               }}
             >
-              Islampur, Nalanda, Bihar, India
+              <Copy en="Islampur, Nalanda, Bihar, India" hi="इस्लामपुर, नालंदा, बिहार, भारत" />
             </small>
           </div>
         </div>
