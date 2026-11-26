@@ -14,6 +14,7 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -63,7 +64,21 @@ public final class BodhiWorkspaceActivity extends Activity {
 
         ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         layout.addView(progress, new LinearLayout.LayoutParams(-1, 6));
+        LinearLayout unavailable = new LinearLayout(this);
+        unavailable.setOrientation(LinearLayout.VERTICAL);
+        unavailable.setVisibility(android.view.View.GONE);
+        TextView explanation = new TextView(this);
+        explanation.setText(hindi
+            ? "पेज नहीं खुल सका। इंटरनेट कनेक्शन जाँचें या ऑफ़लाइन सुविधाओं के लिए वापस जाएँ।"
+            : "This page could not load. Check your connection or go back to use offline features.");
+        explanation.setTextSize(16);
+        unavailable.addView(explanation);
+        Button retry = new Button(this);
+        retry.setText(hindi ? "फिर कोशिश करें" : "Try again");
+        unavailable.addView(retry);
+        layout.addView(unavailable);
         workspace = new WebView(this);
+        retry.setOnClickListener(view -> workspace.reload());
         layout.addView(workspace, new LinearLayout.LayoutParams(-1, 0, 1));
         TextView credits = new TextView(this);
         credits.setText("© Bodhi Rural Livelihood & Agri Private Limited\nDesigned by Tattvabodhini Technologies Private Limited");
@@ -85,6 +100,24 @@ public final class BodhiWorkspaceActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(workspace, false);
 
         workspace.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon) {
+                unavailable.setVisibility(android.view.View.GONE);
+                view.setVisibility(android.view.View.VISIBLE);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (!request.isForMainFrame()) return;
+                Uri retryUrl = request.getUrl();
+                retry.setOnClickListener(button -> {
+                    if (isBodhiSite(retryUrl)) workspace.loadUrl(retryUrl.toString());
+                });
+                unavailable.setVisibility(android.view.View.VISIBLE);
+                view.setVisibility(android.view.View.INVISIBLE);
+                progress.setVisibility(android.view.View.GONE);
+            }
+
             @Override
             public void onPageCommitVisible(WebView view, String url) {
                 hideWebsiteChrome(view, url);
