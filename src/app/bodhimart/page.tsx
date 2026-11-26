@@ -47,7 +47,7 @@ const categories = [
     detail: "Seeds and essentials for the growing season.",
     icon: Leaf,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=seeds",
+    href: "/bodhimart/products?category=seeds",
     action: "Shop seeds",
   },
   {
@@ -56,7 +56,7 @@ const categories = [
     detail: "Poultry and livestock feed for daily operations.",
     icon: Wheat,
     color: "bg-[#f8efd9] text-[#8b651d]",
-    href: "/bodhimart/products?search=feed",
+    href: "/bodhimart/products?category=feed",
     action: "Shop feed",
   },
   {
@@ -65,7 +65,7 @@ const categories = [
     detail: "Products and supplies for healthier farm routines.",
     icon: PackageSearch,
     color: "bg-[#f7e9df] text-[#9a5831]",
-    href: "/bodhimart/products?search=poultry",
+    href: "/bodhimart/products?category=poultry",
     action: "Shop livestock supplies",
   },
   {
@@ -74,7 +74,7 @@ const categories = [
     detail: "Practical equipment for farms and rural businesses.",
     icon: Truck,
     color: "bg-[#e5edf2] text-[#3f6174]",
-    href: "/bodhimart/products?search=equipment",
+    href: "/bodhimart/products?category=equipment",
     action: "Shop equipment",
   },
   {
@@ -83,7 +83,7 @@ const categories = [
     detail: "Everyday food and household essentials for home and farm.",
     icon: ShoppingBasket,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=grocery",
+    href: "/bodhimart/products?category=groceries",
     action: "Shop groceries",
   },
   {
@@ -92,7 +92,7 @@ const categories = [
     detail: "Seasonal vegetables, fruit and leafy greens.",
     icon: Carrot,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=vegetable",
+    href: "/bodhimart/products?category=fresh-produce",
     action: "Shop fresh produce",
   },
   {
@@ -101,16 +101,16 @@ const categories = [
     detail: "Everyday clothing, school uniforms and footwear.",
     icon: Shirt,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=clothing",
+    href: "/bodhimart/products?category=clothing-footwear",
     action: "Shop clothing",
   },
   {
-    name: "Stationery & school supplies",
+    name: "School & stationery",
     hindi: { name: "स्टेशनरी और स्कूल का सामान", detail: "कॉपी, पेन, स्कूल बैग और पढ़ाई का सामान।", action: "स्टेशनरी देखें" },
     detail: "Notebooks, pens, school bags and classroom supplies.",
     icon: NotebookPen,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=stationery",
+    href: "/bodhimart/products?category=school-stationery",
     action: "Shop stationery",
   },
   {
@@ -119,7 +119,7 @@ const categories = [
     detail: "Cleaning products, cookware and personal care essentials.",
     icon: Droplets,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=household",
+    href: "/bodhimart/products?category=household-personal-care",
     action: "Shop household essentials",
   },
   {
@@ -128,7 +128,7 @@ const categories = [
     detail: "Bulbs, switches, fittings and tools.",
     icon: Hammer,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=hardware",
+    href: "/bodhimart/products?category=hardware-electrical",
     action: "Shop hardware",
   },
   {
@@ -137,7 +137,7 @@ const categories = [
     detail: "Products from local farmers, self-help groups and artisans.",
     icon: HeartHandshake,
     color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?search=local",
+    href: "/bodhimart/products?category=made-locally",
     action: "Shop local products",
   },
   {
@@ -145,7 +145,7 @@ const categories = [
     detail: "Browse meals and snacks listed by local hotels and restaurants.",
     icon: Utensils,
     color: "bg-[#f8efd9] text-[#8b651d]",
-    href: "/bodhimart/products?search=hotels+%26+restaurants",
+    href: "/bodhimart/products?category=hotels-restaurants",
     action: "Browse meals",
     hindi: { name: "होटल और रेस्तराँ", detail: "स्थानीय होटलों और रेस्तराँ के भोजन और नाश्ते देखें।", action: "भोजन देखें" },
   },
