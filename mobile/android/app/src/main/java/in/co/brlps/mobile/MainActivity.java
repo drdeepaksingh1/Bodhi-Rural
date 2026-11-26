@@ -143,12 +143,7 @@ public final class MainActivity extends Activity {
                 break;
             case DELIVERY:
                 addHeading(content, text("Delivery Partner", "डिलीवरी पार्टनर"), 24);
-                TextView status = new TextView(this);
-                status.setText(text("Delivery partner sign-in is in development.", "डिलीवरी पार्टनर लॉग इन अभी तैयार किया जा रहा है।"));
-                status.setTextSize(16);
-                status.setTextColor(GREEN);
-                status.setGravity(Gravity.CENTER);
-                content.addView(status);
+                addSignIn(content, () -> openFarmSignIn("/bodhimart/delivery"));
                 break;
         }
     }
