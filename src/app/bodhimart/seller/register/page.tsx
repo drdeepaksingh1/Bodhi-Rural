@@ -49,6 +49,10 @@ export default function SellerRegistrationPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [verificationEmail, setVerificationEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -152,6 +156,7 @@ export default function SellerRegistrationPage() {
       if (!verifiedUser) throw new Error('Email verified, but the account could not be opened. Please try again.');
 
       setUserId(verifiedUser.id);
+      setNeedsPassword(true);
       setVerificationEmail(verifiedUser.email || verificationEmail.trim().toLowerCase());
       setForm((current) => ({
         ...current,
@@ -165,11 +170,38 @@ export default function SellerRegistrationPage() {
     }
   }
 
+  async function savePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+    if (newPassword.length < 8 || newPassword !== confirmPassword) {
+      setError(t('Use at least 8 characters and enter the same password twice.', 'कम से कम 8 अक्षर इस्तेमाल करें और दोनों बार वही पासवर्ड दर्ज करें।'));
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { data, error: sessionError } = await supabase.auth.getUser();
+      if (sessionError || !data.user || data.user.id !== userId) {
+        throw new Error(t('Verify your email again before setting a password.', 'पासवर्ड बनाने से पहले ईमेल दोबारा सत्यापित करें।'));
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword('');
+      setConfirmPassword('');
+      setNeedsPassword(false);
+      setSuccess(t('Password saved. Complete your seller application below.', 'पासवर्ड सहेज लिया गया। अपना विक्रेता आवेदन पूरा करें।'));
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : t('Could not set your password.', 'पासवर्ड सेट नहीं हो सका।'));
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
   async function submitApplication(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
-    if (!shopLocation || locating || submitting) return;
+    if (!shopLocation || locating || submitting || needsPassword) return;
 
     setSubmitting(true);
     setSuccess('');
@@ -419,6 +451,23 @@ export default function SellerRegistrationPage() {
               Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fregister">{t("Log in", "लॉग इन करें")}</Link>
             </p>
           </section>
+        ) : needsPassword ? (
+          <form onSubmit={savePassword} className="space-y-4 rounded-2xl bg-white p-6">
+            <h2 className="text-xl font-bold text-green-900">{t('Create your seller login password', 'विक्रेता लॉग इन का पासवर्ड बनाएँ')}</h2>
+            <label className="block">
+              {t('Password', 'पासवर्ड')}
+              <input type="password" required minLength={8} autoComplete="new-password" value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
+            </label>
+            <label className="block">
+              {t('Confirm password', 'पासवर्ड की पुष्टि करें')}
+              <input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
+            </label>
+            <button type="submit" disabled={savingPassword} className="rounded-lg bg-green-800 px-4 py-3 font-semibold text-white disabled:opacity-60">
+              {savingPassword ? t('Saving…', 'सहेजा जा रहा है…') : t('Save password and continue', 'पासवर्ड सहेजें और आगे बढ़ें')}
+            </button>
+          </form>
         ) : (
           <form
             onSubmit={submitApplication}
