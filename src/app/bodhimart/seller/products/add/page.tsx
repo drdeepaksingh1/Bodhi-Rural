@@ -16,6 +16,7 @@ const marketplacePhotoLoader = ({ src }: { src: string }) => src;
 type Category = {
   id: string;
   name: string;
+  parent_id: string | null;
 };
 
 type Seller = {
@@ -102,7 +103,8 @@ export default function AddProductPage() {
 
           supabase
             .from('marketplace_categories')
-            .select('id, name')
+            .select('id, name, parent_id')
+            .eq('is_active', true)
             .order('name', { ascending: true }),
         ]);
 
@@ -689,14 +691,20 @@ export default function AddProductPage() {
                     Select Category
                   </option>
 
-                  {categories.map((category) => (
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
-                      {category.name}
-                    </option>
-                  ))}
+                  {categories.filter((category) => !category.parent_id).map((category) => {
+                    const children = categories.filter((item) => item.parent_id === category.id);
+                    if (!children.length) {
+                      return <option key={category.id} value={category.id}>{category.name}</option>;
+                    }
+                    return (
+                      <optgroup key={category.id} label={category.name}>
+                        <option value={category.id}>{category.name} — General</option>
+                        {children.map((item) => (
+                          <option key={item.id} value={item.id}>{item.name}</option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
                 </select>
               </Field>
 
