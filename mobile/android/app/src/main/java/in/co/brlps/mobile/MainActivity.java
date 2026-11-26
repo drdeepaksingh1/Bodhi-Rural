@@ -166,6 +166,11 @@ public final class MainActivity extends Activity {
                 addSignIn(content, () -> openWebsiteSignIn("/bodhimart/delivery"));
                 break;
         }
+        if (screen != Screen.HOME && screen != Screen.FARM && screen != Screen.MART) {
+            addButton(content, text("Privacy policy", "गोपनीयता नीति"), false, () -> openPage("/privacy-policy"));
+            addButton(content, text("Request account deletion", "खाता हटाने का अनुरोध करें"), false,
+                () -> openPage("/account-deletion"));
+        }
     }
 
     private void addBrand(LinearLayout content) {
