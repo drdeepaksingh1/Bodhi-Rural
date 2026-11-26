@@ -6,18 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
-import { BodhiMartLanguage, Copy } from '../bodhimart/language';
-
-function LoginEntry() {
-  const params = useSearchParams();
-  const account = params.get('account');
-  const redirect = params.get('redirect') || '';
-  const isMarketplace = account === 'buyer' || account === 'seller'
-    || redirect === '/bodhimart' || redirect.startsWith('/bodhimart/');
-  return isMarketplace
-    ? <BodhiMartLanguage><LoginForm /></BodhiMartLanguage>
-    : <LoginForm />;
-}
+import { Copy } from '../bodhimart/language';
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -390,7 +379,7 @@ export default function LoginPage() {
         </main>
       }
     >
-      <LoginEntry />
+      <LoginForm />
     </Suspense>
   );
 }
