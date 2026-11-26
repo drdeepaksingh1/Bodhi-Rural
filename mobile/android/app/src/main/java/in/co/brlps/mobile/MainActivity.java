@@ -19,6 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.FrameLayout;
+import android.widget.EditText;
+import android.widget.Toast;
+import android.text.InputFilter;
 
 import java.util.EnumSet;
 
@@ -28,7 +31,7 @@ public final class MainActivity extends Activity {
     private static final int ORANGE = Color.rgb(245, 178, 38);
     private static final String WEBSITE = "https://www.brlps.co.in";
 
-    private enum Screen { HOME, FARM, MART, FARMER, FIELD_TEAM, MANAGEMENT, BUYER, SELLER, DELIVERY }
+    private enum Screen { HOME, FARM, MART, FARMER, FIELD_TEAM, MANAGEMENT, BUYER, SELLER, DELIVERY, FARM_TRAINING, FARM_NOTES, MART_LIST }
     private Screen screen = Screen.HOME;
     private boolean hindi;
     private OnBackInvokedCallback backCallback;
@@ -198,19 +201,43 @@ public final class MainActivity extends Activity {
                 break;
             case FARM:
                 addButton(content, text("Skills & Training", "कौशल और प्रशिक्षण"), true,
-                    () -> openPage("/skills-training"));
+                    () -> show(Screen.FARM_TRAINING));
+                addButton(content, text("Offline farm notes", "ऑफ़लाइन फार्म नोट्स"), false,
+                    () -> show(Screen.FARM_NOTES));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Farmer", "किसान"), true, () -> show(Screen.FARMER));
                 addButton(content, text("Field Team", "फील्ड टीम"), true, () -> show(Screen.FIELD_TEAM));
                 addButton(content, text("Management", "प्रबंधन"), true, () -> show(Screen.MANAGEMENT));
                 break;
             case MART:
+                addButton(content, text("Offline shopping list", "ऑफ़लाइन खरीदारी सूची"), false,
+                    () -> show(Screen.MART_LIST));
                 addButton(content, text("Browse products without signing in", "बिना लॉग इन के उत्पाद देखें"), true,
                     () -> openPage("/bodhimart/products"));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Buyer", "खरीदार"), false, () -> show(Screen.BUYER));
                 addButton(content, text("Seller", "विक्रेता"), false, () -> show(Screen.SELLER));
                 addButton(content, text("Delivery Partner", "डिलीवरी पार्टनर"), false, () -> show(Screen.DELIVERY));
+                break;
+            case FARM_TRAINING:
+                addHeading(content, text("Skills & Training", "कौशल और प्रशिक्षण"), 24);
+                addTrainingCard(content, text("Daily farm records", "दैनिक फार्म रिकॉर्ड"),
+                    text("Record the date, farm or batch, work completed, and anything the team needs to follow up.",
+                         "तारीख, फार्म या बैच, पूरा किया गया काम और अगली कार्रवाई दर्ज करें।"));
+                addTrainingCard(content, text("Stock checks", "स्टॉक की जाँच"),
+                    text("Count the physical stock, record its unit, and note any difference from the register before updating the system.",
+                         "वास्तविक स्टॉक गिनें, उसकी इकाई लिखें और सिस्टम अपडेट करने से पहले रजिस्टर से अंतर दर्ज करें।"));
+                addTrainingCard(content, text("Prepare for a field visit", "फील्ड दौरे की तैयारी"),
+                    text("List the places to visit and the questions to ask. After the visit, record the next action and who will handle it.",
+                         "दौरे के स्थान और सवाल लिखें। दौरे के बाद अगला काम और उसकी ज़िम्मेदारी दर्ज करें।"));
+                addButton(content, text("Open online training", "ऑनलाइन प्रशिक्षण खोलें"), false,
+                    () -> openPage("/skills-training"));
+                break;
+            case FARM_NOTES:
+                addOfflineDraft(content, true);
+                break;
+            case MART_LIST:
+                addOfflineDraft(content, false);
                 break;
             case FARMER:
                 addHeading(content, text("Farmer", "किसान"), 24);
@@ -274,10 +301,13 @@ public final class MainActivity extends Activity {
 
     private Screen parentScreen() {
         switch (screen) {
+            case FARM_TRAINING:
+            case FARM_NOTES:
             case FARMER:
             case FIELD_TEAM:
             case MANAGEMENT:
                 return Screen.FARM;
+            case MART_LIST:
             case BUYER:
             case SELLER:
             case DELIVERY:
@@ -317,6 +347,46 @@ public final class MainActivity extends Activity {
         startActivity(new Intent(this, BodhiWorkspaceActivity.class)
             .putExtra(BodhiWorkspaceActivity.PAGE_URL, localizedDestination.toString())
             .putExtra(BodhiWorkspaceActivity.HINDI, hindi));
+    }
+
+    private void addTrainingCard(LinearLayout group, String title, String details) {
+        addHeading(group, title, 18);
+        TextView description = new TextView(this);
+        description.setText(details);
+        description.setTextSize(16);
+        description.setTextColor(GREEN);
+        description.setPadding(dp(8), 0, dp(8), dp(10));
+        group.addView(description);
+    }
+
+    private void addOfflineDraft(LinearLayout group, boolean farm) {
+        String key = farm ? "offlineFarmNotes" : "offlineShoppingList";
+        addHeading(group, farm ? text("Offline farm notes", "ऑफ़लाइन फार्म नोट्स")
+            : text("Offline shopping list", "ऑफ़लाइन खरीदारी सूची"), 24);
+        TextView info = new TextView(this);
+        info.setText(text("Saved only on this phone. Keep personal and financial details out of this draft.",
+            "यह केवल इस फ़ोन पर सहेजा जाता है। इसमें निजी और वित्तीय जानकारी दर्ज न करें।"));
+        info.setTextColor(GREEN);
+        group.addView(info);
+
+        EditText draft = new EditText(this);
+        draft.setId(farm ? 0x0B0D0101 : 0x0B0D0102);
+        draft.setHint(farm ? text("Enter your field notes", "अपने फील्ड नोट्स लिखें")
+            : text("Enter products and quantities", "उत्पाद और मात्रा लिखें"));
+        draft.setText(getPreferences(MODE_PRIVATE).getString(key, ""));
+        draft.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+            | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        draft.setMinLines(5);
+        draft.setGravity(Gravity.TOP | Gravity.START);
+        draft.setFilters(new InputFilter[] {new InputFilter.LengthFilter(5000)});
+        group.addView(draft, new LinearLayout.LayoutParams(-1, -2));
+
+        addButton(group, text("Save on this phone", "इस फ़ोन पर सहेजें"), true, () -> {
+            boolean saved = getPreferences(MODE_PRIVATE).edit()
+                .putString(key, draft.getText().toString()).commit();
+            Toast.makeText(this, saved ? text("Draft saved", "मसौदा सहेजा गया")
+                : text("Could not save the draft", "मसौदा सहेजा नहीं जा सका"), Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void addHeading(LinearLayout group, String label, int size) {
