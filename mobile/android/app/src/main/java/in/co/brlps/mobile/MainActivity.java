@@ -247,10 +247,9 @@ public final class MainActivity extends Activity {
                 addSignIn(content, () -> openWebsiteSignIn("/bodhimart/delivery"));
                 break;
         }
-        if (screen != Screen.HOME && screen != Screen.FARM && screen != Screen.MART) {
-            addButton(content, text("Privacy policy", "गोपनीयता नीति"), false, () -> openPage("/privacy-policy"));
-            addButton(content, text("Request account deletion", "खाता हटाने का अनुरोध करें"), false,
-                () -> openPage("/account-deletion"));
+        if (screen == Screen.FARM || screen == Screen.MART) {
+            addButton(content, text("Account & Privacy", "खाता और गोपनीयता"), false,
+                () -> openPage(screen == Screen.FARM ? "/privacy-policy/bodhifarm" : "/privacy-policy/bodhimart"));
         }
     }
 
