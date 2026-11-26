@@ -163,7 +163,10 @@ public final class MainActivity extends Activity {
 
     private void openWebsite(Uri destination) {
         try {
-            startActivity(new Intent(Intent.ACTION_VIEW, destination));
+            Uri localizedDestination = destination.buildUpon()
+                .appendQueryParameter("app_lang", hindi ? "hi" : "en")
+                .build();
+            startActivity(new Intent(Intent.ACTION_VIEW, localizedDestination));
         } catch (ActivityNotFoundException failure) {
             Toast.makeText(this, text("A browser is required to continue.", "आगे बढ़ने के लिए ब्राउज़र चाहिए।"), Toast.LENGTH_LONG).show();
         }
