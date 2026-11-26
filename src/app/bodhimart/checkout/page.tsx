@@ -211,8 +211,10 @@ export default function BodhiMartCheckoutPage() {
         <p className="mt-3 text-gray-600"><Copy en="Order number:" hi="ऑर्डर संख्या:" /> <strong>{order.order_number}</strong></p>
         <p className="mt-2">Total: {money(order.total_amount)}</p>
         <p className="mt-3 text-sm text-amber-800">
-          {order.delivery_method === "PICKUP" ? "Pay the seller when you collect your order." : "Pay the seller when your order is delivered."}
-          {" "}Payment remains pending until an administrator confirms it was received.
+          {order.delivery_method === "PICKUP"
+            ? <Copy en="Pay the seller when you collect your order." hi="ऑर्डर लेते समय विक्रेता को भुगतान करें।" />
+            : <Copy en="Pay the seller when your order is delivered." hi="ऑर्डर मिलने पर विक्रेता को भुगतान करें।" />}
+          {" "}<Copy en="Payment remains pending until an administrator confirms it was received." hi="प्रशासक की पुष्टि तक भुगतान लंबित रहेगा।" />
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href={`/bodhimart/orders/${order.order_id}`}><Copy en="View / print summary" hi="सारांश देखें या प्रिंट करें" /></Link>
@@ -248,11 +250,11 @@ export default function BodhiMartCheckoutPage() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "STANDARD"} onChange={() => setDeliveryMethod("STANDARD")} />
-                  <span><strong><Copy en="Standard delivery" hi="सामान्य डिलीवरी" /></strong><small className="mt-1 block text-gray-500">Pay the seller when the order is delivered. Current delivery charge: ₹0.</small></span>
+                  <span><strong><Copy en="Standard delivery" hi="सामान्य डिलीवरी" /></strong><small className="mt-1 block text-gray-500"><Copy en="Pay the seller when the order is delivered. Current delivery charge: ₹0." hi="ऑर्डर मिलने पर विक्रेता को भुगतान करें। वर्तमान डिलीवरी शुल्क ₹0 है।" /></small></span>
                 </label>
                 <label className="flex cursor-pointer gap-3 rounded-xl border p-4">
                   <input type="radio" name="delivery" checked={deliveryMethod === "PICKUP"} onChange={() => setDeliveryMethod("PICKUP")} />
-                  <span><strong><Copy en="Pickup" hi="खुद ले जाएँ" /></strong><small className="mt-1 block text-gray-500">Pay the seller when you collect the order.</small></span>
+                  <span><strong><Copy en="Pickup" hi="खुद ले जाएँ" /></strong><small className="mt-1 block text-gray-500"><Copy en="Pay the seller when you collect the order." hi="ऑर्डर लेते समय विक्रेता को भुगतान करें।" /></small></span>
                 </label>
               </div>
             </div>
@@ -302,7 +304,10 @@ export default function BodhiMartCheckoutPage() {
               <div className="flex justify-between border-t pt-3 text-lg font-bold"><span><Copy en="Total" hi="कुल" /></span><span className="text-green-800">{money(total)}</span></div>
             </div>
             <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
-              {deliveryMethod === "PICKUP" ? "Manual payment at pickup." : "Manual payment on delivery."} The order stays pending until BodhiMart confirms payment was received.
+              {deliveryMethod === "PICKUP"
+                ? <Copy en="Pay at pickup." hi="ऑर्डर लेते समय भुगतान करें।" />
+                : <Copy en="Pay on delivery." hi="डिलीवरी पर भुगतान करें।" />}{' '}
+              <Copy en="Payment remains pending until BodhiMart confirms receipt." hi="BodhiMart की पुष्टि तक भुगतान लंबित रहेगा।" />
             </p>
             <button type="submit" disabled={submitting || invalidItems || !items.length} className="mt-5 w-full rounded-xl bg-green-700 px-5 py-3 font-bold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600">
               {submitting ? <Copy en="Placing order…" hi="ऑर्डर भेजा जा रहा है…" /> : <Copy en="Place order" hi="ऑर्डर करें" />}
