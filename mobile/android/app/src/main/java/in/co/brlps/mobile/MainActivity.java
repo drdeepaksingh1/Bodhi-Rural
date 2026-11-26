@@ -2,7 +2,6 @@ package in.co.brlps.mobile;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -19,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 public final class MainActivity extends Activity {
@@ -285,14 +283,12 @@ public final class MainActivity extends Activity {
     }
 
     private void openWebsite(Uri destination) {
-        try {
-            Uri localizedDestination = destination.buildUpon()
-                .appendQueryParameter("app_lang", hindi ? "hi" : "en")
-                .build();
-            startActivity(new Intent(Intent.ACTION_VIEW, localizedDestination));
-        } catch (ActivityNotFoundException failure) {
-            Toast.makeText(this, text("A browser is required to continue.", "आगे बढ़ने के लिए ब्राउज़र चाहिए।"), Toast.LENGTH_LONG).show();
-        }
+        Uri localizedDestination = destination.buildUpon()
+            .appendQueryParameter("app_lang", hindi ? "hi" : "en")
+            .build();
+        startActivity(new Intent(this, BodhiWorkspaceActivity.class)
+            .putExtra(BodhiWorkspaceActivity.PAGE_URL, localizedDestination.toString())
+            .putExtra(BodhiWorkspaceActivity.HINDI, hindi));
     }
 
     private void addHeading(LinearLayout group, String label, int size) {
