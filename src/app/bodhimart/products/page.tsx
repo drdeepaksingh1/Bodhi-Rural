@@ -145,6 +145,7 @@ export default function BodhiMartProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(24);
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
@@ -193,25 +194,6 @@ export default function BodhiMartProductsPage() {
         throw categoriesResult.error;
       }
 
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          const { data: savedItems, error: wishlistError } = await supabase
-            .from("marketplace_wishlist_items")
-            .select("product_id")
-            .eq("user_id", user.id);
-          if (wishlistError) throw wishlistError;
-          setSavedProductIds((savedItems || []).map((item) => item.product_id));
-        } else {
-          setSavedProductIds([]);
-        }
-      } catch (wishlistLoadError) {
-        console.warn("Unable to load saved product markers.", wishlistLoadError);
-        setSavedProductIds([]);
-      }
-
       setProducts((productsResult.data || []) as Product[]);
       setInventory((inventoryResult.data || []) as Inventory[]);
       setCategories((categoriesResult.data || []) as Category[]);
@@ -220,6 +202,27 @@ export default function BodhiMartProductsPage() {
       setError(err?.message || "Unable to load products.");
     } finally {
       setLoading(false);
+    }
+  }, [supabase]);
+
+  const loadSavedProducts = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: savedItems, error: wishlistError } = await supabase
+          .from("marketplace_wishlist_items")
+          .select("product_id")
+          .eq("user_id", user.id);
+        if (wishlistError) throw wishlistError;
+        setSavedProductIds((savedItems || []).map((item) => item.product_id));
+      } else {
+        setSavedProductIds([]);
+      }
+    } catch (wishlistLoadError) {
+      console.warn("Unable to load saved product markers.", wishlistLoadError);
+      setSavedProductIds([]);
     }
   }, [supabase]);
 
@@ -244,7 +247,8 @@ export default function BodhiMartProductsPage() {
       setSort(initialSort || "DEFAULT");
     }
     void loadProducts();
-  }, [loadProducts]);
+    void loadSavedProducts();
+  }, [loadProducts, loadSavedProducts]);
 
   function productDetailsHref(product: Product) {
     const returnParams = new URLSearchParams();
@@ -853,7 +857,7 @@ export default function BodhiMartProductsPage() {
           !error &&
           filteredProducts.length > 0 && (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => {
+              {filteredProducts.slice(0, visibleCount).map((product) => {
                 const availableStock =
                   getAvailableStock(product.id);
 
@@ -1089,6 +1093,14 @@ export default function BodhiMartProductsPage() {
               })}
             </div>
           )}
+        {!loading && !error && visibleCount < filteredProducts.length && (
+          <div className="mt-6 flex justify-center">
+            <button type="button" onClick={() => setVisibleCount((count) => count + 24)}
+              className="rounded-lg border border-green-800 px-5 py-3 font-semibold text-green-800">
+              <Copy en="Show more products" hi="और उत्पाद देखें" />
+            </button>
+          </div>
+        )}
       </section>
 
       {compareMessage && (
