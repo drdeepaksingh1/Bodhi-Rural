@@ -5,7 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/client';
 
+import { Copy } from '../language';
+
 type AccountSummary = {
+  name: string | null;
+  phone: string | null;
   email: string;
   orders: number;
   savedItems: number;
@@ -39,6 +43,13 @@ const quickLinks = [
 export default function BodhiMartAccountPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      try { setDark(localStorage.getItem('bodhimart-account-dark') === 'true'); } catch {}
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const [summary, setSummary] = useState<AccountSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -66,6 +77,8 @@ export default function BodhiMartAccountPage() {
       if (failedQuery?.error) throw failedQuery.error;
 
       setSummary({
+        name: typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null,
+        phone: user.phone ?? null,
         email: user.email || 'Your BodhiMart account',
         orders: orders.count || 0,
         savedItems: savedItems.count || 0,
@@ -88,7 +101,7 @@ export default function BodhiMartAccountPage() {
     setError('');
     setSigningOut(true);
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
       if (signOutError) throw signOutError;
       router.replace('/bodhimart/login');
       router.refresh();
@@ -103,12 +116,14 @@ export default function BodhiMartAccountPage() {
   }
 
   return (
-    <main className="min-h-[70vh] bg-[#f5f7f2] px-5 py-12 sm:py-16">
+    <main className={dark ? 'min-h-[70vh] bg-slate-950 px-5 py-8 text-white' : 'min-h-[70vh] bg-[#f5f7f2] px-5 py-8'}>
       <div className="mx-auto max-w-5xl">
         <Link href="/bodhimart" className="text-sm font-semibold text-[#27623b] hover:underline">← Back to BodhiMart</Link>
         <header className="mt-8 rounded-3xl bg-[#173f2b] p-7 text-white shadow-sm sm:p-10">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#e1bd59]">Buyer account</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">My BodhiMart</h1>
+          {summary?.name && <p className="mt-3 break-words">{summary.name}</p>}
+          {summary?.phone && <p className="mt-2">{summary.phone}</p>}
           <p className="mt-3 text-sm text-white/80">{summary?.email || 'Your account overview'}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/bodhimart/products" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#e1bd59] px-5 py-3 text-sm font-bold text-[#183426] transition hover:bg-[#edd17e]">Continue shopping</Link>
@@ -120,9 +135,17 @@ export default function BodhiMartAccountPage() {
 
         {error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
 
+        <label className="mt-5 flex items-center justify-between rounded-xl border p-4">
+          <Copy en="Dark theme for this screen" hi="इस स्क्रीन के लिए डार्क थीम" />
+          <input type="checkbox" checked={dark} onChange={(event) => {
+            const value = event.target.checked;
+            setDark(value);
+            try { localStorage.setItem('bodhimart-account-dark', String(value)); } catch {}
+          }} />
+        </label>
         <section aria-label="Account links" className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="group rounded-2xl border border-[#e3e8df] bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#bfd2c1] hover:shadow-md">
+            <Link key={item.href} href={item.href} className="group rounded-2xl border border-[#e3e8df] bg-white p-6 text-green-950 shadow-sm transition hover:-translate-y-0.5 hover:border-[#bfd2c1] hover:shadow-md">
               <div className="flex items-start justify-between gap-4">
                 <span aria-hidden="true" className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf4eb] text-xl text-[#27623b]">{item.icon}</span>
                 {summary && <span className="rounded-full bg-[#f0f4ee] px-3 py-1 text-xs font-bold text-[#27623b]">{summary[item.count]}</span>}
