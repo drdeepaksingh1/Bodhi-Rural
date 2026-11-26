@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy } from '../language';
+import { Copy, useBodhiMartLanguage } from '../language';
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -38,7 +38,34 @@ type Inventory = {
 type Category = {
   id: string;
   name: string;
+  slug: string;
+  parent_id: string | null;
 };
+
+const categoryHindi: Record<string, string> = {
+  "hotels-restaurants": "होटल और रेस्तराँ",
+  "vegetarian-meals": "शाकाहारी भोजन",
+  "non-vegetarian-meals": "मांसाहारी भोजन",
+  "restaurant-snacks": "नाश्ता",
+  "restaurant-beverages": "पेय",
+  "restaurant-desserts": "मिठाइयाँ",
+  "school-stationery": "स्कूल और स्टेशनरी",
+  "school-notebooks": "कॉपी और कागज़",
+  "school-writing": "पेन और पेंसिल",
+  "school-art": "कला और शिल्प सामग्री",
+  "school-bags": "स्कूल बैग",
+  "school-uniforms": "स्कूल यूनिफ़ॉर्म"
+};
+
+function belongsToCategory(id: string | null, root: string, byId: Map<string, Category>) {
+  const visited = new Set<string>();
+  while (id && !visited.has(id)) {
+    if (id === root) return true;
+    visited.add(id);
+    id = byId.get(id)?.parent_id ?? null;
+  }
+  return false;
+}
 
 function getProductPlaceholder(product: Product, categoryName = "") {
   const name = product.name.toLowerCase();
@@ -96,7 +123,7 @@ export default function BodhiMartProductsPage() {
 
           supabase
             .from("marketplace_categories")
-            .select("id, name")
+            .select("id, name, slug, parent_id")
             .order("name", { ascending: true }),
         ]);
 
@@ -155,6 +182,10 @@ export default function BodhiMartProductsPage() {
     if (initialAvailability === "in_stock") setStockFilter("IN_STOCK");
     if (initialAvailability === "out_of_stock") setStockFilter("OUT_OF_STOCK");
     if (initialCategory) setCategory(initialCategory);
+    else if (initialSearch === "hotels & restaurants") {
+      setCategory("hotels-restaurants");
+      setSearch("");
+    }
     if (["PRICE_LOW", "PRICE_HIGH", "SAVINGS", "NAME"].includes(initialSort || "")) {
       setSort(initialSort || "DEFAULT");
     }
@@ -195,6 +226,13 @@ export default function BodhiMartProductsPage() {
     return map;
   }, [categories]);
 
+  const language = useBodhiMartLanguage();
+  const categoriesById = useMemo(() => new Map(categories.map((item) => [item.id, item])), [categories]);
+  const selected = categoriesById.get(category) ?? categories.find((item) => item.slug === category);
+  const parent = categoriesById.get(selected?.parent_id ?? "") ?? selected;
+  const subcategories = parent ? categories.filter((item) => item.parent_id === parent.id) : [];
+  const categoryLabel = (item: Category) => language === "hi" ? categoryHindi[item.slug] ?? item.name : item.name;
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
@@ -226,10 +264,10 @@ export default function BodhiMartProductsPage() {
       });
     }
 
-    if (category !== "ALL") {
-      result = result.filter(
-        (product) => product.category_id === category
-      );
+    if (selected) {
+      result = result.filter((product) => belongsToCategory(product.category_id, selected.id, categoriesById));
+    } else if (category !== "ALL") {
+      result = [];
     }
 
     if (stockFilter !== "ALL") {
@@ -263,7 +301,7 @@ export default function BodhiMartProductsPage() {
     }
 
     return result;
-  }, [products, search, category, sort, stockFilter, categoryMap, inventoryMap]);
+  }, [products, search, category, selected, categoriesById, sort, stockFilter, categoryMap, inventoryMap]);
 
   const comparedProducts = useMemo(
     () => compareIds
@@ -560,25 +598,31 @@ export default function BodhiMartProductsPage() {
               </label>
 
               <select
-                value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value)
-                }
+                aria-label={language === "hi" ? "श्रेणी" : "Category"}
+                value={parent?.id ?? "ALL"}
+                onChange={(event) => setCategory(event.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
-                <option value="ALL">
-                  <Copy en="All Categories" hi="सभी श्रेणियाँ" />
-                </option>
-
-                {categories.map((item) => (
-                  <option
-                    key={item.id}
-                    value={item.id}
-                  >
-                    {item.name}
-                  </option>
+                <option value="ALL">{language === "hi" ? "सभी श्रेणियाँ" : "All categories"}</option>
+                {categories.filter((item) => !item.parent_id).map((item) => (
+                  <option key={item.id} value={item.id}>{categoryLabel(item)}</option>
                 ))}
               </select>
+              {subcategories.length > 0 && (
+                <label className="mt-3 block text-sm font-medium text-gray-700">
+                  <Copy en="Subcategory" hi="उपश्रेणी" />
+                  <select
+                    value={selected?.id === parent?.id ? "" : selected?.id ?? ""}
+                    onChange={(event) => setCategory(event.target.value || parent?.id || "ALL")}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-3"
+                  >
+                    <option value="">{language === "hi" ? "सभी उपश्रेणियाँ" : "All subcategories"}</option>
+                    {subcategories.map((item) => (
+                      <option key={item.id} value={item.id}>{categoryLabel(item)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
 
             <div>
