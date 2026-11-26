@@ -20,6 +20,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.window.OnBackInvokedDispatcher;
 
@@ -64,6 +65,15 @@ public final class BodhiWorkspaceActivity extends Activity {
         layout.addView(progress, new LinearLayout.LayoutParams(-1, 6));
         workspace = new WebView(this);
         layout.addView(workspace, new LinearLayout.LayoutParams(-1, 0, 1));
+        TextView credits = new TextView(this);
+        credits.setText("© Bodhi Rural Livelihood & Agri Private Limited\nDesigned by Tattvabodhini Technologies Private Limited");
+        credits.setTextSize(11);
+        credits.setGravity(android.view.Gravity.CENTER);
+        credits.setTextColor(Color.rgb(18, 69, 49));
+        credits.setBackgroundColor(Color.rgb(249, 246, 237));
+        int padding = Math.round(8 * getResources().getDisplayMetrics().density);
+        credits.setPadding(padding, padding, padding, padding);
+        layout.addView(credits);
         setContentView(layout);
 
         WebSettings settings = workspace.getSettings();
@@ -75,6 +85,16 @@ public final class BodhiWorkspaceActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(workspace, false);
 
         workspace.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                hideWebsiteChrome(view, url);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                hideWebsiteChrome(view, url);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri target = request.getUrl();
@@ -136,6 +156,18 @@ public final class BodhiWorkspaceActivity extends Activity {
         if (savedState == null || workspace.restoreState(savedState) == null) {
             workspace.loadUrl(initial.toString());
         }
+    }
+
+    private static void hideWebsiteChrome(WebView view, String url) {
+        if (!isBodhiSite(Uri.parse(url))) return;
+        view.evaluateJavascript(
+            "(() => {"
+                + "if (!document.head || document.getElementById('bodhi-app-chrome')) return;"
+                + "const style = document.createElement('style');"
+                + "style.id = 'bodhi-app-chrome';"
+                + "style.textContent = 'body > header,body > footer{display:none!important}';"
+                + "document.head.appendChild(style);"
+                + "})();", null);
     }
 
     static boolean isBodhiSite(Uri uri) {
