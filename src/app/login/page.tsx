@@ -6,6 +6,19 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
+import { BodhiMartLanguage, Copy } from '../bodhimart/language';
+
+function LoginEntry() {
+  const params = useSearchParams();
+  const account = params.get('account');
+  const redirect = params.get('redirect') || '';
+  const isMarketplace = account === 'buyer' || account === 'seller'
+    || redirect === '/bodhimart' || redirect.startsWith('/bodhimart/');
+  return isMarketplace
+    ? <BodhiMartLanguage><LoginForm /></BodhiMartLanguage>
+    : <LoginForm />;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const accountType = searchParams.get('account');
@@ -168,11 +181,11 @@ function LoginForm() {
 
           <p className="mt-2 text-sm text-gray-600">
             {isForgotPassword
-              ? 'Reset your account password'
+              ? <Copy en="Reset your account password" hi="अपने खाते का पासवर्ड बदलें" />
               : isSellerLogin
-                ? 'Seller workspace sign in'
+                ? <Copy en="Seller workspace sign in" hi="विक्रेता खाते में लॉग इन करें" />
                 : isBuyerLogin
-                  ? 'Shop and manage your BodhiMart orders'
+                  ? <Copy en="Shop and manage your BodhiMart orders" hi="खरीदारी करें और अपने BodhiMart ऑर्डर देखें" />
                   : `Welcome to ${loginBrand}`}
           </p>
         </div>
@@ -180,12 +193,12 @@ function LoginForm() {
         {/* Form heading */}
         <h2 className="mb-6 text-xl font-semibold text-gray-800">
           {isForgotPassword
-            ? 'Forgot Password'
+            ? <Copy en="Forgot Password" hi="पासवर्ड भूल गए" />
             : isSellerLogin
-              ? 'Seller Login'
+              ? <Copy en="Seller Login" hi="विक्रेता लॉग इन" />
               : isBuyerLogin
-                ? 'Buyer Login'
-                : 'Login to Your Account'}
+                ? <Copy en="Buyer Login" hi="खरीदार लॉग इन" />
+                : <Copy en="Login to Your Account" hi="अपने खाते में लॉग इन करें" />}
         </h2>
 
         {!isForgotPassword && (isSellerLogin || isBuyerLogin) && (
@@ -211,7 +224,7 @@ function LoginForm() {
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Email Address
+              <Copy en="Email Address" hi="ईमेल पता" />
             </label>
 
             <input
@@ -234,7 +247,7 @@ function LoginForm() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-gray-700"
               >
-                Password
+                <Copy en="Password" hi="पासवर्ड" />
               </label>
 
               <input
@@ -260,7 +273,7 @@ function LoginForm() {
                 disabled={loading}
                 className="text-sm font-medium text-green-700 hover:text-green-900"
               >
-                Forgot Password?
+                <Copy en="Forgot Password?" hi="पासवर्ड भूल गए?" />
               </button>
             </div>
           )}
@@ -283,10 +296,10 @@ function LoginForm() {
             className="w-full rounded-lg bg-green-700 px-4 py-3 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading
-              ? 'Please wait...'
+              ? <Copy en="Please wait..." hi="कृपया प्रतीक्षा करें…" />
               : isForgotPassword
-                ? 'Send Reset Password Link'
-                : 'Login'}
+                ? <Copy en="Send Reset Password Link" hi="पासवर्ड बदलने का लिंक भेजें" />
+                : <Copy en="Login" hi="लॉग इन करें" />}
           </button>
 
         </form>
@@ -313,7 +326,7 @@ function LoginForm() {
               disabled={loading}
               className="text-sm font-medium text-green-700 hover:text-green-900"
             >
-              Back to Login
+              <Copy en="Back to Login" hi="लॉग इन पर लौटें" />
             </button>
           </div>
         )}
@@ -331,11 +344,11 @@ function LoginForm() {
               className="font-semibold text-green-800 underline"
             >
               {isSellerLogin
-                ? 'Shopping instead? Buyer login'
+                ? <Copy en="Shopping instead? Buyer login" hi="खरीदारी करनी है? खरीदार लॉग इन" />
                 : isBuyerLogin
-                  ? 'Selling on BodhiMart? Seller login'
+                  ? <Copy en="Selling on BodhiMart? Seller login" hi="BodhiMart पर बेचना है? विक्रेता लॉग इन" />
                   : isBodhiMartLogin
-                    ? 'Choose buyer or seller sign in'
+                    ? <Copy en="Choose buyer or seller sign in" hi="खरीदार या विक्रेता लॉग इन चुनें" />
                     : 'Return to Bodhi Rural'}
             </a>
           </div>
@@ -348,7 +361,7 @@ function LoginForm() {
               href={`/bodhimart/register?redirect=${encodeURIComponent(searchParams.get('redirect') || '/bodhimart/products')}`}
               className="font-semibold text-green-800 underline"
             >
-              Create a buyer account
+              <Copy en="Create a buyer account" hi="खरीदार खाता बनाएँ" />
             </a>
           </p>
         )}
@@ -377,7 +390,7 @@ export default function LoginPage() {
         </main>
       }
     >
-      <LoginForm />
+      <LoginEntry />
     </Suspense>
   );
 }
