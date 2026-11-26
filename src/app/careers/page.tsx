@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -13,10 +14,10 @@ export default function CareersPage() {
       <section className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[1.2fr_.8fr] lg:items-end">
         <div>
           <p className="inline-flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[.16em] text-[#1c6844] before:h-px before:w-7 before:bg-[#876321]">
-            Careers at Bodhi Rural
+            <Copy en="Careers at Bodhi Rural" hi="बोधि रूरल में करियर" />
           </p>
           <h1 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-[-.035em] text-[#123d2b] sm:text-6xl">
-            Grow your work with rural India.
+            <Copy en="Grow your work with rural India." hi="ग्रामीण भारत के विकास में अपना योगदान दें।" />
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-[#526157]">
             We work across agriculture, allied livelihoods, rural enterprise and technology. We value people who bring practical skills, curiosity and respect for the communities we work alongside.
@@ -34,7 +35,7 @@ export default function CareersPage() {
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-12 sm:px-8 sm:py-16 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[.14em] text-[#70501f]">Current opportunities</p>
-            <h2 className="mt-3 font-serif text-3xl font-medium tracking-[-.025em] text-[#123d2b]">No open positions are listed right now.</h2>
+            <h2 className="mt-3 font-serif text-3xl font-medium tracking-[-.025em] text-[#123d2b]"><Copy en="No open positions are listed right now." hi="अभी कोई रिक्त पद सूचीबद्ध नहीं है।" /></h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[#617067]">
               There are no advertised roles at the moment. You can still submit a general staff application through our email-verified form; it will enter the existing HR review process.
             </p>
@@ -50,13 +51,13 @@ export default function CareersPage() {
               href="mailto:bodhirural@gmail.com,ceo@brlps.co.in?subject=Career%20enquiry%20-%20Bodhi%20Rural"
               className="inline-flex min-h-12 items-center justify-center border border-[#cbd5ca] px-5 text-sm font-bold text-[#123d2b] no-underline transition hover:bg-[#f7f7f2]"
             >
-              Ask a question
+              <Copy en="Ask a question" hi="सवाल पूछें" />
             </a>
             <Link
               href="/staff/application/track"
               className="inline-flex min-h-12 items-center justify-center border border-[#cbd5ca] px-5 text-sm font-bold text-[#123d2b] no-underline transition hover:bg-[#f7f7f2]"
             >
-              Track an application
+              <Copy en="Track an application" hi="आवेदन की स्थिति देखें" />
             </Link>
           </div>
         </div>
