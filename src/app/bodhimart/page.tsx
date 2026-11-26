@@ -1,11 +1,12 @@
 import { Copy } from './language';
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 import printStyles from "./bodhimart-print.module.css";
 import {
   ArrowRight,
-  BadgeCheck,
+  Search,
   Carrot,
   Droplets,
   Hammer,
@@ -151,165 +152,64 @@ const categories = [
   },
 ];
 
-const features = [
-  {
-    title: "Approved sellers",
-    text: "Discover products from reviewed marketplace sellers.",
-    icon: BadgeCheck,
-  },
-  {
-    title: "Clear product details",
-    text: "See pricing, units and availability before you order.",
-    icon: PackageSearch,
-  },
-  {
-    title: "Flexible fulfilment",
-    text: "Check delivery and pickup options on each product.",
-    icon: Truck,
-  },
-];
-
 export default function BodhiMartPage() {
   return (
-    <main className={`${printStyles.root} min-h-screen bg-[#f7f8f4] text-[#183426]`}>
-      <section className={`${printStyles.hero} relative isolate overflow-hidden bg-[#103a27] text-white`}>
-        <div
-          aria-hidden="true"
-          className={`${printStyles.heroArtwork} absolute inset-0 -z-20 bg-cover bg-center`}
-          style={{ backgroundImage: "url('/branding/bodhi-rural-hero-v2.webp')" }}
-        />
-        <div
-          aria-hidden="true"
-          className={`${printStyles.heroArtwork} absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(10,38,25,0.96)_0%,rgba(10,38,25,0.88)_48%,rgba(10,38,25,0.5)_100%)]`}
-        />
-        <div className={`${printStyles.heroContent} mx-auto flex min-h-[480px] max-w-[1320px] items-center px-5 py-16 sm:px-8 lg:px-12 lg:py-24`}>
-          <div className="max-w-3xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#e5d29a]">
-              <span className="h-2 w-2 rounded-full bg-[#d8b44e]" />
-              Bodhi Rural marketplace
-            </div>
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[64px]">
-              <Copy en="Shop for home," hi="घर, स्कूल और" />
-              <span className="block text-[#e5c56d]"><Copy en="school and farm." hi="खेत के लिए खरीदारी" /></span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
-              Find groceries, clothing, school supplies, farm essentials and products
-              made by local producers.
-            </p>
-            <form action="/bodhimart/products" className="mt-6 flex max-w-xl flex-wrap gap-2 sm:flex-nowrap">
-              <label htmlFor="mart-search" className="sr-only">Search BodhiMart products</label>
-              <input
-                id="mart-search"
-                name="search"
-                type="search"
-                maxLength={100}
-                placeholder="Sugar, notebooks, seeds"
-                className="min-h-12 min-w-0 flex-1 rounded-xl bg-white px-4 text-[#183426]"
-              />
-              <button className="min-h-12 rounded-xl bg-[#e1bd59] px-5 text-sm font-bold text-[#183426]"><Copy en="Search" hi="खोजें" /></button>
-            </form>
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/bodhimart/products"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#e1bd59] px-6 py-3 text-sm font-bold text-[#183426] shadow-lg shadow-black/10 transition hover:bg-[#edd17e] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#103a27]"
-              >
-                <Copy en="Explore the marketplace" hi="बाज़ार देखें" />
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+    <main className="bg-[#f5f4eb] text-[#173b2b]">
+      <section className={`${printStyles.hero} bg-[#173e2e] text-white`}>
+        <div className="mx-auto max-w-6xl px-4 pb-5 pt-6 sm:px-8">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="flex items-center gap-2 text-3xl font-bold"><Leaf size={23} aria-hidden="true" /> BodhiMart</h1>
+            <Link href="/bodhimart/addresses" className="rounded-xl border border-white/35 px-3 py-2 text-sm">
+              <Copy en="Delivery address" hi="डिलीवरी पता" />
+            </Link>
+          </div>
+          <form action="/bodhimart/products" className="mt-4 flex items-center gap-2 rounded-2xl bg-white p-2 text-[#173b2b]">
+            <label htmlFor="mart-search" className="sr-only"><Copy en="Search products" hi="उत्पाद खोजें" /></label>
+            <Search size={20} className="ml-2 shrink-0" aria-hidden="true" />
+            <input id="mart-search" name="search" type="search" maxLength={100}
+              className="min-w-0 flex-1 bg-white px-1 py-2" placeholder="Search rice, seeds, notebooks…" />
+            <button className="min-h-11 rounded-xl bg-[#f5c65a] px-3 font-semibold"><Copy en="Search" hi="खोजें" /></button>
+          </form>
+          <nav aria-label="Shop by category" className="mt-4 flex gap-3 overflow-x-auto pb-2">
+            {categories.map(({ name, hindi, href, icon: Icon, color }) => (
+              <Link key={href} href={href} className="flex w-24 shrink-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-xs font-semibold hover:bg-white/10">
+                <span className={`rounded-2xl p-2.5 ${color}`}><Icon size={22} aria-hidden="true" /></span>
+                <Copy en={name} hi={hindi.name} />
               </Link>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-white/75">
-              <span className="inline-flex items-center gap-2">
-                <BadgeCheck className="h-4 w-4 text-[#e5c56d]" aria-hidden="true" />
-                <Copy en="Seller-reviewed catalogue" hi="स्वीकृत विक्रेताओं के उत्पाद" />
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Truck className="h-4 w-4 text-[#e5c56d]" aria-hidden="true" />
-                <Copy en="Delivery or pickup where available" hi="जहाँ उपलब्ध हो, डिलीवरी या खुद ले जाएँ" />
-              </span>
-            </div>
-          </div>
-
-
+            ))}
+          </nav>
         </div>
       </section>
 
-      <section className={`${printStyles.features} border-b border-[#e6e9e2] bg-white`}>
-        <div className="mx-auto grid max-w-[1320px] gap-4 px-5 py-6 sm:grid-cols-3 sm:px-8 lg:px-12">
-          {features.map(({ icon: Icon, title, text }) => (
-            <div key={title} className={`${printStyles.featureCard} flex gap-3 rounded-2xl px-2 py-3`}>
-              <div className="mt-0.5 rounded-xl bg-[#eff4ed] p-2.5 text-[#27623b]">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold">{title}</h2>
-                <p className="mt-1 text-sm leading-6 text-[#6a776d]">{text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={`${printStyles.shop} mx-auto max-w-[1320px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20`}>
-        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6c8a6f]">
-              <Copy en="Shop by need" hi="ज़रूरत के अनुसार खरीदें" />
-            </p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              <Copy en="Essentials for village life" hi="गाँव की रोज़मर्रा की ज़रूरतें" />
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-[#69766d]">
-              Browse the catalogue by what you need for your home, school or farm.
-            </p>
-          </div>
-          <Link
-            href="/bodhimart/products"
-            className="inline-flex items-center gap-2 self-start text-sm font-bold text-[#27623b] hover:text-[#173f2b] sm:self-auto"
-          >
-            <Copy en="View all products" hi="सभी उत्पाद देखें" />
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-5 sm:px-8">
+        <section className="relative isolate overflow-hidden rounded-3xl bg-[#284c36] p-6 text-white sm:p-10">
+          <Image src="/branding/bodhi-rural-village-hero.png" alt="" fill sizes="(max-width: 768px) 100vw, 1100px" className="-z-20 object-cover" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#102d20] via-[#102d20]/85 to-[#102d20]/30" />
+          <h2 className="max-w-xs text-3xl font-bold sm:text-4xl"><Copy en="Shop for home, school and farm" hi="घर, स्कूल और खेत के लिए खरीदारी" /></h2>
+          <Link href="/bodhimart/products" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#f5c65a] px-4 text-sm font-bold text-[#173b2b]">
+            <Copy en="Browse all products" hi="सभी उत्पाद देखें" /><ArrowRight size={16} aria-hidden="true" />
           </Link>
-        </div>
-        <div className={`${printStyles.categoryGrid} mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
-          {categories.map(({
-              name,
-              detail,
-              icon: Icon,
-              color,
-              href = "/bodhimart/products",
-              action = "Browse products",
-              hindi,
-            }) => (
-              <Link
-                key={name}
-                href={href}
-                className={`${printStyles.categoryCard} group rounded-3xl border border-[#e3e8df] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-[#bfd2c1] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#458454]`}
-              >
-                <div className={"inline-flex rounded-2xl p-3 " + color}>
-                  <Icon className="h-6 w-6" aria-hidden="true" />
-                </div>
-                <h3 className="mt-5 text-lg font-semibold text-[#203d2c]">
-                  <Copy en={name} hi={hindi.name} />
-                </h3>
-                <p className="mt-2 min-h-12 text-sm leading-6 text-[#6a776d]">
-                  <Copy en={detail} hi={hindi.detail} />
-                </p>
-                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#27623b]">
-                  <Copy en={action} hi={hindi.action} />
-                  <ArrowRight
-                    className="h-4 w-4 transition group-hover:translate-x-1"
-                    aria-hidden="true"
-                  />
-                </span>
-              </Link>
-            )
-          )}
-        </div>
-      </section>
+        </section>
 
-      
+        <section aria-labelledby="departments-title">
+          <h2 id="departments-title" className="mb-3 text-xl font-bold"><Copy en="Explore departments" hi="श्रेणियाँ देखें" /></h2>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {categories.map(({ name, hindi, href, icon: Icon, color }) => (
+              <li key={href}><Link href={href} className="flex h-full items-center gap-2 rounded-2xl border border-[#e2e8dd] bg-white p-3 text-sm font-semibold">
+                <span className={`shrink-0 rounded-xl p-2 ${color}`}><Icon size={19} aria-hidden="true" /></span>
+                <Copy en={name} hi={hindi.name} />
+              </Link></li>
+            ))}
+          </ul>
+        </section>
 
-      
+        <nav aria-label="BodhiMart services" className="flex flex-wrap gap-x-5 gap-y-3 pb-2 text-sm font-semibold underline underline-offset-4">
+          <Link href="/bodhimart/account"><Copy en="My account" hi="मेरा खाता" /></Link>
+          <Link href="/bodhimart/cart"><Copy en="Shopping cart" hi="खरीदारी की टोकरी" /></Link>
+          <Link href="/bodhimart/seller/register"><Copy en="Sell on BodhiMart" hi="BodhiMart पर बेचें" /></Link>
+          <Link href="/bodhimart/delivery/register"><Copy en="Apply to deliver" hi="डिलीवरी के लिए आवेदन करें" /></Link>
+        </nav>
+      </div>
     </main>
   );
 }
