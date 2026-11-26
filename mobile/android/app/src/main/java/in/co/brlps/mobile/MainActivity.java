@@ -18,7 +18,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.VideoView;
+import android.widget.FrameLayout;
+
+import java.util.EnumSet;
 
 public final class MainActivity extends Activity {
     private static final int GREEN = Color.rgb(18, 69, 49);
@@ -30,7 +32,8 @@ public final class MainActivity extends Activity {
     private Screen screen = Screen.HOME;
     private boolean hindi;
     private OnBackInvokedCallback backCallback;
-    private VideoView farmSplash;
+    private final EnumSet<Screen> shownIntros = EnumSet.noneOf(Screen.class);
+    private View introView;
 
     @Override
     public void onCreate(Bundle state) {
@@ -84,60 +87,84 @@ public final class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (farmSplash != null) render();
+        if (introView != null) render();
     }
 
-    private void stopFarmSplash() {
-        VideoView video = farmSplash;
-        farmSplash = null;
-        if (video != null) video.stopPlayback();
-    }
-
-    private void openBodhiFarm() {
-        if (getPreferences(MODE_PRIVATE).getBoolean("farmSplashSeen", false)) {
-            show(Screen.FARM);
+    private void openModule(Screen module) {
+        if (!shownIntros.add(module)) {
+            show(module);
             return;
         }
-        getPreferences(MODE_PRIVATE).edit().putBoolean("farmSplashSeen", true).apply();
-        screen = Screen.FARM;
+        screen = module;
         updateBackCallback();
 
-        LinearLayout splash = new LinearLayout(this);
-        splash.setOrientation(LinearLayout.VERTICAL);
-        splash.setBackgroundColor(CREAM);
-        splash.setOnApplyWindowInsetsListener((view, insets) -> {
-            splash.setPadding(dp(16) + insets.getSystemWindowInsetLeft(),
-                dp(10) + insets.getSystemWindowInsetTop(),
-                dp(16) + insets.getSystemWindowInsetRight(),
-                dp(16) + insets.getSystemWindowInsetBottom());
+        boolean farm = module == Screen.FARM;
+        FrameLayout cover = new FrameLayout(this);
+        cover.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+            farm ? new int[] {0xff0d3425, 0xff246746} : new int[] {0xff073b2c, 0xff146040}));
+        cover.setOnApplyWindowInsetsListener((view, insets) -> {
+            cover.setPadding(dp(24) + insets.getSystemWindowInsetLeft(),
+                dp(24) + insets.getSystemWindowInsetTop(),
+                dp(24) + insets.getSystemWindowInsetRight(),
+                dp(24) + insets.getSystemWindowInsetBottom());
             return insets;
         });
 
-        VideoView video = new VideoView(this);
-        farmSplash = video;
-        splash.addView(video, new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        addButton(splash, text("Skip intro", "परिचय छोड़ें"), false, this::render);
-        video.setOnPreparedListener(player -> {
-            if (farmSplash == video) {
-                player.setVolume(0f, 0f);
-                video.start();
-            }
-        });
-        video.setOnCompletionListener(player -> {
-            if (farmSplash == video) render();
-        });
-        video.setOnErrorListener((player, error, extra) -> {
-            if (farmSplash == video) render();
-            return true;
-        });
+        LinearLayout brand = new LinearLayout(this);
+        brand.setOrientation(LinearLayout.VERTICAL);
+        brand.setGravity(Gravity.CENTER);
+        cover.addView(brand, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
 
-        setContentView(splash);
-        video.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.bodhifarm_splash));
+        ImageView mark = new ImageView(this);
+        mark.setImageResource(R.drawable.bodhi_logo);
+        mark.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        mark.setPadding(dp(14), dp(14), dp(14), dp(14));
+        GradientDrawable tile = new GradientDrawable();
+        tile.setColor(Color.WHITE);
+        tile.setCornerRadius(dp(28));
+        mark.setBackground(tile);
+        brand.addView(mark, new LinearLayout.LayoutParams(dp(110), dp(110)));
+
+        TextView title = new TextView(this);
+        title.setText(farm ? "BodhiFarm" : "BodhiMart");
+        title.setTextSize(42);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setTextColor(Color.WHITE);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, dp(24), 0, dp(8));
+        brand.addView(title);
+
+        View accent = new View(this);
+        accent.setBackgroundColor(ORANGE);
+        brand.addView(accent, new LinearLayout.LayoutParams(dp(46), dp(3)));
+
+        TextView subtitle = new TextView(this);
+        subtitle.setText(farm
+            ? text("Farm operations and training", "फार्म संचालन और प्रशिक्षण")
+            : text("Shop, sell and deliver", "खरीदें, बेचें और डिलीवरी करें"));
+        subtitle.setTextSize(16);
+        subtitle.setTextColor(0xffe5f2e9);
+        subtitle.setGravity(Gravity.CENTER);
+        subtitle.setPadding(0, dp(15), 0, 0);
+        brand.addView(subtitle);
+
+        Button skip = new Button(this);
+        skip.setText(text("Continue", "आगे बढ़ें"));
+        skip.setAllCaps(false);
+        skip.setOnClickListener(view -> render());
+        cover.addView(skip, new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+
+        introView = cover;
+        setContentView(cover);
+        brand.setAlpha(0f);
+        brand.animate().alpha(1f).setDuration(300).start();
+        cover.postDelayed(() -> {
+            if (introView == cover) render();
+        }, 1150);
     }
 
     private void render() {
-        stopFarmSplash();
+        introView = null;
         updateBackCallback();
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -166,10 +193,12 @@ public final class MainActivity extends Activity {
 
         switch (screen) {
             case HOME:
-                addButton(content, text("BodhiFarm\nFarm operations", "BodhiFarm\nफार्म संचालन"), true, this::openBodhiFarm);
-                addButton(content, text("BodhiMart\nShop, sell or deliver", "BodhiMart\nखरीदें, बेचें या डिलीवरी करें"), true, () -> show(Screen.MART));
+                addButton(content, text("BodhiFarm\nFarm operations", "BodhiFarm\nफार्म संचालन"), true, () -> openModule(Screen.FARM));
+                addButton(content, text("BodhiMart\nShop, sell or deliver", "BodhiMart\nखरीदें, बेचें या डिलीवरी करें"), true, () -> openModule(Screen.MART));
                 break;
             case FARM:
+                addButton(content, text("Skills & Training", "कौशल और प्रशिक्षण"), true,
+                    () -> openPage("/skills-training"));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Farmer", "किसान"), true, () -> show(Screen.FARMER));
                 addButton(content, text("Field Team", "फील्ड टीम"), true, () -> show(Screen.FIELD_TEAM));
