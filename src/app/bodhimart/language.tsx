@@ -14,7 +14,7 @@ export function Copy({ en, hi }: { en: string; hi: string }) {
   return useBodhiMartLanguage() === 'hi' ? hi : en;
 }
 
-export function BodhiMartLanguage({ children }: { children: ReactNode }) {
+export function SiteLanguage({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
@@ -24,6 +24,10 @@ export function BodhiMartLanguage({ children }: { children: ReactNode }) {
       // The selector still works without storage.
     }
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   function changeLanguage(language: Language) {
     setLanguage(language);
@@ -36,7 +40,6 @@ export function BodhiMartLanguage({ children }: { children: ReactNode }) {
 
   return (
     <LanguageContext.Provider value={language}>
-      <div lang={language}>
         <div className="mx-auto flex max-w-[1320px] justify-end px-4 py-2 print:hidden">
           <label className="flex items-center gap-3 text-sm font-semibold">
             <Copy en="Language" hi="भाषा" />
@@ -48,7 +51,6 @@ export function BodhiMartLanguage({ children }: { children: ReactNode }) {
           </label>
         </div>
         {children}
-      </div>
     </LanguageContext.Provider>
   );
 }

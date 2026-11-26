@@ -202,11 +202,19 @@ export default function BodhiMartProductsPage() {
       value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery").replace(/चीनी/g, "sugar");
     const searchText = normalizeSearchText(search);
 
+    const hospitalitySearch = searchText === 'hotels & restaurants' || searchText === 'होटल और रेस्तराँ';
+
     if (searchText) {
       result = result.filter((product) => {
         const categoryName = product.category_id
           ? categoryMap[product.category_id] || ""
           : "";
+
+        if (hospitalitySearch) {
+          return /hotel|restaurant|prepared food|ready.to.eat|होटल|रेस्तराँ|रेस्टोरेंट/.test(
+            normalizeSearchText(categoryName)
+          );
+        }
 
         return (
           normalizeSearchText(product.name).includes(searchText) ||

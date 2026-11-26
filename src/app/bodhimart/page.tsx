@@ -17,6 +17,7 @@ import {
   ShoppingBasket,
   Truck,
   Wheat,
+  Utensils,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -138,6 +139,15 @@ const categories = [
     color: "bg-[#e8f1e8] text-[#27623b]",
     href: "/bodhimart/products?search=local",
     action: "Shop local products",
+  },
+  {
+    name: "Hotels & restaurants",
+    detail: "Browse meals and snacks listed by local hotels and restaurants.",
+    icon: Utensils,
+    color: "bg-[#f8efd9] text-[#8b651d]",
+    href: "/bodhimart/products?search=hotels+%26+restaurants",
+    action: "Browse meals",
+    hindi: { name: "होटल और रेस्तराँ", detail: "स्थानीय होटलों और रेस्तराँ के भोजन और नाश्ते देखें।", action: "भोजन देखें" },
   },
 ];
 

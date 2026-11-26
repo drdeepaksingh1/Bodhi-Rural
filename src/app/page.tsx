@@ -1,3 +1,4 @@
+import { Copy } from './bodhimart/language';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -202,7 +203,7 @@ export default function Home() {
           <div className="br-wrap br-hero-grid">
             <div className="br-hero-copy">
               <span className="br-eyebrow">Rural enterprise · Agriculture · Technology</span>
-              <h1>Building a stronger <em>rural future.</em></h1>
+              <h1><Copy en="Building a stronger" hi="मिलकर बनाएँ " /> <em><Copy en="rural future." hi="मज़बूत ग्रामीण भविष्य।" /></em></h1>
               <p className="br-lead">
                 We connect agriculture, rural enterprises and digital tools to create
                 more resilient livelihoods and stronger value chains across India.
@@ -228,7 +229,7 @@ export default function Home() {
           <div className="br-wrap br-intro-grid">
             <div>
               <span className="br-eyebrow">Who we are</span>
-              <h2>Rural progress, built through connection.</h2>
+              <h2><Copy en="Rural progress, built through connection." hi="साझेदारी से ग्रामीण विकास।" /></h2>
             </div>
             <div className="br-intro-copy">
               <p>
@@ -250,7 +251,7 @@ export default function Home() {
           <div className="br-wrap">
             <div className="br-section-heading">
               <span className="br-eyebrow">Our sectors</span>
-              <h2>Experience across the rural economy.</h2>
+              <h2><Copy en="Experience across the rural economy." hi="ग्रामीण अर्थव्यवस्था के कई क्षेत्रों में अनुभव।" /></h2>
               <p>Our work spans interconnected sectors, creating opportunities to support production, services and value addition at every stage.</p>
             </div>
             <div className="br-sector-grid">
@@ -270,7 +271,7 @@ export default function Home() {
             <div className="br-platform-head">
               <div>
                 <span className="br-eyebrow">Digital platforms</span>
-                <h2>Connected tools for rural enterprise.</h2>
+                <h2><Copy en="Connected tools for rural enterprise." hi="ग्रामीण उद्यमों के लिए डिजिटल साधन।" /></h2>
               </div>
               <p>Purpose-built platforms help connect operations, products and people across the Bodhi Rural ecosystem.</p>
             </div>
@@ -291,7 +292,7 @@ export default function Home() {
           <div className="br-wrap br-cta-row">
             <div>
               <span className="br-eyebrow">Work with us</span>
-              <h2>Let’s build meaningful opportunities, together.</h2>
+              <h2><Copy en="Let’s build meaningful opportunities, together." hi="आइए मिलकर नए अवसर बनाएँ।" /></h2>
             </div>
             <div className="br-actions">
               <Link href="/projects" className="br-button">Explore our projects <span aria-hidden="true">→</span></Link>

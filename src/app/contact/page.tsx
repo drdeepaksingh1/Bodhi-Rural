@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -60,7 +61,7 @@ export default function Page() {
           <div className="br-contact-wrap br-contact-hero-grid">
             <div>
               <span className="br-contact-eyebrow">Contact Bodhi Rural</span>
-              <h1>Start a conversation.</h1>
+              <h1><Copy en="Start a conversation." hi="हमसे बात करें।" /></h1>
               <p className="br-contact-lead">
                 Reach us for general enquiries, partnerships, or conversations
                 about agriculture and rural enterprise.
@@ -78,7 +79,7 @@ export default function Page() {
           <div className="br-contact-wrap br-contact-grid">
             <div>
               <span className="br-contact-eyebrow">Get in touch</span>
-              <h2>Choose the best way to reach us.</h2>
+              <h2><Copy en="Choose the best way to reach us." hi="संपर्क का तरीका चुनें।" /></h2>
               <p className="br-contact-intro">
                 Contact the Bodhi Rural team by email or phone. We are based in
                 Islampur, Nalanda, Bihar.

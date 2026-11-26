@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -115,7 +116,7 @@ export default function Page() {
           <div className="br-about-wrap br-about-hero-grid">
             <div>
               <span className="br-about-eyebrow">About the company</span>
-              <h1>Rural enterprise, built through connection.</h1>
+              <h1><Copy en="Rural enterprise, built through connection." hi="साझेदारी से ग्रामीण उद्यमों का विकास।" /></h1>
               <p className="br-about-lead">
                 Bodhi Rural Livelihood &amp; Agri Private Limited is a Bihar-based
                 company working across agriculture, rural enterprise and livelihood
@@ -149,7 +150,7 @@ export default function Page() {
           <div className="br-about-wrap">
             <div className="br-about-section-heading">
               <span className="br-about-eyebrow">Our areas of work</span>
-              <h2>Experience across connected rural sectors.</h2>
+              <h2><Copy en="Experience across connected rural sectors." hi="ग्रामीण क्षेत्रों में हमारा अनुभव।" /></h2>
               <p>
                 Our company scope spans production, services and value addition,
                 bringing together the activities that support a stronger rural economy.
@@ -171,7 +172,7 @@ export default function Page() {
           <div className="br-about-wrap">
             <div className="br-about-section-heading">
               <span className="br-about-eyebrow">Our approach</span>
-              <h2>From production to market access.</h2>
+              <h2><Copy en="From production to market access." hi="उत्पादन से बाज़ार तक।" /></h2>
               <p>
                 We focus on connecting capabilities at each stage, from productive
                 activity and aggregation through value addition and market linkages.
@@ -193,7 +194,7 @@ export default function Page() {
           <div className="br-about-wrap br-about-cta-row">
             <div>
               <span className="br-about-eyebrow">Work with us</span>
-              <h2>Let’s build meaningful opportunities, together.</h2>
+              <h2><Copy en="Let’s build meaningful opportunities, together." hi="आइए मिलकर नए अवसर बनाएँ।" /></h2>
             </div>
             <Link className="br-about-button" href="/contact">Get in touch <span aria-hidden="true">↗</span></Link>
           </div>

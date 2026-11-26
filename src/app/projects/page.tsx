@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
@@ -217,7 +218,7 @@ export default function ProjectsPage() {
         <div className="rp-container rp-hero-grid">
           <div>
             <span className="rp-kicker">Projects · Programmes · Partnerships</span>
-            <h1>Practical pathways for a stronger rural economy.</h1>
+            <h1><Copy en="Practical pathways for a stronger rural economy." hi="मज़बूत ग्रामीण अर्थव्यवस्था के लिए व्यावहारिक पहल।" /></h1>
             <p className="rp-lead">
               Bodhi Rural works across agriculture, allied livelihoods, rural
               enterprise and digital services. We bring these areas together
@@ -244,7 +245,7 @@ export default function ProjectsPage() {
         <div className="rp-container">
           <div className="rp-section-heading">
             <span className="rp-kicker">Areas of focus</span>
-            <h2>Connected work across the rural livelihood system.</h2>
+            <h2><Copy en="Connected work across the rural livelihood system." hi="ग्रामीण आजीविका के विभिन्न क्षेत्रों में हमारा काम।" /></h2>
             <p>
               Rural livelihoods depend on more than production alone. Our focus
               spans natural resources, skills, services, enterprise and access
@@ -299,7 +300,7 @@ export default function ProjectsPage() {
       <section className="rp-partner">
         <div className="rp-container">
           <span className="rp-kicker">Who we work with</span>
-          <h2>Partnerships that connect local capability with wider opportunity.</h2>
+          <h2><Copy en="Partnerships that connect local capability with wider opportunity." hi="स्थानीय क्षमताओं को नए अवसरों से जोड़ने वाली साझेदारियाँ।" /></h2>
           <p className="rp-partner-intro">
             We are interested in collaborations that are locally grounded,
             clearly governed and focused on practical outcomes for rural

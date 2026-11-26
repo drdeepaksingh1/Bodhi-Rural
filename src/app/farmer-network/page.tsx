@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
@@ -184,7 +185,7 @@ export default function RuralNetworkPage() {
         <div className="rn-container rn-hero-grid">
           <div>
             <span className="rn-kicker">Rural Network · Programme coordination</span>
-            <h1>A connected operating model for rural development.</h1>
+            <h1><Copy en="A connected operating model for rural development." hi="ग्रामीण विकास के लिए समन्वित कार्यप्रणाली।" /></h1>
             <p className="rn-lead">
               Rural Network brings field activity, programme coordination and
               regional reporting into one structured digital workspace.
@@ -236,7 +237,7 @@ export default function RuralNetworkPage() {
         <div className="rn-container">
           <div className="rn-section-heading">
             <span className="rn-kicker">A clear line of sight</span>
-            <h2>Connect local delivery with programme oversight.</h2>
+            <h2><Copy en="Connect local delivery with programme oversight." hi="स्थानीय काम और कार्यक्रम की निगरानी को जोड़ें।" /></h2>
             <p>
               Information can move through three connected levels, helping
               teams stay close to local activity while supporting a wider view

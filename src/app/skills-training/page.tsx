@@ -1,3 +1,4 @@
+import { Copy } from '../bodhimart/language';
 import Link from 'next/link';
 import { CalendarDays, ExternalLink, GraduationCap, PlayCircle, Video } from 'lucide-react';
 import { createClient } from '../../lib/supabase/server';
@@ -41,12 +42,12 @@ export default async function SkillsTrainingPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[1.3fr_.7fr] lg:items-end lg:py-24">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b9d2b8]">Bodhi Rural Learning</p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">Skills that grow with every season.</h1>
+            <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl"><Copy en="Skills that grow with every season." hi="हर मौसम में नए कौशल सीखें।" /></h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/80">Explore practical training for agriculture, allied livelihoods and rural enterprise. Watch a short lesson or join a live session from your phone or computer.</p>
           </div>
           <div className="rounded-3xl border border-white/15 bg-white/10 p-6 sm:p-7">
             <GraduationCap aria-hidden="true" className="text-[#f2c66d]" size={30} />
-            <h2 className="mt-4 text-xl font-semibold">Learn online, apply locally</h2>
+            <h2 className="mt-4 text-xl font-semibold"><Copy en="Learn online, apply locally" hi="ऑनलाइन सीखें और स्थानीय स्तर पर अपनाएँ" /></h2>
             <p className="mt-2 text-sm leading-6 text-white/75">Training links are reviewed by Bodhi Rural before they appear here. Live sessions include a direct Google Meet, Zoom or Teams join link when available.</p>
           </div>
         </div>
@@ -56,7 +57,7 @@ export default async function SkillsTrainingPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#68806c]">Learning library</p>
-            <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Video lessons & live sessions</h2>
+            <h2 className="mt-2 text-2xl font-semibold sm:text-3xl"><Copy en="Video lessons & live sessions" hi="वीडियो पाठ और लाइव सत्र" /></h2>
           </div>
           <p className="text-sm text-[#607265]">{resources.length} published resource{resources.length === 1 ? '' : 's'}</p>
         </div>
@@ -95,7 +96,7 @@ export default async function SkillsTrainingPage() {
         ) : (
           <div className="mt-8 rounded-3xl border border-dashed border-[#c8d7c8] bg-white px-6 py-14 text-center">
             <GraduationCap aria-hidden="true" className="mx-auto text-[#578062]" size={38} />
-            <h3 className="mt-4 text-xl font-semibold">New learning resources are on the way</h3>
+            <h3 className="mt-4 text-xl font-semibold"><Copy en="New learning resources are on the way" hi="जल्द ही नई प्रशिक्षण सामग्री उपलब्ध होगी।" /></h3>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[#607265]">Video lessons and live training links will appear here after our team publishes them.</p>
             <a href="mailto:bodhirural@gmail.com,ceo@brlps.co.in?subject=Skills%20and%20training%20enquiry" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#1c643f] px-5 py-2 text-sm font-bold text-white hover:bg-[#154b30]">Ask about training</a>
           </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { SiteLanguage } from './bodhimart/language';
 import SiteHeader from '../components/SiteHeader';
 import Footer from '../components/Footer';
 
@@ -65,9 +66,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        <SiteHeader />
-        {children}
-        <Footer />
+        <SiteLanguage>
+          <SiteHeader />
+          {children}
+          <Footer />
+        </SiteLanguage>
       </body>
     </html>
   );
