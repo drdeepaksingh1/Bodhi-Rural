@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Copy } from '../app/bodhimart/language';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useEffectEvent, useState } from 'react';
@@ -127,7 +128,7 @@ export default function SiteHeader() {
             href="/about"
             active={isActive('/about')}
           >
-            About
+            <Copy en="About" hi="हमारे बारे में" />
           </NavLink>
 
           <NavLink
@@ -148,32 +149,32 @@ export default function SiteHeader() {
             href="/farmer-network"
             active={isActive('/farmer-network')}
           >
-            Rural Network
+            <Copy en="Rural Network" hi="ग्रामीण नेटवर्क" />
           </NavLink>
 
           <NavLink
             href="/projects"
             active={isActive('/projects')}
           >
-            Projects
+            <Copy en="Projects" hi="परियोजनाएँ" />
           </NavLink>
 
           <NavLink
             href="/careers"
             active={isActive('/careers')}
           >
-            Careers
+            <Copy en="Careers" hi="करियर" />
           </NavLink>
 
           <NavLink
             href="/contact"
             active={isActive('/contact')}
           >
-            Contact
+            <Copy en="Contact" hi="संपर्क" />
           </NavLink>
 
           <NavLink href="/skills-training" active={isActive('/skills-training')}>
-            Skills &amp; Training
+            <Copy en="Skills & Training" hi="कौशल और प्रशिक्षण" />
           </NavLink>
 
 
@@ -191,7 +192,7 @@ export default function SiteHeader() {
               marginLeft: '4px',
             }}
           >
-            {loginLabel}
+            <Copy en={loginLabel} hi={isBodhiMartPage ? 'खरीदार / विक्रेता लॉग इन' : loginAccount === 'seller' ? 'विक्रेता लॉग इन' : loginAccount === 'buyer' ? 'खरीदार लॉग इन' : 'लॉग इन'} />
           </Link>
         </nav>
 
@@ -236,7 +237,7 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/about')}
           >
-            About
+            <Copy en="About" hi="हमारे बारे में" />
           </MobileLink>
 
           <MobileLink
@@ -260,7 +261,7 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/farmer-network')}
           >
-            Rural Network
+            <Copy en="Rural Network" hi="ग्रामीण नेटवर्क" />
           </MobileLink>
 
           <MobileLink
@@ -268,7 +269,7 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/projects')}
           >
-            Projects
+            <Copy en="Projects" hi="परियोजनाएँ" />
           </MobileLink>
 
           <MobileLink
@@ -276,7 +277,7 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/careers')}
           >
-            Careers
+            <Copy en="Careers" hi="करियर" />
           </MobileLink>
 
           <MobileLink
@@ -284,11 +285,11 @@ export default function SiteHeader() {
             onClick={closeMenu}
             active={isActive('/contact')}
           >
-            Contact
+            <Copy en="Contact" hi="संपर्क" />
           </MobileLink>
 
           <MobileLink href="/skills-training" onClick={closeMenu} active={isActive('/skills-training')}>
-            Skills &amp; Training
+            <Copy en="Skills & Training" hi="कौशल और प्रशिक्षण" />
           </MobileLink>
 
           <Link
@@ -307,7 +308,7 @@ export default function SiteHeader() {
               textAlign: 'center',
             }}
           >
-            {loginLabel}
+            <Copy en={loginLabel} hi={isBodhiMartPage ? 'खरीदार / विक्रेता लॉग इन' : loginAccount === 'seller' ? 'विक्रेता लॉग इन' : loginAccount === 'buyer' ? 'खरीदार लॉग इन' : 'लॉग इन'} />
           </Link>
         </div>
       )}
