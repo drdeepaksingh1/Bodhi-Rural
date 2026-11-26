@@ -1,6 +1,6 @@
 alter table public.marketplace_seller_applications
-  add column shop_latitude double precision,
-  add column shop_longitude double precision;
+  add column if not exists shop_latitude double precision,
+  add column if not exists shop_longitude double precision;
 
 -- Existing applications can still be reviewed without a historical GPS record.
 create function public.require_bodhimart_shop_gps()
