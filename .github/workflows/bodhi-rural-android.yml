@@ -6,6 +6,11 @@ on:
       - 'mobile/android/**'
       - 'public/branding/bodhi-rural-logo.png'
       - '.github/workflows/bodhi-rural-android.yml'
+  pull_request:
+    paths:
+      - 'mobile/android/**'
+      - 'public/branding/bodhi-rural-logo.png'
+      - '.github/workflows/bodhi-rural-android.yml'
   workflow_dispatch:
 
 permissions:
