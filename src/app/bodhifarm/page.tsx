@@ -894,7 +894,7 @@ export default function BodhiFarmPage() {
               </p>
             </Link>
 
-            <a
+            <Link
               href="/bodhifarm/farms"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
@@ -905,9 +905,9 @@ export default function BodhiFarmPage() {
               <p className="mt-1 text-sm text-slate-500">
                 Track crops, fish, mushrooms, dairy, livestock, poultry and other farm output.
               </p>
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/bodhifarm/farms"
               className="rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
@@ -918,7 +918,7 @@ export default function BodhiFarmPage() {
               <p className="mt-1 text-sm text-slate-500">
                 Track animal and fish feed, seeds, fertilizer, medicines and other inputs.
               </p>
-            </a>
+            </Link>
 
             <a
               href="/bodhifarm/veterinary"
