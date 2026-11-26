@@ -18,6 +18,11 @@ export function SiteLanguage({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
+    const requestedLanguage = new URLSearchParams(window.location.search).get('app_lang');
+    if (requestedLanguage === 'en' || requestedLanguage === 'hi') {
+      changeLanguage(requestedLanguage);
+      return;
+    }
     try {
       if (localStorage.getItem(preferenceKey) === 'hi') setLanguage('hi');
     } catch {

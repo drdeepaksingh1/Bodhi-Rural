@@ -200,6 +200,12 @@ export default function Footer() {
           </div>
         </div>
 
+        <nav className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          <Link href="/privacy-policy/bodhifarm" className="underline"><Copy en="BodhiFarm privacy" hi="BodhiFarm गोपनीयता" /></Link>
+          <Link href="/privacy-policy/bodhimart" className="underline"><Copy en="BodhiMart privacy" hi="BodhiMart गोपनीयता" /></Link>
+          <Link href="/account-deletion" className="underline"><Copy en="Request account deletion" hi="खाता हटाने का अनुरोध करें" /></Link>
+        </nav>
+
         {/* Bottom */}
         <div
           style={{

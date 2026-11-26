@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application' version '8.13.0'
+}
+
+def uploadKeystore = providers.environmentVariable('ANDROID_UPLOAD_KEYSTORE_PATH')
+
+android {
+    namespace 'in.co.brlps.mobile'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'in.co.brlps.mobile'
+        minSdk 29
+        targetSdk 36
+        versionCode 9
+        versionName '0.9.0'
+    }
+
+    if (uploadKeystore.isPresent()) {
+        signingConfigs {
+            release {
+                storeFile file(uploadKeystore.get())
+                storePassword providers.environmentVariable('ANDROID_UPLOAD_STORE_PASSWORD').get()
+                keyAlias providers.environmentVariable('ANDROID_UPLOAD_KEY_ALIAS').get()
+                keyPassword providers.environmentVariable('ANDROID_UPLOAD_KEY_PASSWORD').get()
+            }
+        }
+
+        buildTypes {
+            release {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
