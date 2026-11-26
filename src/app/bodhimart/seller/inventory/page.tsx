@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../../language';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -472,7 +473,7 @@ export default function SellerInventoryPage() {
               </div>
 
               <h1 style={{ margin: 0, fontSize: 30 }}>
-                Inventory Management
+                <Copy en="Inventory Management" hi="स्टॉक प्रबंधन" />
               </h1>
 
               {seller && (
@@ -487,7 +488,7 @@ export default function SellerInventoryPage() {
                 href="/bodhimart/seller/products"
                 style={headerButton}
               >
-                My Products
+                <Copy en="My Products" hi="मेरे उत्पाद" />
               </Link>
 
               <Link
@@ -498,7 +499,7 @@ export default function SellerInventoryPage() {
                   color: '#145c2b',
                 }}
               >
-                Dashboard
+                <Copy en="Dashboard" hi="डैशबोर्ड" />
               </Link>
             </div>
           </div>
@@ -540,7 +541,7 @@ export default function SellerInventoryPage() {
               <option value="ALL">All Stock</option>
               <option value="AVAILABLE">Available</option>
               <option value="LOW">Low Stock</option>
-              <option value="OUT">Out of Stock</option>
+              <option value="OUT"><Copy en="Out of Stock" hi="स्टॉक खत्म" /></option>
             </select>
 
             <button
@@ -556,7 +557,7 @@ export default function SellerInventoryPage() {
         <div className="panel inventory-panel">
           <div className="panel-heading">
             <h2 style={{ margin: 0, fontSize: 20 }}>
-              Product Inventory
+              <Copy en="Product Inventory" hi="उत्पादों का स्टॉक" />
             </h2>
 
             <p
@@ -682,7 +683,7 @@ export default function SellerInventoryPage() {
                             onClick={() => openAdjustment(row)}
                             style={adjustButton}
                           >
-                            Manage Stock
+                            <Copy en="Manage Stock" hi="स्टॉक बदलें" />
                           </button>
                         </td>
                       </tr>
@@ -707,21 +708,21 @@ export default function SellerInventoryPage() {
               href="/bodhimart/seller/products"
               style={bottomLink}
             >
-              My Products
+              <Copy en="My Products" hi="मेरे उत्पाद" />
             </Link>
 
             <Link
               href="/bodhimart/seller/orders"
               style={bottomLink}
             >
-              Orders
+              <Copy en="Orders" hi="ऑर्डर" />
             </Link>
 
             <Link
               href="/bodhimart/seller/sales"
               style={bottomLink}
             >
-              Sales
+              <Copy en="Sales" hi="बिक्री" />
             </Link>
           </div>
         </div>
@@ -733,7 +734,7 @@ export default function SellerInventoryPage() {
             <div className="modal-heading">
               <div>
                 <h2 style={{ margin: 0, fontSize: 22 }}>
-                  Manage Stock
+                  <Copy en="Manage Stock" hi="स्टॉक बदलें" />
                 </h2>
 
                 <p className="subtext">
@@ -887,7 +888,7 @@ export default function SellerInventoryPage() {
                 disabled={saving}
                 style={cancelButton}
               >
-                Cancel
+                <Copy en="Cancel" hi="रद्द करें" />
               </button>
 
               <button

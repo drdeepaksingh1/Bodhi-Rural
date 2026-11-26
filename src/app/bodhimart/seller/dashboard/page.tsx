@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../../language';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '../../../../lib/supabase/client';
@@ -323,15 +324,15 @@ export default function SellerDashboardPage() {
 
             <div className="error-actions">
               <button type="button" onClick={loadDashboard}>
-                Retry
+                <Copy en="Retry" hi="फिर कोशिश करें" />
               </button>
 
               <Link href="/bodhimart/seller/status">
-                Check application status
+                <Copy en="Check application status" hi="आवेदन की स्थिति देखें" />
               </Link>
 
               <Link href="/bodhimart">
-                Back to BodhiMart
+                <Copy en="Back to BodhiMart" hi="BodhiMart पर लौटें" />
               </Link>
             </div>
           </div>
@@ -439,7 +440,7 @@ export default function SellerDashboardPage() {
               href="/bodhimart"
               className="secondary-btn"
             >
-              View BodhiMart
+              <Copy en="View BodhiMart" hi="BodhiMart देखें" />
             </Link>
 
             <button
@@ -501,7 +502,7 @@ export default function SellerDashboardPage() {
             <span className="quick-icon">📦</span>
 
             <span>
-              <strong>My Products</strong>
+              <strong><Copy en="My Products" hi="मेरे उत्पाद" /></strong>
               <small>Manage products</small>
             </span>
           </Link>
@@ -537,7 +538,7 @@ export default function SellerDashboardPage() {
             <span className="quick-icon">🛍️</span>
 
             <span>
-              <strong>Orders</strong>
+              <strong><Copy en="Orders" hi="ऑर्डर" /></strong>
               <small>Manage customer orders</small>
             </span>
           </Link>
@@ -622,7 +623,7 @@ export default function SellerDashboardPage() {
               </div>
 
               <Link href="/bodhimart/seller/orders">
-                View All
+                <Copy en="View All" hi="सभी देखें" />
               </Link>
             </div>
 
@@ -630,7 +631,7 @@ export default function SellerDashboardPage() {
               <div className="empty-state">
                 <div>🛍️</div>
 
-                <h3>No orders yet</h3>
+                <h3><Copy en="No orders yet" hi="अभी कोई ऑर्डर नहीं है" /></h3>
 
                 <p>
                   New customer orders will appear here when customers
@@ -685,7 +686,7 @@ export default function SellerDashboardPage() {
               </div>
 
               <Link href="/bodhimart/seller/inventory">
-                Manage
+                <Copy en="Manage" hi="प्रबंधित करें" />
               </Link>
             </div>
 
@@ -703,7 +704,7 @@ export default function SellerDashboardPage() {
 
               <div className="inventory-box danger">
                 <strong>{summary.outOfStockProducts}</strong>
-                <span>Out of Stock</span>
+                <span><Copy en="Out of Stock" hi="स्टॉक खत्म" /></span>
               </div>
 
             </div>
@@ -794,7 +795,7 @@ export default function SellerDashboardPage() {
             </div>
 
             <Link href="/bodhimart/seller/notifications">
-              View All
+              <Copy en="View All" hi="सभी देखें" />
             </Link>
 
           </div>

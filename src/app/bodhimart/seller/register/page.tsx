@@ -2,10 +2,38 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useBodhiMartLanguage } from '../../language';
 import { createClient } from '../../../../lib/supabase/client';
 
 export default function SellerRegistrationPage() {
   const supabase = useMemo(() => createClient(), []);
+
+  const language = useBodhiMartLanguage();
+  const [shopLocation, setShopLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<'denied' | 'unavailable' | null>(null);
+  const t = (english: string, hindi: string) => language === 'hi' ? hindi : english;
+
+  function captureShopLocation() {
+    setShopLocation(null);
+    setLocationError(null);
+    if (!navigator.geolocation) {
+      setLocationError('unavailable');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: { latitude, longitude } }) => {
+        setShopLocation({ latitude, longitude });
+        setLocating(false);
+      },
+      (failure) => {
+        setLocationError(failure.code === 1 ? 'denied' : 'unavailable');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+    );
+  }
 
   const [form, setForm] = useState({
     owner_name: '',
@@ -80,7 +108,7 @@ export default function SellerRegistrationPage() {
     setSuccess('');
     const email = verificationEmail.trim().toLowerCase();
     if (!email) {
-      setError('Enter your email address to receive a verification code.');
+      setError(t("Enter your email address to receive a verification code.", "सत्यापन कोड पाने के लिए अपना ईमेल पता दर्ज करें।"));
       return;
     }
 
@@ -95,9 +123,9 @@ export default function SellerRegistrationPage() {
       });
       if (error) throw error;
       setOtpSent(true);
-      setSuccess('Verification code sent. Check your email and enter the 8-digit code below.');
+      setSuccess(t("Verification code sent. Check your email and enter the 8-digit code below.", "सत्यापन कोड भेज दिया गया है। ईमेल में मिला 8 अंकों का कोड दर्ज करें।"));
     } catch (err: any) {
-      setError(err?.message || 'Unable to send a verification code. Please try again.');
+      setError(err?.message || t("Unable to send a verification code. Please try again.", "कोड नहीं भेजा जा सका। फिर कोशिश करें।"));
     } finally {
       setSendingOtp(false);
     }
@@ -108,7 +136,7 @@ export default function SellerRegistrationPage() {
     setSuccess('');
     const cleanedOtp = otp.replace(/\D/g, '');
     if (!/^\d{8}$/.test(cleanedOtp)) {
-      setError('Enter the 8-digit verification code from your email.');
+      setError(t("Enter the 8-digit verification code from your email.", "ईमेल से मिला 8 अंकों का सत्यापन कोड दर्ज करें।"));
       return;
     }
 
@@ -129,9 +157,9 @@ export default function SellerRegistrationPage() {
         ...current,
         email: current.email || verifiedUser.email || '',
       }));
-      setSuccess('Email verified. Complete your seller application below. BodhiMart admins review every application before activation.');
+      setSuccess(t("Email verified. Complete your seller application below. BodhiMart admins review every application before activation.", "ईमेल सत्यापित हो गया। नीचे अपना विक्रेता आवेदन पूरा करें।"));
     } catch (err: any) {
-      setError(err?.message || 'Unable to verify this code. Please check it and try again.');
+      setError(err?.message || t("Unable to verify this code. Please check it and try again.", "कोड का सत्यापन नहीं हुआ। कोड जाँचकर फिर कोशिश करें।"));
     } finally {
       setVerifyingOtp(false);
     }
@@ -141,6 +169,7 @@ export default function SellerRegistrationPage() {
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+    if (!shopLocation || locating || submitting) return;
 
     setSubmitting(true);
     setSuccess('');
@@ -153,7 +182,7 @@ export default function SellerRegistrationPage() {
         !form.mobile.trim()
       ) {
         throw new Error(
-          'Please fill Owner Name, Shop Name and Mobile Number.'
+          t("Please fill Owner Name, Shop Name and Mobile Number.", "मालिक का नाम, दुकान का नाम और मोबाइल नंबर भरें।")
         );
       }
 
@@ -166,7 +195,7 @@ export default function SellerRegistrationPage() {
 
       const authenticatedUser = userData.user;
       if (!authenticatedUser || authenticatedUser.id !== userId) {
-        throw new Error('Verify your email before submitting a seller application.');
+        throw new Error(t("Verify your email before submitting a seller application.", "विक्रेता आवेदन भेजने से पहले अपना ईमेल सत्यापित करें।"));
       }
 
       const { data, error } = await supabase
@@ -186,6 +215,8 @@ export default function SellerRegistrationPage() {
             form.upi_id.trim() || null,
           business_type:
             form.business_type.trim() || null,
+          shop_latitude: shopLocation.latitude,
+          shop_longitude: shopLocation.longitude,
           status: 'SUBMITTED',
         })
         .select('id, application_number')
@@ -196,10 +227,11 @@ export default function SellerRegistrationPage() {
       }
 
       setApplicationSubmitted(true);
+      setShopLocation(null);
       setSuccess(
-        `Seller application submitted successfully${
+        `${t("Seller application submitted successfully", "विक्रेता आवेदन सफलतापूर्वक जमा हुआ")}${
           data?.application_number
-            ? ` — Application No. ${data.application_number}`
+            ? ` — ${t("Application No.", "आवेदन संख्या")} ${data.application_number}`
             : ''
         }.`
       );
@@ -218,7 +250,7 @@ export default function SellerRegistrationPage() {
     } catch (err: any) {
       setError(
         err?.message ||
-          'Unable to submit seller application.'
+          t("Unable to submit seller application.", "विक्रेता आवेदन जमा नहीं हो सका।")
       );
     } finally {
       setSubmitting(false);
@@ -228,13 +260,14 @@ export default function SellerRegistrationPage() {
   if (checkingSession) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f8f5] px-4 text-center text-sm text-gray-600">
-        <p aria-live="polite">Checking your BodhiMart account…</p>
+        <p aria-live="polite">{t("Checking your BodhiMart account…", "आपके BodhiMart खाते की जाँच हो रही है…")}</p>
       </main>
     );
   }
 
   return (
     <main
+      lang={language}
       style={{
         minHeight: '100vh',
         background: '#f5f8f5',
@@ -273,7 +306,7 @@ export default function SellerRegistrationPage() {
               fontSize: 30,
             }}
           >
-            Become a BodhiMart Seller
+            {t("Become a BodhiMart Seller", "BodhiMart विक्रेता बनें")}
           </h1>
 
           <p
@@ -283,7 +316,7 @@ export default function SellerRegistrationPage() {
               lineHeight: 1.6,
             }}
           >
-            Apply to list your shop or business on BodhiMart. Verify your email first; our team reviews every application before seller activation.
+            {t("Apply to list your shop or business on BodhiMart. Verify your email first; our team reviews every application before seller activation.", "BodhiMart पर अपनी दुकान या व्यवसाय जोड़ने के लिए आवेदन करें। पहले ईमेल सत्यापित करें। हमारी टीम हर आवेदन की समीक्षा करती है।")}
           </p>
         </div>
 
@@ -303,7 +336,7 @@ export default function SellerRegistrationPage() {
             {applicationSubmitted && (
               <p style={{ margin: '10px 0 0' }}>
                 <Link href="/bodhimart/seller/status" style={{ color: '#145c2b', fontWeight: 700 }}>
-                  View your application status →
+                  {t("View your application status →", "अपने आवेदन की स्थिति देखें →")}
                 </Link>
               </p>
             )}
@@ -334,11 +367,11 @@ export default function SellerRegistrationPage() {
               boxShadow: '0 4px 18px rgba(0,0,0,0.06)',
             }}
           >
-            <h2 style={{ marginTop: 0, color: '#145c2b' }}>Verify your email to get started</h2>
+            <h2 style={{ marginTop: 0, color: '#145c2b' }}>{t("Verify your email to get started", "शुरू करने के लिए अपना ईमेल सत्यापित करें")}</h2>
             <p style={{ color: '#555', lineHeight: 1.6 }}>
-              We’ll use your verified email to link your seller application to your account. Creating an account does not activate a seller profile or publish products.
+              {t("We’ll use your verified email to link your seller application to your account. Creating an account does not activate a seller profile or publish products.", "आपका सत्यापित ईमेल विक्रेता आवेदन को आपके खाते से जोड़ेगा। विक्रेता प्रोफ़ाइल सक्रिय करने के लिए आवेदन की मंज़ूरी ज़रूरी है।")}
             </p>
-            <label htmlFor="seller-verification-email" style={labelStyle}>Email Address</label>
+            <label htmlFor="seller-verification-email" style={labelStyle}>{t("Email Address", "ईमेल पता")}</label>
             <input
               id="seller-verification-email"
               type="email"
@@ -356,17 +389,17 @@ export default function SellerRegistrationPage() {
               disabled={sendingOtp || otpSent}
               style={{ marginTop: 16, background: '#145c2b', color: '#fff', border: 0, borderRadius: 9, padding: '13px 20px', fontWeight: 700, cursor: sendingOtp || otpSent ? 'not-allowed' : 'pointer', opacity: sendingOtp || otpSent ? 0.7 : 1 }}
             >
-              {sendingOtp ? 'Sending code…' : otpSent ? 'Code sent' : 'Send verification code'}
+              {sendingOtp ? t("Sending code…", "कोड भेजा जा रहा है…") : otpSent ? t("Code sent", "कोड भेज दिया गया") : t("Send verification code", "सत्यापन कोड भेजें")}
             </button>
             {otpSent && (
               <div style={{ marginTop: 20 }}>
-                <label htmlFor="seller-verification-code" style={labelStyle}>8-digit verification code</label>
+                <label htmlFor="seller-verification-code" style={labelStyle}>{t("8-digit verification code", "8 अंकों का सत्यापन कोड")}</label>
                 <input
                   id="seller-verification-code"
                   type="text"
                   value={otp}
                   onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 8))}
-                  placeholder="Enter code from email"
+                  placeholder={t("Enter code from email", "ईमेल से मिला कोड दर्ज करें")}
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={8}
@@ -378,12 +411,12 @@ export default function SellerRegistrationPage() {
                   disabled={verifyingOtp}
                   style={{ marginTop: 12, background: '#1f2937', color: '#fff', border: 0, borderRadius: 9, padding: '13px 20px', fontWeight: 700, cursor: verifyingOtp ? 'not-allowed' : 'pointer', opacity: verifyingOtp ? 0.7 : 1 }}
                 >
-                  {verifyingOtp ? 'Verifying…' : 'Verify email'}
+                  {verifyingOtp ? t("Verifying…", "सत्यापन हो रहा है…") : t("Verify email", "ईमेल सत्यापित करें")}
                 </button>
               </div>
             )}
             <p style={{ marginTop: 20, fontSize: 13, color: '#666' }}>
-              Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fregister">Log in</Link>
+              Already have an account? <Link className="font-semibold text-green-800 underline" href="/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fregister">{t("Log in", "लॉग इन करें")}</Link>
             </p>
           </section>
         ) : (
@@ -404,12 +437,12 @@ export default function SellerRegistrationPage() {
               color: '#145c2b',
             }}
           >
-            Shopkeeper Information
+            {t("Shopkeeper Information", "दुकानदार की जानकारी")}
           </h2>
 
           <div style={gridStyle}>
             <Field
-              label="Shopkeeper / Owner Name *"
+              label={t("Shopkeeper / Owner Name *", "दुकानदार / मालिक का नाम *")}
               value={form.owner_name}
               onChange={(value) =>
                 updateField('owner_name', value)
@@ -418,7 +451,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="Shop / Business Name *"
+              label={t("Shop / Business Name *", "दुकान / व्यवसाय का नाम *")}
               value={form.shop_name}
               onChange={(value) =>
                 updateField('shop_name', value)
@@ -427,7 +460,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="Mobile Number *"
+              label={t("Mobile Number *", "मोबाइल नंबर *")}
               value={form.mobile}
               onChange={(value) =>
                 updateField('mobile', value)
@@ -437,7 +470,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="Email"
+              label={t("Email", "ईमेल")}
               value={form.email}
               onChange={(value) =>
                 updateField('email', value)
@@ -453,12 +486,12 @@ export default function SellerRegistrationPage() {
               marginTop: 30,
             }}
           >
-            Business Details
+            {t("Business Details", "व्यवसाय की जानकारी")}
           </h2>
 
           <div style={gridStyle}>
             <Field
-              label="Business Type"
+              label={t("Business Type", "व्यवसाय का प्रकार")}
               value={form.business_type}
               onChange={(value) =>
                 updateField(
@@ -466,11 +499,11 @@ export default function SellerRegistrationPage() {
                   value
                 )
               }
-              placeholder="Retail / Wholesale / Manufacturer / Farmer Producer"
+              placeholder={t("Retail / Wholesale / Manufacturer / Farmer Producer", "खुदरा / थोक / निर्माता / किसान उत्पादक")}
             />
 
             <Field
-              label="PAN Number"
+              label={t("PAN Number", "पैन नंबर")}
               value={form.pan_number}
               onChange={(value) =>
                 updateField(
@@ -489,7 +522,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="UPI ID"
+              label={t("UPI ID", "यूपीआई आईडी")}
               value={form.upi_id}
               onChange={(value) =>
                 updateField('upi_id', value)
@@ -500,7 +533,7 @@ export default function SellerRegistrationPage() {
           {/* ADDRESS */}
           <div style={{ marginTop: 18 }}>
             <label style={labelStyle}>
-              Business / Shop Address
+              {t("Business / Shop Address", "व्यवसाय / दुकान का पता")}
             </label>
 
             <textarea
@@ -512,7 +545,7 @@ export default function SellerRegistrationPage() {
                 )
               }
               rows={4}
-              placeholder="Enter complete shop/business address"
+              placeholder={t("Enter complete shop/business address", "दुकान या व्यवसाय का पूरा पता दर्ज करें")}
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
@@ -523,6 +556,19 @@ export default function SellerRegistrationPage() {
               }}
             />
           </div>
+
+          <fieldset className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4">
+            <legend className="px-1 font-semibold text-green-900">{t('Shop GPS location (required)', 'दुकान का जीपीएस स्थान (अनिवार्य)')}</legend>
+            <p className="mb-3 text-sm">{t('Stand at your shop and allow location access. BodhiMart uses this pickup point to match nearby orders.', 'अपनी दुकान पर खड़े होकर लोकेशन की अनुमति दें। BodhiMart इस स्थान का उपयोग पास के ऑर्डर से आपकी दुकान को जोड़ने के लिए करता है।')}</p>
+            <button type="button" disabled={locating || submitting} onClick={captureShopLocation} className="min-h-11 rounded-lg bg-green-800 px-4 text-sm font-semibold text-white disabled:opacity-60">
+              {locating ? t('Getting location…', 'स्थान लिया जा रहा है…') : shopLocation ? t('Capture again', 'स्थान फिर से लें') : t('Capture shop location', 'दुकान का स्थान लें')}
+            </button>
+            <div className="mt-2 text-sm" aria-live="polite">
+              {shopLocation && t('Shop location captured.', 'दुकान का स्थान दर्ज हो गया।')}
+              {locationError === 'denied' && t('Allow location access in your browser settings, then try again.', 'ब्राउज़र सेटिंग में लोकेशन की अनुमति देकर फिर कोशिश करें।')}
+              {locationError === 'unavailable' && t('Location is unavailable. Turn on GPS and try again at your shop.', 'स्थान उपलब्ध नहीं है। जीपीएस चालू करके दुकान पर फिर कोशिश करें।')}
+            </div>
+          </fieldset>
 
           {/* WORKFLOW NOTICE */}
           <div
@@ -536,16 +582,13 @@ export default function SellerRegistrationPage() {
               lineHeight: 1.6,
             }}
           >
-            After submission, the application will be
-            reviewed by BodhiMart administration. KYC
-            verification and seller approval will be
-            completed before seller activation.
+            {t('BodhiMart reviews your application and verifies KYC before activating your seller account.', 'विक्रेता खाता सक्रिय करने से पहले BodhiMart आपके आवेदन और केवाईसी की जाँच करता है।')}
           </div>
 
           {/* SUBMIT */}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !shopLocation || locating || applicationSubmitted}
             style={{
               marginTop: 24,
               background: '#145c2b',
@@ -555,15 +598,15 @@ export default function SellerRegistrationPage() {
               padding: '13px 24px',
               fontWeight: 700,
               fontSize: 15,
-              cursor: submitting
+              cursor: submitting || !shopLocation || locating || applicationSubmitted
                 ? 'not-allowed'
                 : 'pointer',
-              opacity: submitting ? 0.7 : 1,
+              opacity: submitting || !shopLocation || locating || applicationSubmitted ? 0.7 : 1,
             }}
           >
             {submitting
-              ? 'Submitting...'
-              : 'Submit Seller Application'}
+              ? t("Submitting...", "आवेदन भेजा जा रहा है…")
+              : t("Submit Seller Application", "विक्रेता आवेदन जमा करें")}
           </button>
           </form>
         )}

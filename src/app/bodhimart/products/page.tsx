@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy } from '../language';
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -198,7 +199,7 @@ export default function BodhiMartProductsPage() {
     let result = [...products];
 
     const normalizeSearchText = (value: string) =>
-      value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery");
+      value.trim().toLowerCase().replace(/\bgroceries\b/g, "grocery").replace(/चीनी/g, "sugar");
     const searchText = normalizeSearchText(search);
 
     if (searchText) {
@@ -513,7 +514,7 @@ export default function BodhiMartProductsPage() {
             </p>
 
             <h1 className="text-3xl font-bold sm:text-4xl">
-              Shop Rural Products
+              <Copy en="Shop Rural Products" hi="ग्रामीण उत्पाद खरीदें" />
             </h1>
 
             <p className="mt-3 text-green-100">
@@ -531,7 +532,7 @@ export default function BodhiMartProductsPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Search Products
+                <Copy en="Search Products" hi="उत्पाद खोजें" />
               </label>
 
               <input
@@ -547,7 +548,7 @@ export default function BodhiMartProductsPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Category
+                <Copy en="Category" hi="श्रेणी" />
               </label>
 
               <select
@@ -558,7 +559,7 @@ export default function BodhiMartProductsPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
                 <option value="ALL">
-                  All Categories
+                  <Copy en="All Categories" hi="सभी श्रेणियाँ" />
                 </option>
 
                 {categories.map((item) => (
@@ -574,7 +575,7 @@ export default function BodhiMartProductsPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Sort By
+                <Copy en="Sort By" hi="क्रम चुनें" />
               </label>
 
               <select
@@ -585,7 +586,7 @@ export default function BodhiMartProductsPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
                 <option value="DEFAULT">
-                  Latest
+                  <Copy en="Latest" hi="सबसे नए" />
                 </option>
 
                 <option value="PRICE_LOW">
@@ -597,27 +598,27 @@ export default function BodhiMartProductsPage() {
                 </option>
 
                 <option value="SAVINGS">
-                  Highest Savings
+                  <Copy en="Highest Savings" hi="सबसे ज़्यादा बचत" />
                 </option>
 
                 <option value="NAME">
-                  Product Name
+                  <Copy en="Product Name" hi="उत्पाद का नाम" />
                 </option>
               </select>
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Availability
+                <Copy en="Availability" hi="उपलब्धता" />
               </label>
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               >
-                <option value="ALL">All products</option>
-                <option value="IN_STOCK">In stock</option>
-                <option value="OUT_OF_STOCK">Out of stock</option>
+                <option value="ALL"><Copy en="All products" hi="सभी उत्पाद" /></option>
+                <option value="IN_STOCK"><Copy en="In stock" hi="स्टॉक में" /></option>
+                <option value="OUT_OF_STOCK"><Copy en="Out of stock" hi="स्टॉक खत्म" /></option>
               </select>
             </div>
           </div>
@@ -627,7 +628,7 @@ export default function BodhiMartProductsPage() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              Products
+              <Copy en="Products" hi="उत्पाद" />
             </h2>
 
             {!loading && (
@@ -646,7 +647,7 @@ export default function BodhiMartProductsPage() {
               href="/bodhimart/orders"
               className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
             >
-              My orders
+              <Copy en="My orders" hi="मेरे ऑर्डर" />
             </Link>
             <Link
               href="/bodhimart/wishlist"
@@ -658,7 +659,7 @@ export default function BodhiMartProductsPage() {
               href="/bodhimart/addresses"
               className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
             >
-              Delivery addresses
+              <Copy en="Delivery addresses" hi="डिलीवरी के पते" />
             </Link>
             <a
               href="/bodhimart/cart"
@@ -671,7 +672,7 @@ export default function BodhiMartProductsPage() {
               onClick={loadProducts}
               className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
             >
-              Refresh
+              <Copy en="Refresh" hi="फिर से लोड करें" />
             </button>
           </div>
         </div>
@@ -735,7 +736,7 @@ export default function BodhiMartProductsPage() {
                   }}
                   className="mt-5 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
                 >
-                  Clear filters
+                  <Copy en="Clear filters" hi="फ़िल्टर हटाएँ" />
                 </button>
               )}
             </div>
@@ -844,11 +845,11 @@ export default function BodhiMartProductsPage() {
 
                         {product.delivery_available ? (
                           <span className="text-xs font-medium text-green-700">
-                            Delivery
+                            <Copy en="Delivery" hi="डिलीवरी" />
                           </span>
                         ) : (
                           <span className="text-xs text-gray-500">
-                            Pickup
+                            <Copy en="Pickup" hi="खुद ले जाएँ" />
                           </span>
                         )}
                       </div>
@@ -924,7 +925,7 @@ export default function BodhiMartProductsPage() {
                         {outOfStock ? (
                           <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
                             <span className="h-2 w-2 rounded-full bg-red-500" />
-                            Out of Stock
+                            <Copy en="Out of Stock" hi="स्टॉक खत्म" />
                           </span>
                         ) : availableStock <=
                           (5) ? (
@@ -936,7 +937,7 @@ export default function BodhiMartProductsPage() {
                         ) : (
                           <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700">
                             <span className="h-2 w-2 rounded-full bg-green-500" />
-                            In Stock
+                            <Copy en="In Stock" hi="स्टॉक में" />
                           </span>
                         )}
                       </div>
@@ -951,7 +952,7 @@ export default function BodhiMartProductsPage() {
                         href={productDetailsHref(product)}
                         className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
                       >
-                        View product details
+                        <Copy en="View product details" hi="उत्पाद की जानकारी देखें" />
                       </Link>
 
                       {/* Add to cart */}
@@ -995,7 +996,7 @@ export default function BodhiMartProductsPage() {
           <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm font-bold text-[#183426]">
-                Compare products <span className="text-gray-500">({comparedProducts.length}/3)</span>
+                <Copy en="Compare products" hi="उत्पादों की तुलना करें" /> <span className="text-gray-500">({comparedProducts.length}/3)</span>
               </p>
               <p className="mt-1 truncate text-xs text-gray-600">
                 {comparedProducts.map((product) => product.name).join(" · ")}
@@ -1011,7 +1012,7 @@ export default function BodhiMartProductsPage() {
                 }}
                 className="min-h-10 rounded-xl px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-700"
               >
-                Clear
+                <Copy en="Clear" hi="हटाएँ" />
               </button>
               <button
                 type="button"
@@ -1042,7 +1043,7 @@ export default function BodhiMartProductsPage() {
             <div className="flex items-start justify-between gap-4 border-b border-gray-100 p-5 sm:p-7">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700">BodhiMart</p>
-                <h2 id="bodhimart-compare-title" className="mt-1 text-2xl font-bold text-gray-950">Compare products</h2>
+                <h2 id="bodhimart-compare-title" className="mt-1 text-2xl font-bold text-gray-950"><Copy en="Compare products" hi="उत्पादों की तुलना करें" /></h2>
                 <p className="mt-1 text-sm text-gray-500">Review current listing details side by side.</p>
               </div>
               <button
@@ -1072,7 +1073,7 @@ export default function BodhiMartProductsPage() {
                             aria-label={`Remove ${product.name} from comparison`}
                             className="rounded-md px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
                           >
-                            Remove
+                            <Copy en="Remove" hi="हटाएँ" />
                           </button>
                         </div>
                       </th>

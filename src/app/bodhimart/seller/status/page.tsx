@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../../language';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -98,11 +99,11 @@ export default function SellerApplicationStatusPage() {
           ← Back to BodhiMart
         </Link>
         <div className="mt-7 rounded-3xl border border-[#e1e9e2] bg-white p-6 shadow-sm sm:p-9">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6b8a70]">Seller onboarding</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6b8a70]"><Copy en="Seller onboarding" hi="विक्रेता पंजीकरण" /></p>
           <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#173d24]">Application status</h1>
-              <p className="mt-2 text-sm leading-6 text-[#68756b]">Track the latest review of your BodhiMart seller application.</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-[#173d24]"><Copy en="Application status" hi="आवेदन की स्थिति" /></h1>
+              <p className="mt-2 text-sm leading-6 text-[#68756b]"><Copy en="Track the latest review of your BodhiMart seller application." hi="अपने विक्रेता आवेदन की समीक्षा की स्थिति देखें।" /></p>
             </div>
             <button
               type="button"
@@ -122,15 +123,15 @@ export default function SellerApplicationStatusPage() {
             <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800" role="alert">
               <p>{error}</p>
               <button type="button" onClick={() => void loadApplication()} className="mt-3 font-bold underline">
-                Try again
+                <Copy en="Try again" hi="फिर कोशिश करें" />
               </button>
             </div>
           ) : !application ? (
             <div className="mt-8 rounded-2xl bg-[#f5f8f5] p-6">
-              <h2 className="text-lg font-semibold text-[#173d24]">No application found</h2>
-              <p className="mt-2 text-sm leading-6 text-[#68756b]">Start your seller application to list products on BodhiMart.</p>
+              <h2 className="text-lg font-semibold text-[#173d24]"><Copy en="No application found" hi="कोई आवेदन नहीं मिला" /></h2>
+              <p className="mt-2 text-sm leading-6 text-[#68756b]"><Copy en="Start your seller application to list products on BodhiMart." hi="BodhiMart पर उत्पाद बेचने के लिए आवेदन करें।" /></p>
               <Link href="/bodhimart/seller/register" className="mt-5 inline-flex rounded-xl bg-[#145c2b] px-5 py-3 text-sm font-bold text-white">
-                Apply to sell
+                <Copy en="Apply to sell" hi="विक्रेता बनने के लिए आवेदन करें" />
               </Link>
             </div>
           ) : (
@@ -149,7 +150,7 @@ export default function SellerApplicationStatusPage() {
                 <p className="mt-3 text-sm leading-6 text-[#526257]">{state?.message || 'Your application status is being updated.'}</p>
                 {application.status === 'REJECTED' && application.rejection_reason && (
                   <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4">
-                    <h3 className="text-sm font-bold text-[#5f4810]">Review note</h3>
+                    <h3 className="text-sm font-bold text-[#5f4810]"><Copy en="Review note" hi="समीक्षा टिप्पणी" /></h3>
                     <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#665b3d]">{application.rejection_reason}</p>
                   </div>
                 )}
@@ -157,19 +158,19 @@ export default function SellerApplicationStatusPage() {
 
               <dl className="mt-6 grid gap-4 rounded-2xl border border-[#e6ebe6] p-5 sm:grid-cols-2">
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]">Shop</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]"><Copy en="Shop" hi="दुकान" /></dt>
                   <dd className="mt-1 font-semibold text-[#263e2c]">{application.shop_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]">Application number</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]"><Copy en="Application number" hi="आवेदन संख्या" /></dt>
                   <dd className="mt-1 font-semibold text-[#263e2c]">{application.application_number || 'Pending'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]">Submitted</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]"><Copy en="Submitted" hi="जमा किया गया" /></dt>
                   <dd className="mt-1 text-sm text-[#526257]">{new Date(application.created_at).toLocaleDateString('en-IN')}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]">Last updated</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#7a857c]"><Copy en="Last updated" hi="आखिरी बदलाव" /></dt>
                   <dd className="mt-1 text-sm text-[#526257]">{new Date(application.updated_at).toLocaleDateString('en-IN')}</dd>
                 </div>
               </dl>

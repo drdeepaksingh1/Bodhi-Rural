@@ -1,5 +1,6 @@
 "use client";
 
+import { Copy } from '../language';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../../lib/supabase/client";
@@ -376,7 +377,7 @@ export default function BodhiMartCartPage() {
             <div className="text-5xl">🛒</div>
 
             <h1 className="mt-4 text-2xl font-bold text-gray-900">
-              BodhiMart Cart
+              <Copy en="BodhiMart Cart" hi="BodhiMart की टोकरी" />
             </h1>
 
             <p className="mt-3 text-red-600">
@@ -387,7 +388,7 @@ export default function BodhiMartCartPage() {
               href={`/login?account=buyer&redirect=${encodeURIComponent("/bodhimart/cart")}`}
               className="mt-6 inline-block rounded-xl bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800"
             >
-              Login
+              <Copy en="Login" hi="लॉग इन करें" />
             </Link>
           </div>
         </div>
@@ -405,7 +406,7 @@ export default function BodhiMartCartPage() {
           </p>
 
           <h1 className="mt-1 text-3xl font-bold text-gray-900">
-            Shopping Cart
+            <Copy en="Shopping Cart" hi="खरीदारी की टोकरी" />
           </h1>
 
           {userEmail && (
@@ -428,7 +429,7 @@ export default function BodhiMartCartPage() {
             <div className="text-6xl">🛒</div>
 
             <h2 className="mt-5 text-2xl font-bold text-gray-900">
-              Your cart is empty
+              <Copy en="Your cart is empty" hi="आपकी टोकरी खाली है" />
             </h2>
 
             <p className="mt-2 text-gray-500">
@@ -439,7 +440,7 @@ export default function BodhiMartCartPage() {
               href="/bodhimart/products"
               className="mt-7 inline-block rounded-xl bg-green-700 px-7 py-3 font-semibold text-white hover:bg-green-800"
             >
-              Continue Shopping
+              <Copy en="Continue Shopping" hi="खरीदारी जारी रखें" />
             </Link>
           </div>
         ) : (
@@ -512,7 +513,7 @@ export default function BodhiMartCartPage() {
                         {/* Stock warning */}
                         {item.availableStock <= 0 ? (
                           <p className="mt-3 text-sm font-semibold text-red-600">
-                            Currently out of stock
+                            <Copy en="Currently out of stock" hi="अभी स्टॉक में नहीं है" />
                           </p>
                         ) : item.quantity >
                           item.availableStock ? (
@@ -589,7 +590,7 @@ export default function BodhiMartCartPage() {
                             }
                             className="text-sm font-semibold text-red-600 hover:text-red-800 disabled:opacity-50"
                           >
-                            Remove
+                            <Copy en="Remove" hi="हटाएँ" />
                           </button>
                         </div>
                       </div>
@@ -609,13 +610,13 @@ export default function BodhiMartCartPage() {
             {/* Summary */}
             <aside className="h-fit rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900">
-                Order Summary
+                <Copy en="Order Summary" hi="ऑर्डर का सारांश" />
               </h2>
 
               <div className="mt-6 space-y-4 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Items
+                    <Copy en="Items" hi="सामान" />
                   </span>
 
                   <span className="font-medium">
@@ -625,7 +626,7 @@ export default function BodhiMartCartPage() {
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    MRP Total
+                    <Copy en="MRP Total" hi="कुल एमआरपी" />
                   </span>
 
                   <span>
@@ -635,7 +636,7 @@ export default function BodhiMartCartPage() {
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Product Discount
+                    <Copy en="Product Discount" hi="उत्पाद पर छूट" />
                   </span>
 
                   <span className="font-medium text-green-600">
@@ -645,18 +646,18 @@ export default function BodhiMartCartPage() {
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Delivery
+                    <Copy en="Delivery" hi="डिलीवरी" />
                   </span>
 
                   <span className="font-medium text-gray-500">
-                    Calculated at checkout
+                    <Copy en="Calculated at checkout" hi="चेकआउट पर तय होगा" />
                   </span>
                 </div>
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between">
                     <span className="text-lg font-bold text-gray-900">
-                      Subtotal
+                      <Copy en="Subtotal" hi="उप-योग" />
                     </span>
 
                     <span className="text-xl font-bold text-green-800">
@@ -670,7 +671,7 @@ export default function BodhiMartCartPage() {
                 href="/bodhimart/checkout"
                 className="mt-7 block w-full rounded-xl bg-green-700 px-5 py-3 text-center font-bold text-white hover:bg-green-800"
               >
-                Proceed to Checkout
+                <Copy en="Proceed to Checkout" hi="चेकआउट पर जाएँ" />
               </a>
 
               <p className="mt-3 text-center text-xs text-gray-500">

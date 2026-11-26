@@ -1,3 +1,4 @@
+import { Copy } from './language';
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -5,6 +6,12 @@ import printStyles from "./bodhimart-print.module.css";
 import {
   ArrowRight,
   BadgeCheck,
+  Carrot,
+  Droplets,
+  Hammer,
+  HeartHandshake,
+  NotebookPen,
+  Shirt,
   Leaf,
   PackageSearch,
   ShoppingBasket,
@@ -35,6 +42,7 @@ export const metadata: Metadata = {
 const categories = [
   {
     name: "Seeds & crop care",
+    hindi: { name: "बीज और फसल देखभाल", detail: "मौसम के अनुसार खेती के बीज और ज़रूरी सामान।", action: "बीज देखें" },
     detail: "Seeds and essentials for the growing season.",
     icon: Leaf,
     color: "bg-[#e8f1e8] text-[#27623b]",
@@ -43,6 +51,7 @@ const categories = [
   },
   {
     name: "Feed & nutrition",
+    hindi: { name: "चारा और पोषण", detail: "मुर्गियों और पशुओं के लिए रोज़ाना का आहार।", action: "चारा देखें" },
     detail: "Poultry and livestock feed for daily operations.",
     icon: Wheat,
     color: "bg-[#f8efd9] text-[#8b651d]",
@@ -51,6 +60,7 @@ const categories = [
   },
   {
     name: "Livestock & poultry",
+    hindi: { name: "पशुपालन और मुर्गीपालन", detail: "पशुओं और मुर्गियों की देखभाल का सामान।", action: "पशुपालन का सामान देखें" },
     detail: "Products and supplies for healthier farm routines.",
     icon: PackageSearch,
     color: "bg-[#f7e9df] text-[#9a5831]",
@@ -59,6 +69,7 @@ const categories = [
   },
   {
     name: "Tools & equipment",
+    hindi: { name: "औज़ार और उपकरण", detail: "खेती और ग्रामीण व्यवसायों के औज़ार।", action: "उपकरण देखें" },
     detail: "Practical equipment for farms and rural businesses.",
     icon: Truck,
     color: "bg-[#e5edf2] text-[#3f6174]",
@@ -67,11 +78,66 @@ const categories = [
   },
   {
     name: "Groceries & daily essentials",
+    hindi: { name: "किराना और रोज़मर्रा का सामान", detail: "घर और खेत के लिए किराना और ज़रूरी सामान।", action: "किराना देखें" },
     detail: "Everyday food and household essentials for home and farm.",
     icon: ShoppingBasket,
     color: "bg-[#e8f1e8] text-[#27623b]",
     href: "/bodhimart/products?search=grocery",
     action: "Shop groceries",
+  },
+  {
+    name: "Fresh produce",
+    hindi: { name: "ताज़ी सब्ज़ियाँ और फल", detail: "मौसमी सब्ज़ियाँ, फल और साग।", action: "ताज़े उत्पाद देखें" },
+    detail: "Seasonal vegetables, fruit and leafy greens.",
+    icon: Carrot,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=vegetable",
+    action: "Shop fresh produce",
+  },
+  {
+    name: "Clothing & footwear",
+    hindi: { name: "कपड़े और जूते-चप्पल", detail: "रोज़ के कपड़े, स्कूल यूनिफ़ॉर्म और जूते-चप्पल।", action: "कपड़े देखें" },
+    detail: "Everyday clothing, school uniforms and footwear.",
+    icon: Shirt,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=clothing",
+    action: "Shop clothing",
+  },
+  {
+    name: "Stationery & school supplies",
+    hindi: { name: "स्टेशनरी और स्कूल का सामान", detail: "कॉपी, पेन, स्कूल बैग और पढ़ाई का सामान।", action: "स्टेशनरी देखें" },
+    detail: "Notebooks, pens, school bags and classroom supplies.",
+    icon: NotebookPen,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=stationery",
+    action: "Shop stationery",
+  },
+  {
+    name: "Household & personal care",
+    hindi: { name: "घरेलू सामान और व्यक्तिगत देखभाल", detail: "सफ़ाई का सामान, बर्तन और देखभाल के उत्पाद।", action: "घरेलू सामान देखें" },
+    detail: "Cleaning products, cookware and personal care essentials.",
+    icon: Droplets,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=household",
+    action: "Shop household essentials",
+  },
+  {
+    name: "Hardware & electrical",
+    hindi: { name: "हार्डवेयर और बिजली का सामान", detail: "बल्ब, स्विच, फिटिंग और औज़ार।", action: "हार्डवेयर देखें" },
+    detail: "Bulbs, switches, fittings and tools.",
+    icon: Hammer,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=hardware",
+    action: "Shop hardware",
+  },
+  {
+    name: "Made locally",
+    hindi: { name: "स्थानीय उत्पाद", detail: "स्थानीय किसानों, स्वयं सहायता समूहों और कारीगरों के उत्पाद।", action: "स्थानीय उत्पाद देखें" },
+    detail: "Products from local farmers, self-help groups and artisans.",
+    icon: HeartHandshake,
+    color: "bg-[#e8f1e8] text-[#27623b]",
+    href: "/bodhimart/products?search=local",
+    action: "Shop local products",
   },
 ];
 
@@ -113,30 +179,42 @@ export default function BodhiMartPage() {
               Bodhi Rural marketplace
             </div>
             <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[64px]">
-              Source smarter.
-              <span className="block text-[#e5c56d]">Grow together.</span>
+              <Copy en="Shop for home," hi="घर, स्कूल और" />
+              <span className="block text-[#e5c56d]"><Copy en="school and farm." hi="खेत के लिए खरीदारी" /></span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
-              A marketplace for farmers, households and rural businesses to
-              discover agricultural essentials and connect with approved sellers.
+              Find groceries, clothing, school supplies, farm essentials and products
+              made by local producers.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <form action="/bodhimart/products" className="mt-6 flex max-w-xl flex-wrap gap-2 sm:flex-nowrap">
+              <label htmlFor="mart-search" className="sr-only">Search BodhiMart products</label>
+              <input
+                id="mart-search"
+                name="search"
+                type="search"
+                maxLength={100}
+                placeholder="Sugar, notebooks, seeds"
+                className="min-h-12 min-w-0 flex-1 rounded-xl bg-white px-4 text-[#183426]"
+              />
+              <button className="min-h-12 rounded-xl bg-[#e1bd59] px-5 text-sm font-bold text-[#183426]"><Copy en="Search" hi="खोजें" /></button>
+            </form>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/bodhimart/products"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#e1bd59] px-6 py-3 text-sm font-bold text-[#183426] shadow-lg shadow-black/10 transition hover:bg-[#edd17e] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#103a27]"
               >
-                Explore the marketplace
+                <Copy en="Explore the marketplace" hi="बाज़ार देखें" />
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-white/75">
               <span className="inline-flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-[#e5c56d]" aria-hidden="true" />
-                Seller-reviewed catalogue
+                <Copy en="Seller-reviewed catalogue" hi="स्वीकृत विक्रेताओं के उत्पाद" />
               </span>
               <span className="inline-flex items-center gap-2">
                 <Truck className="h-4 w-4 text-[#e5c56d]" aria-hidden="true" />
-                Delivery or pickup where available
+                <Copy en="Delivery or pickup where available" hi="जहाँ उपलब्ध हो, डिलीवरी या खुद ले जाएँ" />
               </span>
             </div>
           </div>
@@ -165,33 +243,32 @@ export default function BodhiMartPage() {
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6c8a6f]">
-              Shop by need
+              <Copy en="Shop by need" hi="ज़रूरत के अनुसार खरीदें" />
             </p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Essentials for work on the land
+              <Copy en="Essentials for village life" hi="गाँव की रोज़मर्रा की ज़रूरतें" />
             </h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-[#69766d]">
-              Explore the catalogue for products that support farms and rural
-              enterprises at every stage.
+              Browse the catalogue by what you need for your home, school or farm.
             </p>
           </div>
           <Link
             href="/bodhimart/products"
             className="inline-flex items-center gap-2 self-start text-sm font-bold text-[#27623b] hover:text-[#173f2b] sm:self-auto"
           >
-            View all products
+            <Copy en="View all products" hi="सभी उत्पाद देखें" />
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-        <div className={`${printStyles.categoryGrid} mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-5`}>
-          {categories.map(
-            ({
+        <div className={`${printStyles.categoryGrid} mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
+          {categories.map(({
               name,
               detail,
               icon: Icon,
               color,
               href = "/bodhimart/products",
               action = "Browse products",
+              hindi,
             }) => (
               <Link
                 key={name}
@@ -202,13 +279,13 @@ export default function BodhiMartPage() {
                   <Icon className="h-6 w-6" aria-hidden="true" />
                 </div>
                 <h3 className="mt-5 text-lg font-semibold text-[#203d2c]">
-                  {name}
+                  <Copy en={name} hi={hindi.name} />
                 </h3>
                 <p className="mt-2 min-h-12 text-sm leading-6 text-[#6a776d]">
-                  {detail}
+                  <Copy en={detail} hi={hindi.detail} />
                 </p>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#27623b]">
-                  {action}
+                  <Copy en={action} hi={hindi.action} />
                   <ArrowRight
                     className="h-4 w-4 transition group-hover:translate-x-1"
                     aria-hidden="true"

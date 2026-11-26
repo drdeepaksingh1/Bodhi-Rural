@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../language';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -260,11 +261,11 @@ export default function BodhiMartAddressesPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-10 sm:px-6 lg:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-200">BodhiMart</p>
-            <h1 className="mt-2 text-3xl font-bold">Saved addresses</h1>
-            <p className="mt-2 text-sm text-green-100">Keep delivery details ready for your next order.</p>
+            <h1 className="mt-2 text-3xl font-bold"><Copy en="Saved addresses" hi="सहेजे गए पते" /></h1>
+            <p className="mt-2 text-sm text-green-100"><Copy en="Keep delivery details ready for your next order." hi="अगले ऑर्डर के लिए अपना डिलीवरी पता सहेजें।" /></p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/bodhimart/checkout" className="rounded-xl border border-white/40 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10">Back to checkout</Link>
+            <Link href="/bodhimart/checkout" className="rounded-xl border border-white/40 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10"><Copy en="Back to checkout" hi="चेकआउट पर लौटें" /></Link>
             <button type="button" onClick={startAdd} className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-green-900 hover:bg-green-50">+ Add address</button>
           </div>
         </div>
@@ -278,30 +279,30 @@ export default function BodhiMartAddressesPage() {
           <form onSubmit={(event) => void saveAddress(event)} className="mb-6 rounded-2xl border border-green-100 bg-white p-5 shadow-sm sm:p-7">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-gray-900">{editing ? 'Edit address' : 'Add a delivery address'}</h2>
-              <button type="button" onClick={() => setFormOpen(false)} className="text-sm font-semibold text-gray-500 hover:text-gray-800">Close</button>
+              <button type="button" onClick={() => setFormOpen(false)} className="text-sm font-semibold text-gray-500 hover:text-gray-800"><Copy en="Close" hi="बंद करें" /></button>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-sm font-semibold text-gray-700">Address label <span className="font-normal text-gray-500">(Home, shop, etc.)</span><input className={`${inputClass} mt-1`} maxLength={60} value={form.address_name} onChange={(event) => setForm({ ...form, address_name: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700">Recipient name *<input className={`${inputClass} mt-1`} required maxLength={120} value={form.recipient_name} onChange={(event) => setForm({ ...form, recipient_name: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700">Mobile number *<input className={`${inputClass} mt-1`} required type="tel" inputMode="tel" maxLength={16} value={form.mobile} onChange={(event) => setForm({ ...form, mobile: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700 sm:col-span-2">Address line 1 *<input className={`${inputClass} mt-1`} required maxLength={240} value={form.address_line1} onChange={(event) => setForm({ ...form, address_line1: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700">Address line 2<input className={`${inputClass} mt-1`} maxLength={240} value={form.address_line2} onChange={(event) => setForm({ ...form, address_line2: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700">Landmark<input className={`${inputClass} mt-1`} maxLength={120} value={form.landmark} onChange={(event) => setForm({ ...form, landmark: event.target.value })} /></label>
-              <label className="text-sm font-semibold text-gray-700">PIN code<input className={`${inputClass} mt-1`} inputMode="numeric" maxLength={6} value={form.pincode} onChange={(event) => setForm({ ...form, pincode: event.target.value.replace(/\D/g, '') })} /></label>
-              <label className="flex items-center gap-2 self-end pb-3 text-sm font-medium text-gray-700"><input type="checkbox" checked={makeDefault} onChange={(event) => setMakeDefault(event.target.checked)} className="h-4 w-4 accent-green-800" />Use as default address</label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="Address label" hi="पते का नाम" /> <span className="font-normal text-gray-500">(Home, shop, etc.)</span><input className={`${inputClass} mt-1`} maxLength={60} value={form.address_name} onChange={(event) => setForm({ ...form, address_name: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="Recipient name *" hi="प्राप्तकर्ता का नाम *" /><input className={`${inputClass} mt-1`} required maxLength={120} value={form.recipient_name} onChange={(event) => setForm({ ...form, recipient_name: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="Mobile number *" hi="मोबाइल नंबर *" /><input className={`${inputClass} mt-1`} required type="tel" inputMode="tel" maxLength={16} value={form.mobile} onChange={(event) => setForm({ ...form, mobile: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700 sm:col-span-2"><Copy en="Address line 1 *" hi="पते की पहली पंक्ति *" /><input className={`${inputClass} mt-1`} required maxLength={240} value={form.address_line1} onChange={(event) => setForm({ ...form, address_line1: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="Address line 2" hi="पते की दूसरी पंक्ति" /><input className={`${inputClass} mt-1`} maxLength={240} value={form.address_line2} onChange={(event) => setForm({ ...form, address_line2: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="Landmark" hi="नज़दीकी पहचान" /><input className={`${inputClass} mt-1`} maxLength={120} value={form.landmark} onChange={(event) => setForm({ ...form, landmark: event.target.value })} /></label>
+              <label className="text-sm font-semibold text-gray-700"><Copy en="PIN code" hi="पिन कोड" /><input className={`${inputClass} mt-1`} inputMode="numeric" maxLength={6} value={form.pincode} onChange={(event) => setForm({ ...form, pincode: event.target.value.replace(/\D/g, '') })} /></label>
+              <label className="flex items-center gap-2 self-end pb-3 text-sm font-medium text-gray-700"><input type="checkbox" checked={makeDefault} onChange={(event) => setMakeDefault(event.target.checked)} className="h-4 w-4 accent-green-800" /><Copy en="Use as default address" hi="इसे मुख्य पता बनाएँ" /></label>
             </div>
             <button type="submit" disabled={saving} className="mt-5 rounded-xl bg-green-800 px-5 py-3 text-sm font-bold text-white hover:bg-green-900 disabled:cursor-wait disabled:opacity-60">{saving ? 'Saving…' : editing ? 'Save changes' : 'Save address'}</button>
           </form>
         )}
 
         {loading ? (
-          <div className="rounded-2xl bg-white p-12 text-center text-gray-600 shadow-sm">Loading saved addresses…</div>
+          <div className="rounded-2xl bg-white p-12 text-center text-gray-600 shadow-sm"><Copy en="Loading saved addresses…" hi="सहेजे गए पते लोड हो रहे हैं…" /></div>
         ) : addresses.length === 0 ? (
           <div className="rounded-2xl bg-white px-6 py-14 text-center shadow-sm">
             <div className="text-5xl" aria-hidden="true">⌂</div>
-            <h2 className="mt-4 text-xl font-bold text-gray-900">No saved addresses</h2>
-            <p className="mt-2 text-sm text-gray-600">Add a delivery address to make checkout faster.</p>
-            <button type="button" onClick={startAdd} className="mt-6 rounded-xl bg-green-800 px-5 py-3 text-sm font-bold text-white">Add your first address</button>
+            <h2 className="mt-4 text-xl font-bold text-gray-900"><Copy en="No saved addresses" hi="कोई पता सहेजा नहीं गया" /></h2>
+            <p className="mt-2 text-sm text-gray-600"><Copy en="Add a delivery address to make checkout faster." hi="जल्दी चेकआउट के लिए डिलीवरी पता जोड़ें।" /></p>
+            <button type="button" onClick={startAdd} className="mt-6 rounded-xl bg-green-800 px-5 py-3 text-sm font-bold text-white"><Copy en="Add your first address" hi="अपना पहला पता जोड़ें" /></button>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -311,7 +312,7 @@ export default function BodhiMartAddressesPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-bold text-gray-900">{address.address_name || 'Delivery address'}</h2>
-                      {address.is_default && <span className="rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-green-800">Default</span>}
+                      {address.is_default && <span className="rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-green-800"><Copy en="Default" hi="मुख्य पता" /></span>}
                     </div>
                     <p className="mt-3 font-semibold text-gray-800">{address.recipient_name}</p>
                     <p className="mt-1 text-sm text-gray-600">{address.mobile}</p>
@@ -319,7 +320,7 @@ export default function BodhiMartAddressesPage() {
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
-                  <button type="button" onClick={() => startEdit(address)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Edit</button>
+                  <button type="button" onClick={() => startEdit(address)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"><Copy en="Edit" hi="बदलें" /></button>
                   {!address.is_default && <button type="button" onClick={() => void setAsDefault(address)} disabled={Boolean(settingDefault)} className="rounded-lg border border-green-700 px-3 py-2 text-sm font-semibold text-green-800 hover:bg-green-50 disabled:opacity-60">{settingDefault === address.id ? 'Updating…' : 'Set as default'}</button>}
                   <button type="button" onClick={() => void removeAddress(address)} disabled={removing === address.id} className="ml-auto rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">{removing === address.id ? 'Removing…' : 'Remove'}</button>
                 </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../language';
 import { FormEvent, Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -90,22 +91,22 @@ function BuyerRegistrationForm() {
           ← Back to BodhiMart
         </Link>
         <div className="mt-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6c8a6f]">BodhiMart shopping</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#203d2c]">Create buyer account</h1>
-          <p className="mt-3 text-sm leading-6 text-[#69766d]">Use your email to shop, save products and follow your orders.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6c8a6f]"><Copy en="BodhiMart shopping" hi="BodhiMart पर खरीदारी" /></p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#203d2c]"><Copy en="Create buyer account" hi="खरीदार खाता बनाएँ" /></h1>
+          <p className="mt-3 text-sm leading-6 text-[#69766d]"><Copy en="Use your email to shop, save products and follow your orders." hi="खरीदारी, उत्पाद सहेजने और ऑर्डर की स्थिति देखने के लिए अपना ईमेल इस्तेमाल करें।" /></p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
-            <label htmlFor="buyer-email" className="mb-2 block text-sm font-medium text-gray-700">Email address</label>
+            <label htmlFor="buyer-email" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Email address" hi="ईमेल पता" /></label>
             <input id="buyer-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" autoComplete="email" required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
           </div>
           <div>
-            <label htmlFor="buyer-password" className="mb-2 block text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="buyer-password" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Password" hi="पासवर्ड" /></label>
             <input id="buyer-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
           </div>
           <div>
-            <label htmlFor="buyer-confirm-password" className="mb-2 block text-sm font-medium text-gray-700">Confirm password</label>
+            <label htmlFor="buyer-confirm-password" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Confirm password" hi="पासवर्ड की पुष्टि करें" /></label>
             <input id="buyer-confirm-password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter your password again" autoComplete="new-password" required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
           </div>
 
@@ -118,7 +119,7 @@ function BuyerRegistrationForm() {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account? <Link href={loginHref} className="font-semibold text-green-800 underline">Buyer login</Link>
+          Already have an account? <Link href={loginHref} className="font-semibold text-green-800 underline"><Copy en="Buyer login" hi="खरीदार लॉग इन" /></Link>
         </p>
         <p className="mt-5 border-t border-gray-200 pt-4 text-center text-xs leading-5 text-gray-500">Buyer registration does not activate seller tools. Sellers must apply separately and receive BodhiMart admin approval.</p>
       </section>
@@ -128,7 +129,7 @@ function BuyerRegistrationForm() {
 
 export default function BuyerRegistrationPage() {
   return (
-    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-[#f5f7f2] text-gray-600">Loading registration…</main>}>
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-[#f5f7f2] text-gray-600"><Copy en="Loading registration…" hi="पंजीकरण लोड हो रहा है…" /></main>}>
       <BuyerRegistrationForm />
     </Suspense>
   );

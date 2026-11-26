@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from '../language';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -251,12 +252,12 @@ export default function BodhiMartOrdersPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-10 sm:px-6 lg:px-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-200">BodhiMart</p>
-            <h1 className="mt-2 text-3xl font-bold">My orders</h1>
-            <p className="mt-2 text-sm text-green-100">Review order details, payment status, and fulfilment progress.</p>
+            <h1 className="mt-2 text-3xl font-bold"><Copy en="My orders" hi="मेरे ऑर्डर" /></h1>
+            <p className="mt-2 text-sm text-green-100"><Copy en="Review order details, payment status, and fulfilment progress." hi="ऑर्डर, भुगतान और डिलीवरी की स्थिति देखें।" /></p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => void loadOrders()} disabled={loading} className="rounded-xl border border-white/40 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:opacity-60">{loading ? 'Refreshing…' : 'Refresh'}</button>
-            <Link href="/bodhimart/products" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-green-900 hover:bg-green-50">Continue shopping</Link>
+            <Link href="/bodhimart/products" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-green-900 hover:bg-green-50"><Copy en="Continue shopping" hi="खरीदारी जारी रखें" /></Link>
           </div>
         </div>
       </section>
@@ -264,13 +265,13 @@ export default function BodhiMartOrdersPage() {
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {error && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
         {loading ? (
-          <div className="rounded-2xl bg-white p-12 text-center text-gray-600 shadow-sm">Loading your orders…</div>
+          <div className="rounded-2xl bg-white p-12 text-center text-gray-600 shadow-sm"><Copy en="Loading your orders…" hi="आपके ऑर्डर लोड हो रहे हैं…" /></div>
         ) : orders.length === 0 ? (
           <div className="rounded-2xl bg-white px-6 py-14 text-center shadow-sm">
             <div className="text-5xl" aria-hidden="true">📦</div>
-            <h2 className="mt-4 text-xl font-bold text-gray-900">No orders yet</h2>
-            <p className="mt-2 text-sm text-gray-600">Your BodhiMart orders will appear here after checkout.</p>
-            <Link href="/bodhimart/products" className="mt-6 inline-flex rounded-xl bg-green-800 px-5 py-3 text-sm font-bold text-white hover:bg-green-900">Browse products</Link>
+            <h2 className="mt-4 text-xl font-bold text-gray-900"><Copy en="No orders yet" hi="अभी कोई ऑर्डर नहीं है" /></h2>
+            <p className="mt-2 text-sm text-gray-600"><Copy en="Your BodhiMart orders will appear here after checkout." hi="खरीदारी पूरी करने के बाद आपके ऑर्डर यहाँ दिखेंगे।" /></p>
+            <Link href="/bodhimart/products" className="mt-6 inline-flex rounded-xl bg-green-800 px-5 py-3 text-sm font-bold text-white hover:bg-green-900"><Copy en="Browse products" hi="उत्पाद देखें" /></Link>
           </div>
         ) : (
           <div className="space-y-5">
@@ -287,7 +288,7 @@ export default function BodhiMartOrdersPage() {
               <article key={order.id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 bg-[#fbfcfa] p-5 sm:p-6">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Order number</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500"><Copy en="Order number" hi="ऑर्डर संख्या" /></p>
                     <h2 className="mt-1 text-lg font-bold text-gray-900">{order.order_number}</h2>
                     <p className="mt-1 text-sm text-gray-500">Placed {new Date(order.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</p>
                   </div>
@@ -297,7 +298,7 @@ export default function BodhiMartOrdersPage() {
                     <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">
                       {order.payment_status === 'PAID' ? 'Paid' : order.payment_method === 'PAY_AT_PICKUP' ? 'Pay at pickup' : 'Pay on delivery'}
                     </span>
-                    <Link href={`/bodhimart/orders/${order.id}`} className="rounded-full border border-green-700 px-3 py-1.5 text-xs font-bold text-green-800 hover:bg-green-50">View / print summary</Link>
+                    <Link href={`/bodhimart/orders/${order.id}`} className="rounded-full border border-green-700 px-3 py-1.5 text-xs font-bold text-green-800 hover:bg-green-50"><Copy en="View / print summary" hi="सारांश देखें या प्रिंट करें" /></Link>
                     {canCancel && (
                       <button
                         type="button"
@@ -324,7 +325,7 @@ export default function BodhiMartOrdersPage() {
                     ))}
                     {sellerPackages.length > 0 && (
                       <div className="mt-5 border-t border-gray-100 pt-4">
-                        <h3 className="mb-3 text-sm font-bold text-gray-800">Seller fulfilment</h3>
+                        <h3 className="mb-3 text-sm font-bold text-gray-800"><Copy en="Seller fulfilment" hi="विक्रेता की ओर से ऑर्डर की स्थिति" /></h3>
                         <div className="space-y-2">
                           {sellerPackages.map((sellerPackage, index) => (
                             <div key={sellerPackage.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3">
@@ -344,11 +345,11 @@ export default function BodhiMartOrdersPage() {
                   </div>
 
                   <dl className="rounded-xl bg-gray-50 p-4 text-sm">
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500">Items</dt><dd className="font-medium">{currency(order.subtotal)}</dd></div>
-                    {Number(order.discount_amount) > 0 && <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500">Discount</dt><dd className="font-medium text-green-700">−{currency(order.discount_amount)}</dd></div>}
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500">Delivery</dt><dd className="font-medium">{currency(order.delivery_charge)}</dd></div>
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500">Tax</dt><dd className="font-medium">{currency(order.tax_amount)}</dd></div>
-                    <div className="mt-2 flex justify-between gap-3 border-t border-gray-200 pt-3 text-base"><dt className="font-bold">Total</dt><dd className="font-bold text-green-900">{currency(order.total_amount)}</dd></div>
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500"><Copy en="Items" hi="सामान" /></dt><dd className="font-medium">{currency(order.subtotal)}</dd></div>
+                    {Number(order.discount_amount) > 0 && <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500"><Copy en="Discount" hi="छूट" /></dt><dd className="font-medium text-green-700">−{currency(order.discount_amount)}</dd></div>}
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500"><Copy en="Delivery" hi="डिलीवरी" /></dt><dd className="font-medium">{currency(order.delivery_charge)}</dd></div>
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-gray-500"><Copy en="Tax" hi="कर" /></dt><dd className="font-medium">{currency(order.tax_amount)}</dd></div>
+                    <div className="mt-2 flex justify-between gap-3 border-t border-gray-200 pt-3 text-base"><dt className="font-bold"><Copy en="Total" hi="कुल" /></dt><dd className="font-bold text-green-900">{currency(order.total_amount)}</dd></div>
                     <p className="mt-3 text-xs text-gray-500">{label(order.delivery_method)} fulfilment</p>
                   </dl>
                 </div>
