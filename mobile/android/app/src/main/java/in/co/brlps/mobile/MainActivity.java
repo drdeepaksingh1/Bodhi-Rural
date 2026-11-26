@@ -210,8 +210,8 @@ public final class MainActivity extends Activity {
             case MART:
                 addButton(content, text("My account", "मेरा खाता"), false,
                     () -> openPage("/bodhimart/account"));
-                addButton(content, text("Browse products without signing in", "बिना लॉग इन के उत्पाद देखें"), true,
-                    () -> openPage("/bodhimart/products"));
+                addButton(content, text("Shop BodhiMart", "BodhiMart पर खरीदें"), true,
+                    () -> openPage("/bodhimart"));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Buyer", "खरीदार"), false, () -> show(Screen.BUYER));
                 addButton(content, text("Seller", "विक्रेता"), false, () -> show(Screen.SELLER));
