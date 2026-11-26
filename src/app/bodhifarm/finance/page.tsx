@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
 
@@ -688,8 +689,8 @@ export default function FinanceDashboardPage() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" onClick={() => { const el = document.getElementById('farmer-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'farmer', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print farmer ID card</button>
                 <button type="button" onClick={() => { const el = document.getElementById('staff-card-select') as HTMLSelectElement | null; if (el?.value) setPrintIdentity({ kind: 'staff', id: el.value }); }} className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800">Print staff ID card</button>
-                <a href="/bodhimart/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Buyer order receipts</a>
-                <a href="/bodhifarm/seller/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Seller orders</a>
+                <Link href="/bodhimart/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Buyer order receipts</Link>
+                <Link href="/bodhifarm/seller/orders" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Seller orders</Link>
               </div>
               <div className="mt-5 overflow-x-auto">
                 <h3 className="mb-2 font-bold text-slate-900">Monthly payroll records</h3>
