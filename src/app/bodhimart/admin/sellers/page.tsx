@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Copy } from '../../language';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../../lib/supabase/client';
@@ -268,6 +269,11 @@ export default function SellerApplicationsPage() {
             Review and manage shopkeeper
             onboarding applications.
           </p>
+          {canManageProducts && (
+            <Link href="/bodhimart/admin/delivery" className="mt-4 mr-3 inline-flex rounded-lg bg-white px-4 py-2 font-semibold text-green-950">
+              <Copy en="Assign deliveries" hi="डिलीवरी सौंपें" />
+            </Link>
+          )}
           {canManageProducts && (
             <Link
               href="/dashboard/marketplace/products?status=PENDING"
