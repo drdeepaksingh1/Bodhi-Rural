@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -21,9 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.IOException;
-import java.io.InputStream;
+import android.widget.VideoView;
 
 public final class MainActivity extends Activity {
     private static final int GREEN = Color.rgb(18, 69, 49);
@@ -35,6 +32,7 @@ public final class MainActivity extends Activity {
     private Screen screen = Screen.HOME;
     private boolean hindi;
     private OnBackInvokedCallback backCallback;
+    private VideoView farmSplash;
 
     @Override
     public void onCreate(Bundle state) {
@@ -85,7 +83,63 @@ public final class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (farmSplash != null) render();
+    }
+
+    private void stopFarmSplash() {
+        VideoView video = farmSplash;
+        farmSplash = null;
+        if (video != null) video.stopPlayback();
+    }
+
+    private void openBodhiFarm() {
+        if (getPreferences(MODE_PRIVATE).getBoolean("farmSplashSeen", false)) {
+            show(Screen.FARM);
+            return;
+        }
+        getPreferences(MODE_PRIVATE).edit().putBoolean("farmSplashSeen", true).apply();
+        screen = Screen.FARM;
+        updateBackCallback();
+
+        LinearLayout splash = new LinearLayout(this);
+        splash.setOrientation(LinearLayout.VERTICAL);
+        splash.setBackgroundColor(CREAM);
+        splash.setOnApplyWindowInsetsListener((view, insets) -> {
+            splash.setPadding(dp(16) + insets.getSystemWindowInsetLeft(),
+                dp(10) + insets.getSystemWindowInsetTop(),
+                dp(16) + insets.getSystemWindowInsetRight(),
+                dp(16) + insets.getSystemWindowInsetBottom());
+            return insets;
+        });
+
+        VideoView video = new VideoView(this);
+        farmSplash = video;
+        splash.addView(video, new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        addButton(splash, text("Skip intro", "परिचय छोड़ें"), false, this::render);
+        video.setOnPreparedListener(player -> {
+            if (farmSplash == video) {
+                player.setVolume(0f, 0f);
+                video.start();
+            }
+        });
+        video.setOnCompletionListener(player -> {
+            if (farmSplash == video) render();
+        });
+        video.setOnErrorListener((player, error, extra) -> {
+            if (farmSplash == video) render();
+            return true;
+        });
+
+        setContentView(splash);
+        video.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.bodhifarm_splash));
+    }
+
     private void render() {
+        stopFarmSplash();
         updateBackCallback();
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -114,7 +168,7 @@ public final class MainActivity extends Activity {
 
         switch (screen) {
             case HOME:
-                addButton(content, text("BodhiFarm\nFarm operations", "BodhiFarm\nफार्म संचालन"), true, () -> show(Screen.FARM));
+                addButton(content, text("BodhiFarm\nFarm operations", "BodhiFarm\nफार्म संचालन"), true, this::openBodhiFarm);
                 addButton(content, text("BodhiMart\nShop, sell or deliver", "BodhiMart\nखरीदें, बेचें या डिलीवरी करें"), true, () -> show(Screen.MART));
                 break;
             case FARM:
@@ -177,11 +231,7 @@ public final class MainActivity extends Activity {
         ImageView logo = new ImageView(this);
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         logo.setContentDescription("Bodhi Rural");
-        try (InputStream asset = getAssets().open("bodhi-rural-logo.png")) {
-            logo.setImageDrawable(Drawable.createFromStream(asset, null));
-        } catch (IOException ignored) {
-            return;
-        }
+        logo.setImageResource(R.drawable.bodhi_logo);
         content.addView(logo, new LinearLayout.LayoutParams(dp(220), dp(82)));
     }
 
