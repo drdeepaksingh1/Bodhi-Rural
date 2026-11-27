@@ -1,5 +1,6 @@
 'use client';
 
+import { DigiLockerVerification } from '../../../components/onboarding/DigiLockerVerification';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -536,6 +537,7 @@ export default function StaffRegistrationPage() {
 
         </div>
 
+        <DigiLockerVerification manualInstructions="Continue with the staff application for document review." />
         {/* PROGRESS */}
 
         <div className="mb-6 grid grid-cols-3 gap-2">
