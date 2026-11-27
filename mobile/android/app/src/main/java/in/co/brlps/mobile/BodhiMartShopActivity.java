@@ -56,6 +56,7 @@ public final class BodhiMartShopActivity extends Activity {
     private final Map<String, JSONObject> categories = new HashMap<>();
     private final NumberFormat money = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     private String selected = "";
+    private int sort = 0;
     private boolean hindi;
     private boolean loaded;
     private TextView status;
@@ -146,7 +147,30 @@ public final class BodhiMartShopActivity extends Activity {
         productsHeading.setTypeface(null, Typeface.BOLD);
         productsHeading.setAccessibilityHeading(true);
         productsHeading.setPadding(dp(16), 0, dp(16), 0);
-        catalog.addView(productsHeading);
+        LinearLayout productToolbar = new LinearLayout(this);
+        productToolbar.setGravity(Gravity.CENTER_VERTICAL);
+        productToolbar.addView(productsHeading, new LinearLayout.LayoutParams(0, dp(48), 1));
+        Button sortButton = button(text("Sort", "क्रम"), () -> {
+            String[] options = {
+                text("Newest", "नवीनतम"),
+                text("Price: low to high", "मूल्य: कम से ज़्यादा"),
+                text("Price: high to low", "मूल्य: ज़्यादा से कम"),
+                text("Product name", "उत्पाद का नाम")
+            };
+            new AlertDialog.Builder(this).setTitle(text("Sort products", "उत्पादों का क्रम"))
+                .setSingleChoiceItems(options, sort, (dialog, choice) -> {
+                    sort = choice;
+                    filter();
+                    dialog.dismiss();
+                }).setNegativeButton(android.R.string.cancel, null).show();
+        });
+        sortButton.setTextColor(GREEN);
+        sortButton.setBackground(surface(0xffe1eee0, 12));
+        sortButton.setStateListAnimator(null);
+        LinearLayout.LayoutParams sortLayout = new LinearLayout.LayoutParams(-2, dp(44));
+        sortLayout.setMarginEnd(dp(12));
+        productToolbar.addView(sortButton, sortLayout);
+        catalog.addView(productToolbar);
         status = label("", 15);
         status.setPadding(dp(16), dp(6), dp(16), dp(6));
         status.setTypeface(null, Typeface.BOLD);
@@ -303,13 +327,13 @@ public final class BodhiMartShopActivity extends Activity {
             button.setContentDescription(name);
             boolean active = id.equals(selected);
             button.setSelected(active);
-            button.setTextSize(12);
+            button.setTextSize(11);
             button.setTextColor(active ? Color.WHITE : GREEN);
             button.setBackground(surface(active ? GREEN : Color.WHITE, 14));
             button.setStateListAnimator(null);
             button.setMinWidth(0);
-            button.setPadding(dp(3), dp(6), dp(3), dp(6));
-            button.setMinHeight(dp(68));
+            button.setPadding(dp(2), dp(3), dp(2), dp(3));
+            button.setMinHeight(dp(52));
             LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(0, -2, 1);
             layout.setMargins(dp(3), dp(3), dp(3), dp(3));
             row.addView(button, layout);
@@ -365,6 +389,9 @@ public final class BodhiMartShopActivity extends Activity {
             if (matchesCategory(item.optString("category_id", ""))
                 && item.optString("name").toLowerCase(Locale.ROOT).contains(query)) visible.add(item);
         }
+        if (sort == 1) visible.sort((a, b) -> Double.compare(a.optDouble("selling_price"), b.optDouble("selling_price")));
+        else if (sort == 2) visible.sort((a, b) -> Double.compare(b.optDouble("selling_price"), a.optDouble("selling_price")));
+        else if (sort == 3) visible.sort((a, b) -> a.optString("name").compareToIgnoreCase(b.optString("name")));
         adapter.notifyDataSetChanged();
         JSONObject category = categories.get(selected);
         String section = category == null ? "" : category.optString("name") + " · ";
@@ -560,14 +587,14 @@ public final class BodhiMartShopActivity extends Activity {
             setOrientation(VERTICAL);
             setPadding(dp(12), 0, dp(12), 0);
             LinearLayout card = column();
-            card.setPadding(dp(16), dp(14), dp(16), dp(14));
+            card.setPadding(dp(12), dp(8), dp(12), dp(8));
             card.setBackground(surface(Color.WHITE, 16));
             addView(card, new LinearLayout.LayoutParams(-1, -2));
 
             photo = new ImageView(BodhiMartShopActivity.this);
             photo.setScaleType(ImageView.ScaleType.FIT_CENTER);
             photo.setBackground(surface(CREAM, 12));
-            card.addView(photo, new LinearLayout.LayoutParams(-1, dp(180)));
+            card.addView(photo, new LinearLayout.LayoutParams(-1, dp(132)));
             category = line(card, 13, true);
             name = line(card, 21, true);
             metadata = line(card, 14, false);
