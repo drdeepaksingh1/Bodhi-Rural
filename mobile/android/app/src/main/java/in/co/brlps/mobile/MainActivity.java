@@ -211,7 +211,7 @@ public final class MainActivity extends Activity {
                 addButton(content, text("My account", "मेरा खाता"), false,
                     () -> openPage("/bodhimart/account"));
                 addButton(content, text("Shop BodhiMart", "BodhiMart पर खरीदें"), true,
-                    () -> openPage("/bodhimart"));
+                    this::openNativeShop);
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Buyer", "खरीदार"), false, () -> show(Screen.BUYER));
                 addButton(content, text("Seller", "विक्रेता"), false, () -> show(Screen.SELLER));
@@ -251,7 +251,7 @@ public final class MainActivity extends Activity {
                 addButton(content, text("Create a buyer account", "खरीदार खाता बनाएँ"), false,
                     () -> openPage("/bodhimart/register"));
                 addButton(content, text("Browse products", "उत्पाद देखें"), false,
-                    () -> openPage("/bodhimart/products"));
+                    this::openNativeShop);
                 break;
             case SELLER:
                 addHeading(content, text("Seller", "विक्रेता"), 24);
@@ -320,6 +320,11 @@ public final class MainActivity extends Activity {
     private void openWebsiteSignIn(String destination) {
         openWebsite(Uri.parse(WEBSITE + "/login").buildUpon()
             .appendQueryParameter("redirect", destination).build());
+    }
+
+    private void openNativeShop() {
+        startActivity(new Intent(this, BodhiMartShopActivity.class)
+            .putExtra(BodhiWorkspaceActivity.HINDI, hindi));
     }
 
     private void openPage(String path) {
