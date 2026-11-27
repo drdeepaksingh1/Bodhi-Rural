@@ -5,6 +5,7 @@
     <application android:label="Bodhi Rural" android:icon="@drawable/bodhi_logo" android:allowBackup="false"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity android:name=".BodhiMartShopActivity" android:exported="false" />
         <activity android:name=".BodhiWorkspaceActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
