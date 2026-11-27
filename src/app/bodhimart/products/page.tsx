@@ -391,14 +391,6 @@ export default function BodhiMartProductsPage() {
     return Math.max(0, Number(item.available_quantity || 0));
   }
 
-  function getSavings(product: Product) {
-    return Math.max(
-      0,
-      Number(product.mrp) -
-        Number(product.selling_price)
-    );
-  }
-
   function getSavingsPercent(product: Product) {
     if (!product.mrp || product.mrp <= 0) return 0;
 
@@ -638,8 +630,8 @@ export default function BodhiMartProductsPage() {
               </button>
             ))}
           </nav>
-          <div className="[display:grid] grid-cols-2 gap-2 md:grid-cols-4">
-            <div className="col-span-2 md:col-span-1">
+          <div className="[display:grid] grid-cols-3 gap-2 [&>div]:min-w-0">
+            <div className="col-span-3">
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 <Copy en="Search Products" hi="उत्पाद खोजें" />
               </label>
@@ -671,21 +663,7 @@ export default function BodhiMartProductsPage() {
                   <option key={item.id} value={item.id}>{categoryLabel(item)}</option>
                 ))}
               </select>
-              {subcategories.length > 0 && (
-                <label className="mt-3 block text-sm font-medium text-gray-700">
-                  <Copy en="Subcategory" hi="उपश्रेणी" />
-                  <select
-                    value={selected?.id === parent?.id ? "" : selected?.id ?? ""}
-                    onChange={(event) => setCategory(event.target.value || parent?.id || "ALL")}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm"
-                  >
-                    <option value="">{language === "hi" ? "सभी उपश्रेणियाँ" : "All subcategories"}</option>
-                    {subcategories.map((item) => (
-                      <option key={item.id} value={item.id}>{categoryLabel(item)}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
+
             </div>
 
             <div>
@@ -736,12 +714,28 @@ export default function BodhiMartProductsPage() {
                 <option value="OUT_OF_STOCK"><Copy en="Out of stock" hi="स्टॉक खत्म" /></option>
               </select>
             </div>
+              {subcategories.length > 0 && (
+                <label className="col-span-3 block text-sm font-medium text-gray-700">
+                  <Copy en="Subcategory" hi="उपश्रेणी" />
+                  <select
+                    value={selected?.id === parent?.id ? "" : selected?.id ?? ""}
+                    onChange={(event) => setCategory(event.target.value || parent?.id || "ALL")}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm"
+                  >
+                    <option value="">{language === "hi" ? "सभी उपश्रेणियाँ" : "All subcategories"}</option>
+                    {subcategories.map((item) => (
+                      <option key={item.id} value={item.id}>{categoryLabel(item)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
           </div>
         </div>
 
         {/* Header */}
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
             <h2 className="text-xl font-bold text-gray-900">
               <Copy en="Products" hi="उत्पाद" />
             </h2>
@@ -755,40 +749,40 @@ export default function BodhiMartProductsPage() {
                 available
               </p>
             )}
+            </div>
+            <button
+              onClick={loadProducts}
+              className="min-h-10 rounded-lg px-2 text-xs font-semibold text-green-700 hover:bg-green-50"
+            >
+              <Copy en="Refresh" hi="फिर से लोड करें" />
+            </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="[display:grid] grid-cols-4 gap-1">
             <Link
               href="/bodhimart/orders"
-              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-green-700 px-1 text-center text-xs font-semibold text-green-800 hover:bg-green-50"
             >
               <Copy en="My orders" hi="मेरे ऑर्डर" />
             </Link>
             <Link
               href="/bodhimart/wishlist"
-              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
+              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-green-700 px-1 text-center text-xs font-semibold text-green-800 hover:bg-green-50"
             >
-              ♡ Saved
-            </Link>
-            <Link
-              href="/bodhimart/addresses"
-              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 hover:bg-green-50"
-            >
-              <Copy en="Delivery addresses" hi="डिलीवरी के पते" />
+              <Copy en="Saved" hi="सहेजे गए" />
             </Link>
             <a
               href="/bodhimart/cart"
-              className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg bg-green-700 px-1 text-center text-xs font-semibold text-white hover:bg-green-800"
             >
-              🛒 Cart
+              <Copy en="Cart" hi="कार्ट" />
             </a>
-
-            <button
-              onClick={loadProducts}
-              className="rounded-lg border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+            <Link
+              href="/bodhimart/addresses"
+              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-green-700 px-1 text-center text-xs font-semibold text-green-800 hover:bg-green-50"
             >
-              <Copy en="Refresh" hi="फिर से लोड करें" />
-            </button>
+              <Copy en="Delivery address" hi="डिलीवरी के पते" />
+            </Link>
           </div>
         </div>
 
@@ -866,9 +860,6 @@ export default function BodhiMartProductsPage() {
                 const availableStock =
                   getAvailableStock(product.id);
 
-                const savings =
-                  getSavings(product);
-
                 const savingsPercent =
                   getSavingsPercent(product);
 
@@ -891,7 +882,7 @@ export default function BodhiMartProductsPage() {
                     className="overflow-hidden min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm"
                   >
                     {/* Product image area */}
-                    <div className="group/image relative flex h-32 items-center sm:h-44 justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#fffdf5_0%,#f3f7ed_60%,#e8f0e5_100%)]">
+                    <div className="group/image relative flex h-24 items-center sm:h-44 justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#fffdf5_0%,#f3f7ed_60%,#e8f0e5_100%)]">
                       <div
                         aria-hidden="true"
                         className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/70 blur-2xl"
@@ -950,22 +941,6 @@ export default function BodhiMartProductsPage() {
 
                     {/* Product content */}
                     <div className="p-2 sm:p-3">
-                      <div className="mb-1 flex flex-wrap items-center gap-1">
-                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                          {categoryName}
-                        </span>
-
-                        {product.delivery_available ? (
-                          <span className="text-xs font-medium text-green-700">
-                            <Copy en="Delivery" hi="डिलीवरी" />
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-500">
-                            <Copy en="Pickup" hi="खुद ले जाएँ" />
-                          </span>
-                        )}
-                      </div>
-
                       <h3 className="break-words text-sm font-bold sm:text-base text-gray-900">
                         <Link
                           href={productDetailsHref(product)}
@@ -974,30 +949,6 @@ export default function BodhiMartProductsPage() {
                           {product.name}
                         </Link>
                       </h3>
-
-                      {product.brand && (
-                        <p className="mt-1 break-words text-xs text-gray-500">
-                          Brand: {product.brand}
-                        </p>
-                      )}
-
-                      {product.unit && (
-                        <p className="mt-1 break-words text-xs text-gray-500">
-                          Unit: {product.unit}
-                        </p>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => toggleCompare(product)}
-                        aria-pressed={compareIds.includes(product.id)}
-                        className="mt-1 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
-                      >
-                        <span aria-hidden="true" className="text-base">
-                          {compareIds.includes(product.id) ? "☑" : "□"}
-                        </span>
-                        {compareIds.includes(product.id) ? "Added to compare" : "Compare"}
-                      </button>
 
                       {/* Price */}
                       <div className="mt-2">
@@ -1021,19 +972,10 @@ export default function BodhiMartProductsPage() {
                             </span>
                           )}
                         </div>
-
-                        {savings > 0 && (
-                          <p className="mt-1 text-sm font-medium text-green-600">
-                            Save ₹
-                            {savings.toLocaleString(
-                              "en-IN"
-                            )}
-                          </p>
-                        )}
                       </div>
 
                       {/* Stock */}
-                      <div className="mt-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2">
                         {outOfStock ? (
                           <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
                             <span className="h-2 w-2 rounded-full bg-red-500" />
@@ -1052,19 +994,26 @@ export default function BodhiMartProductsPage() {
                             <Copy en="In Stock" hi="स्टॉक में" />
                           </span>
                         )}
+
+                      <button
+                        type="button"
+                        onClick={() => toggleCompare(product)}
+                        aria-pressed={compareIds.includes(product.id)}
+                        className="inline-flex min-h-8 items-center gap-1 rounded-lg text-[11px] font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                      >
+                        <span aria-hidden="true" className="text-base">
+                          {compareIds.includes(product.id) ? "☑" : "□"}
+                        </span>
+                        {compareIds.includes(product.id) ? "Compared" : "Compare"}
+                      </button>
                       </div>
 
-                      {/* Product ID */}
-                      <p className="mt-2 text-xs text-gray-400">
-                        Product ID:{" "}
-                        {product.product_id}
-                      </p>
-
+                      <div className="[display:grid] grid-cols-2 gap-1">
                       <Link
                         href={productDetailsHref(product)}
-                        className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-green-700 px-1 py-1 text-center text-xs font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                        className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-green-700 px-1 py-1 text-center text-xs font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
                       >
-                        <Copy en="View product details" hi="उत्पाद की जानकारी देखें" />
+                        <Copy en="Details" hi="विवरण" />
                       </Link>
 
                       {/* Add to cart */}
@@ -1075,7 +1024,7 @@ export default function BodhiMartProductsPage() {
                         onClick={() =>
                           handleAddToCart(product)
                         }
-                        className={`mt-2 min-h-10 w-full rounded-lg px-1 py-1 text-xs font-semibold transition ${
+                        className={`min-h-10 w-full rounded-lg px-1 py-1 text-xs font-semibold transition ${
                           outOfStock
                             ? "cursor-not-allowed bg-gray-200 text-gray-500"
                             : isAdding
@@ -1089,6 +1038,7 @@ export default function BodhiMartProductsPage() {
                           ? "Adding..."
                           : "Add to Cart"}
                       </button>
+                      </div>
                     </div>
                   </article>
                 );
