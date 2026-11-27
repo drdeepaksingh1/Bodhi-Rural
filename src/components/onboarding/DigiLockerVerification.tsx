@@ -19,7 +19,7 @@ export function DigiLockerVerification({ role }: { role: ApplicationRole }) {
         <summary className="cursor-pointer font-medium text-green-900">How optional DigiLocker verification will work</summary>
         <div className="mt-2 space-y-2">
           <p>Bodhi Rural will ask for your permission to retrieve your legal name and residential address from the identity document you choose to share.</p>
-          <p>These details will be used for identity review and to prefill your application. You will be able to review them before submitting. Any address you enter separately will be treated as self-reported.</p>
+          <p>These details will be used for identity review and to prefill your application. You will be able to review them before submitting. If you confirm the document address is your permanent address, Bodhi Rural will record it as such. Enter your current or work address separately if it differs.</p>
           <p>You can decline and continue through the manual review route. This option does not ask you to enter your Aadhaar number.</p>
         </div>
       </details>
