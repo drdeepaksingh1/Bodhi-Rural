@@ -63,6 +63,16 @@ function BuyerRegistrationForm() {
         });
         if (error) throw error;
         if (!data.user || !data.session) throw new Error('Email verification did not start a session. Request a new code.');
+        const { data: hasPassword, error: accountError } = await supabase.rpc('bodhimart_current_account_has_password');
+        if (accountError) throw new Error('Could not check your account. Sign in or try again.');
+        if (hasPassword) {
+          const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+          if (signOutError) throw new Error('This email is already registered. Open BodhiMart to continue.');
+          setOtp('');
+          setStep('email');
+          setError('This email is already registered. Sign in with your existing account.');
+          return;
+        }
         setVerifiedUserId(data.user.id);
         setStep('password');
         return;

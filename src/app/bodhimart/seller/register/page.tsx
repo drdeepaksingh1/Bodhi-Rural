@@ -155,8 +155,11 @@ export default function SellerRegistrationPage() {
       const verifiedUser = data.user;
       if (!verifiedUser) throw new Error('Email verified, but the account could not be opened. Please try again.');
 
+      const { data: hasPassword, error: accountError } = await supabase.rpc('bodhimart_current_account_has_password');
+      if (accountError) throw new Error('Could not check your account. Sign in or try again.');
+
       setUserId(verifiedUser.id);
-      setNeedsPassword(true);
+      setNeedsPassword(!hasPassword);
       setVerificationEmail(verifiedUser.email || verificationEmail.trim().toLowerCase());
       setForm((current) => ({
         ...current,
