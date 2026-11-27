@@ -133,6 +133,7 @@ export default function BodhiMartAccountPage() {
           ))}
         </section>
 
+        <Link href="/bodhimart/order-alerts" className="mt-5 inline-block font-semibold text-green-800 underline">Order notification preferences</Link>
         <p className="mt-8 text-center text-sm text-[#69766d]">Selling on BodhiMart? <Link href="/bodhimart/seller/dashboard" className="font-semibold text-[#27623b] underline">Open seller workspace</Link></p>
       </div>
     </main>

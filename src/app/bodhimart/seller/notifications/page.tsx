@@ -137,6 +137,7 @@ export default function SellerNotificationsPage() {
     <main className="min-h-screen bg-[#f5f8f5] px-4 py-8 text-[#183426] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm text-gray-500" aria-label="Breadcrumb">
+          <Link className="font-semibold text-green-800 underline" href="/bodhimart/order-alerts">Order notification preferences</Link>
           <Link className="font-semibold text-green-800 hover:underline" href="/bodhimart/seller/dashboard">Seller dashboard</Link>
           <span aria-hidden="true">/</span><span>Notifications</span>
         </nav>
