@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Package } from 'lucide-react';
 import { createClient } from '../../lib/supabase/client';
 import { Copy } from './language';
+import { ProductCardSummary } from './ProductCardSummary';
 
-type Listing = { product_id: string; name: string; image_url: string | null; selling_price: number; unit: string | null };
+type Listing = { product_id: string; name: string; image_url: string | null; selling_price: number; unit: string | null; weight: number | null; brand: string | null; description: string | null };
 const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
 const photoLoader = ({ src }: { src: string }) => src;
 
@@ -21,7 +22,7 @@ export default function ShopProducts() {
     void (async () => {
       try {
         const { data, error } = await client.from('marketplace_public_products')
-          .select('product_id,name,image_url,selling_price,unit')
+          .select('product_id,name,image_url,selling_price,unit,weight,brand,description')
           .eq('status', 'ACTIVE')
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -59,6 +60,7 @@ export default function ShopProducts() {
                 <div className="space-y-1 p-3">
                   <p className="line-clamp-2 text-sm font-semibold">{item.name}</p>
                   <p className="text-sm font-bold">{money.format(item.selling_price)}{item.unit ? ' / ' + item.unit : ''}</p>
+                  <ProductCardSummary product={item} />
                 </div>
               </Link>
             </li>

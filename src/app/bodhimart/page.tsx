@@ -194,7 +194,7 @@ export default function BodhiMartPage() {
 
         <ShopProducts />
 
-        <section aria-labelledby="departments-title">
+        <section aria-labelledby="departments-title" className="hidden md:block">
           <h2 id="departments-title" className="mb-3 text-xl font-bold"><Copy en="Explore departments" hi="श्रेणियाँ देखें" /></h2>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {categories.map(({ name, hindi, href, icon: Icon, color }) => (
