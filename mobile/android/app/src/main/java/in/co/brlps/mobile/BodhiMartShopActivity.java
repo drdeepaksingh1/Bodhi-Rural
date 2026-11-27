@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -53,7 +52,7 @@ public final class BodhiMartShopActivity extends Activity {
     private TextView status;
     private Button retry;
     private EditText search;
-    private LinearLayout categoryRow;
+    private LinearLayout categoryGrid;
     private BaseAdapter adapter;
 
     @Override protected void onCreate(Bundle state) {
@@ -87,7 +86,7 @@ public final class BodhiMartShopActivity extends Activity {
         brand.addView(title);
         header.addView(brand);
 
-        TextView headline = label(text("Shop for home, school and farm", "घर, स्कूल और खेत के लिए खरीदारी"), 23);
+        TextView headline = label(text("Home, school & farm", "घर, स्कूल और खेत"), 20);
         headline.setTextColor(Color.WHITE);
         headline.setTypeface(null, Typeface.BOLD);
         headline.setPadding(0, dp(12), 0, 0);
@@ -124,12 +123,9 @@ public final class BodhiMartShopActivity extends Activity {
         browse.setPadding(dp(16), dp(14), dp(16), dp(6));
         catalog.addView(browse);
 
-        HorizontalScrollView categoryStrip = new HorizontalScrollView(this);
-        categoryStrip.setHorizontalScrollBarEnabled(false);
-        categoryRow = new LinearLayout(this);
-        categoryRow.setPadding(dp(12), dp(2), dp(12), dp(8));
-        categoryStrip.addView(categoryRow);
-        catalog.addView(categoryStrip);
+        categoryGrid = column();
+        categoryGrid.setPadding(dp(12), 0, dp(12), dp(4));
+        catalog.addView(categoryGrid);
 
         TextView productsHeading = label(text("Browse products", "उत्पाद देखें"), 19);
         productsHeading.setTypeface(null, Typeface.BOLD);
@@ -201,7 +197,7 @@ public final class BodhiMartShopActivity extends Activity {
         status.setText(text("Loading products…", "उत्पाद लोड हो रहे हैं…"));
         io.execute(() -> {
             try {
-                JSONArray departments = request("marketplace_categories?select=id,name,parent_id&is_active=eq.true&order=name.asc");
+                JSONArray departments = request("marketplace_categories?select=id,name,slug,parent_id&is_active=eq.true&order=name.asc");
                 JSONArray products = request("marketplace_public_products?select=product_id,name,unit,selling_price,category_id,description&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
@@ -258,24 +254,61 @@ public final class BodhiMartShopActivity extends Activity {
         return result;
     }
 
-    private void renderCategories() {
-        categoryRow.removeAllViews();
-        addCategoryButton(text("All", "सभी"), "");
-        for (JSONObject category : children("")) addCategoryButton(category.optString("name"), category.optString("id"));
-    }
+    private static final String[][] HOME_DEPARTMENTS = {
+        {"groceries", "🛒", "Groceries", "किराना"},
+        {"fresh-produce", "🥬", "Fresh produce", "फल व सब्ज़ियाँ"},
+        {"seeds", "🌱", "Seeds & crops", "बीज व फसल"},
+        {"hotels-restaurants", "🍽", "Restaurants", "रेस्तराँ"},
+        {"poultry", "🐔", "Livestock", "पशुधन"},
+        {"feed", "🌾", "Animal feed", "पशु आहार"},
+        {"school-stationery", "📚", "School supplies", "स्कूल सामग्री"},
+        {"clothing-footwear", "👕", "Clothing", "कपड़े"},
+        {"equipment", "🧰", "Farm tools", "कृषि उपकरण"},
+        {"household-personal-care", "🧴", "Home & care", "घर व देखभाल"},
+        {"hardware-electrical", "💡", "Hardware", "हार्डवेयर"},
+        {"made-locally", "🧺", "Made locally", "स्थानीय उत्पाद"},
+    };
 
-    private void addCategoryButton(String name, String id) {
-        Button chip = button(name, () -> selectCategory(id));
-        boolean active = id.equals(selected);
-        chip.setSelected(active);
-        chip.setTextColor(active ? Color.WHITE : GREEN);
-        chip.setBackground(surface(active ? GREEN : 0xffe7eee4, 22));
-        chip.setElevation(0);
-        chip.setMinWidth(0);
-        chip.setPadding(dp(14), 0, dp(14), 0);
-        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(-2, dp(44));
-        layout.setMarginEnd(dp(8));
-        categoryRow.addView(chip, layout);
+    private void renderCategories() {
+        categoryGrid.removeAllViews();
+        Map<String, JSONObject> departments = new HashMap<>();
+        for (JSONObject category : children("")) departments.put(category.optString("slug"), category);
+
+        LinearLayout row = null;
+        int column = 0;
+        for (String[] tile : HOME_DEPARTMENTS) {
+            JSONObject category = departments.get(tile[0]);
+            if (category == null) continue;
+            if (column == 0) {
+                row = new LinearLayout(this);
+                categoryGrid.addView(row);
+            }
+            String id = category.optString("id");
+            String name = text(tile[2], tile[3]);
+            Button button = button(tile[1] + "\n" + name, () -> {
+                if (children(id).isEmpty()) selectCategory(id);
+                else showCategoryOptions(id, name);
+            });
+            button.setContentDescription(name);
+            boolean active = id.equals(selected);
+            button.setSelected(active);
+            button.setTextSize(12);
+            button.setTextColor(active ? Color.WHITE : GREEN);
+            button.setBackground(surface(active ? GREEN : Color.WHITE, 14));
+            button.setStateListAnimator(null);
+            button.setMinWidth(0);
+            button.setPadding(dp(3), dp(6), dp(3), dp(6));
+            button.setMinHeight(dp(68));
+            LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(0, -2, 1);
+            layout.setMargins(dp(3), dp(3), dp(3), dp(3));
+            row.addView(button, layout);
+            column = (column + 1) % 4;
+        }
+        if (row != null && column != 0) {
+            for (int i = column; i < 4; i++) {
+                row.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1));
+            }
+        }
     }
 
     private void showCategories() {
