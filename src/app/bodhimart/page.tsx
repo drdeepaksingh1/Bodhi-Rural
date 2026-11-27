@@ -159,7 +159,7 @@ export default function BodhiMartPage() {
       <section className={`${printStyles.hero} bg-[#173e2e] text-white`}>
         <div className="mx-auto max-w-6xl px-4 pb-5 pt-6 sm:px-8">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="flex items-center gap-2 text-3xl font-bold"><Leaf size={23} aria-hidden="true" /> BodhiMart</h1>
+            <h1 className="flex items-center gap-2 text-3xl font-bold"><Image src="/branding/bodhi-mart-mark.jpg" width={36} height={36} alt="" className="size-9 shrink-0 rounded-md bg-white object-contain" /> BodhiMart</h1>
             <Link href="/bodhimart/addresses" className="rounded-xl border border-white/35 px-3 py-2 text-sm">
               <Copy en="Delivery address" hi="डिलीवरी पता" />
             </Link>
