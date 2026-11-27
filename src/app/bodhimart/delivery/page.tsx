@@ -57,7 +57,7 @@ export default async function DeliveryPartnerPage({ searchParams }: { searchPara
       <h1 className="mt-4 text-3xl font-bold text-green-950">
         <Copy en="Delivery partner" hi="डिलीवरी पार्टनर" />
       </h1>
-      <DigiLockerVerification manualInstructions="Contact BodhiMart to apply for delivery partner access and complete onboarding." />
+      <DigiLockerVerification role="delivery" />
       {handover === 'delivered' && <p role="status"><Copy en="Code verified. Order marked delivered." hi="कोड सत्यापित हुआ। ऑर्डर की डिलीवरी दर्ज हो गई।" /></p>}
       {handover === 'invalid' && <p role="alert"><Copy en="The code is incorrect, expired, or unavailable. Ask the buyer to open My Orders." hi="कोड गलत है, उसकी अवधि समाप्त हो गई है या वह उपलब्ध नहीं है। खरीदार से मेरे ऑर्डर खोलने को कहें।" /></p>}
       {handover === 'error' && <p role="alert"><Copy en="Could not verify delivery. Please try again." hi="डिलीवरी सत्यापित नहीं हुई। फिर कोशिश करें।" /></p>}

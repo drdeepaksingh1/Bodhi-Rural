@@ -435,7 +435,7 @@ export default function FarmerRegisterPage() {
           Register as a Bodhi Rural farmer.
         </p>
 
-        <DigiLockerVerification manualInstructions="Continue with the farmer application for document review." />
+        <DigiLockerVerification role="farmer" />
         {message && (
           <div
             style={{

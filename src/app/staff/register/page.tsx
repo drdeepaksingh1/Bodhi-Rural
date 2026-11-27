@@ -537,7 +537,7 @@ export default function StaffRegistrationPage() {
 
         </div>
 
-        <DigiLockerVerification manualInstructions="Continue with the staff application for document review." />
+        <DigiLockerVerification role="staff" />
         {/* PROGRESS */}
 
         <div className="mb-6 grid grid-cols-3 gap-2">
