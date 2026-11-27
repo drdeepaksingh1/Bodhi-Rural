@@ -611,30 +611,35 @@ export default function BodhiMartProductsPage() {
     <main className={`min-h-screen bg-gray-50 ${comparedProducts.length ? "pb-24" : ""}`}>
       {/* Hero */}
       <section className="bg-green-800 text-white">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
           <div className="max-w-3xl">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-green-200">
-              BODHI MART
-            </p>
-
-            <h1 className="text-3xl font-bold sm:text-4xl">
+            <h1 className="text-xl font-bold sm:text-3xl">
               <Copy en="Shop Rural Products" hi="ग्रामीण उत्पाद खरीदें" />
             </h1>
 
-            <p className="mt-3 text-green-100">
-              Discover products from approved BodhiMart
-              sellers and support rural livelihoods.
-            </p>
           </div>
         </div>
       </section>
 
       {/* Main */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
         {/* Search and filters */}
-        <div className="mb-8 rounded-2xl bg-white p-4 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div>
+        <div className="mb-3 rounded-xl bg-white p-3 shadow-sm">
+          <nav aria-label={language === "hi" ? "श्रेणियाँ" : "Categories"} className="mb-2 flex gap-1.5 overflow-x-auto pb-2">
+            <button type="button" aria-pressed={!parent} onClick={() => setCategory("ALL")}
+              className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-semibold ${!parent ? "bg-green-800 text-white" : "bg-green-50 text-green-900"}`}>
+              <Copy en="All" hi="सभी" />
+            </button>
+            {categories.filter((item) => !item.parent_id).map((item) => (
+              <button key={item.id} type="button" aria-pressed={parent?.id === item.id}
+                onClick={() => setCategory(item.id)}
+                className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-semibold ${parent?.id === item.id ? "bg-green-800 text-white" : "bg-green-50 text-green-900"}`}>
+                {categoryLabel(item)}
+              </button>
+            ))}
+          </nav>
+          <div className="[display:grid] grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="col-span-2 md:col-span-1">
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 <Copy en="Search Products" hi="उत्पाद खोजें" />
               </label>
@@ -646,7 +651,7 @@ export default function BodhiMartProductsPage() {
                   setSearch(e.target.value)
                 }
                 placeholder="Search product, SKU or brand..."
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                className="w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
               />
             </div>
 
@@ -659,7 +664,7 @@ export default function BodhiMartProductsPage() {
                 aria-label={language === "hi" ? "श्रेणी" : "Category"}
                 value={parent?.id ?? "ALL"}
                 onChange={(event) => setCategory(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                className="w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm outline-none focus:border-green-600"
               >
                 <option value="ALL">{language === "hi" ? "सभी श्रेणियाँ" : "All categories"}</option>
                 {categories.filter((item) => !item.parent_id).map((item) => (
@@ -672,7 +677,7 @@ export default function BodhiMartProductsPage() {
                   <select
                     value={selected?.id === parent?.id ? "" : selected?.id ?? ""}
                     onChange={(event) => setCategory(event.target.value || parent?.id || "ALL")}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-3"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm"
                   >
                     <option value="">{language === "hi" ? "सभी उपश्रेणियाँ" : "All subcategories"}</option>
                     {subcategories.map((item) => (
@@ -693,7 +698,7 @@ export default function BodhiMartProductsPage() {
                 onChange={(e) =>
                   setSort(e.target.value)
                 }
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                className="w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm outline-none focus:border-green-600"
               >
                 <option value="DEFAULT">
                   <Copy en="Latest" hi="सबसे नए" />
@@ -724,7 +729,7 @@ export default function BodhiMartProductsPage() {
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                className="w-full rounded-lg border border-gray-300 px-2! py-2! my-0! text-sm outline-none focus:border-green-600"
               >
                 <option value="ALL"><Copy en="All products" hi="सभी उत्पाद" /></option>
                 <option value="IN_STOCK"><Copy en="In stock" hi="स्टॉक में" /></option>
@@ -735,14 +740,14 @@ export default function BodhiMartProductsPage() {
         </div>
 
         {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
               <Copy en="Products" hi="उत्पाद" />
             </h2>
 
             {!loading && (
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 break-words text-xs text-gray-500">
                 {filteredProducts.length} product
                 {filteredProducts.length !== 1
                   ? "s"
@@ -856,7 +861,7 @@ export default function BodhiMartProductsPage() {
         {!loading &&
           !error &&
           filteredProducts.length > 0 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="[display:grid] grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.slice(0, visibleCount).map((product) => {
                 const availableStock =
                   getAvailableStock(product.id);
@@ -883,20 +888,20 @@ export default function BodhiMartProductsPage() {
                 return (
                   <article
                     key={product.id}
-                    className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                    className="overflow-hidden min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm"
                   >
                     {/* Product image area */}
-                    <div className="group/image relative flex h-52 items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#fffdf5_0%,#f3f7ed_60%,#e8f0e5_100%)]">
+                    <div className="group/image relative flex h-32 items-center sm:h-44 justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,#fffdf5_0%,#f3f7ed_60%,#e8f0e5_100%)]">
                       <div
                         aria-hidden="true"
                         className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/70 blur-2xl"
                       />
-                      <div className="relative flex h-full w-full items-center justify-center p-5">
-                        <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] border border-white/80 bg-white/75 shadow-[0_16px_38px_rgba(28,72,45,0.12)] transition duration-300 group-hover/image:scale-105">
+                      <div className="relative flex h-full w-full items-center justify-center p-2">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-[2rem] border border-white/80 bg-white/75 shadow-[0_16px_38px_rgba(28,72,45,0.12)] transition duration-300 group-hover/image:scale-105">
                           <span
                             role="img"
                             aria-label={`${product.name} product image`}
-                            className="text-7xl drop-shadow-sm"
+                            className="text-4xl drop-shadow-sm"
                           >
                             {getProductPlaceholder(product, categoryName)}
                           </span>
@@ -906,7 +911,7 @@ export default function BodhiMartProductsPage() {
                             src={product.image_url}
                             alt={product.name}
                             fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                             loader={marketplacePhotoLoader}
                             unoptimized
                             loading="lazy"
@@ -917,12 +922,9 @@ export default function BodhiMartProductsPage() {
                           />
                         )}
                       </div>
-                      <span className="absolute bottom-3 right-3 rounded-full border border-white/80 bg-white/85 px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-[#55735d] shadow-sm">
-                        BODHI MART
-                      </span>
 
                       {savingsPercent > 0 && (
-                        <span className="absolute left-3 top-3 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
+                        <span className="absolute left-1.5 top-1.5 rounded-full bg-green-700 px-1.5 py-1 text-[10px] font-bold text-white">
                           {savingsPercent}% OFF
                         </span>
                       )}
@@ -938,7 +940,7 @@ export default function BodhiMartProductsPage() {
                         title={savedProductIds.includes(product.id)
                           ? "Remove from saved items"
                           : "Save to wishlist"}
-                        className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-2xl leading-none text-rose-600 shadow-sm transition hover:scale-105 hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-700 disabled:cursor-wait disabled:opacity-60"
+                        className="absolute right-1.5 top-1.5 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-2xl leading-none text-rose-600 shadow-sm transition hover:scale-105 hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-700 disabled:cursor-wait disabled:opacity-60"
                       >
                         <span aria-hidden="true">
                           {savedProductIds.includes(product.id) ? "♥" : "♡"}
@@ -947,8 +949,8 @@ export default function BodhiMartProductsPage() {
                     </div>
 
                     {/* Product content */}
-                    <div className="p-5">
-                      <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="p-2 sm:p-3">
+                      <div className="mb-1 flex flex-wrap items-center gap-1">
                         <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                           {categoryName}
                         </span>
@@ -964,7 +966,7 @@ export default function BodhiMartProductsPage() {
                         )}
                       </div>
 
-                      <h3 className="min-h-[48px] text-lg font-bold text-gray-900">
+                      <h3 className="break-words text-sm font-bold sm:text-base text-gray-900">
                         <Link
                           href={productDetailsHref(product)}
                           className="rounded-sm transition hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-700"
@@ -974,13 +976,13 @@ export default function BodhiMartProductsPage() {
                       </h3>
 
                       {product.brand && (
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 break-words text-xs text-gray-500">
                           Brand: {product.brand}
                         </p>
                       )}
 
                       {product.unit && (
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 break-words text-xs text-gray-500">
                           Unit: {product.unit}
                         </p>
                       )}
@@ -989,7 +991,7 @@ export default function BodhiMartProductsPage() {
                         type="button"
                         onClick={() => toggleCompare(product)}
                         aria-pressed={compareIds.includes(product.id)}
-                        className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                        className="mt-1 inline-flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
                       >
                         <span aria-hidden="true" className="text-base">
                           {compareIds.includes(product.id) ? "☑" : "□"}
@@ -998,9 +1000,9 @@ export default function BodhiMartProductsPage() {
                       </button>
 
                       {/* Price */}
-                      <div className="mt-4">
-                        <div className="flex items-end gap-2">
-                          <span className="text-2xl font-bold text-green-800">
+                      <div className="mt-2">
+                        <div className="flex flex-wrap items-baseline gap-1">
+                          <span className="text-lg font-bold text-green-800">
                             ₹
                             {Number(
                               product.selling_price
@@ -1031,7 +1033,7 @@ export default function BodhiMartProductsPage() {
                       </div>
 
                       {/* Stock */}
-                      <div className="mt-4">
+                      <div className="mt-2">
                         {outOfStock ? (
                           <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
                             <span className="h-2 w-2 rounded-full bg-red-500" />
@@ -1060,7 +1062,7 @@ export default function BodhiMartProductsPage() {
 
                       <Link
                         href={productDetailsHref(product)}
-                        className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-green-700 px-4 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
+                        className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-green-700 px-1 py-1 text-center text-xs font-semibold text-green-800 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-700"
                       >
                         <Copy en="View product details" hi="उत्पाद की जानकारी देखें" />
                       </Link>
@@ -1073,7 +1075,7 @@ export default function BodhiMartProductsPage() {
                         onClick={() =>
                           handleAddToCart(product)
                         }
-                        className={`mt-5 w-full rounded-xl px-4 py-3 font-semibold transition ${
+                        className={`mt-2 min-h-10 w-full rounded-lg px-1 py-1 text-xs font-semibold transition ${
                           outOfStock
                             ? "cursor-not-allowed bg-gray-200 text-gray-500"
                             : isAdding
@@ -1162,7 +1164,7 @@ export default function BodhiMartProductsPage() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700">BodhiMart</p>
                 <h2 id="bodhimart-compare-title" className="mt-1 text-2xl font-bold text-gray-950"><Copy en="Compare products" hi="उत्पादों की तुलना करें" /></h2>
-                <p className="mt-1 text-sm text-gray-500">Review current listing details side by side.</p>
+                <p className="mt-1 break-words text-xs text-gray-500">Review current listing details side by side.</p>
               </div>
               <button
                 type="button"
