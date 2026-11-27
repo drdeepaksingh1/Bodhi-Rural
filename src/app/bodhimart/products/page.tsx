@@ -1,5 +1,7 @@
 "use client";
 
+import { ProductCardSummary } from '../ProductCardSummary';
+
 import { Copy, useBodhiMartLanguage } from '../language';
 import Image from "next/image";
 import Link from "next/link";
@@ -949,6 +951,7 @@ export default function BodhiMartProductsPage() {
                           {product.name}
                         </Link>
                       </h3>
+                      <ProductCardSummary product={product} />
 
                       {/* Price */}
                       <div className="mt-2">
