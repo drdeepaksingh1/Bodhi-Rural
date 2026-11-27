@@ -86,13 +86,20 @@ public final class BodhiMartShopActivity extends Activity {
         title.setAccessibilityHeading(true);
         brand.addView(title);
         header.addView(brand);
+
+        TextView headline = label(text("Shop for home, school and farm", "घर, स्कूल और खेत के लिए खरीदारी"), 23);
+        headline.setTextColor(Color.WHITE);
+        headline.setTypeface(null, Typeface.BOLD);
+        headline.setPadding(0, dp(12), 0, 0);
+        header.addView(headline);
+
         search = new EditText(this);
         search.setSingleLine(true);
         search.setTextColor(GREEN);
         search.setHintTextColor(0xff546b60);
         search.setBackground(surface(Color.WHITE, 14));
         search.setPadding(dp(14), dp(10), dp(14), dp(10));
-        search.setHint(text("Search products", "उत्पाद खोजें"));
+        search.setHint(text("Search rice, seeds, notebooks…", "चावल, बीज, कॉपी खोजें…"));
         search.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         LinearLayout.LayoutParams searchLayout = new LinearLayout.LayoutParams(-1, dp(48));
         searchLayout.topMargin = dp(12);
@@ -105,11 +112,12 @@ public final class BodhiMartShopActivity extends Activity {
         LinearLayout.LayoutParams addressLayout = new LinearLayout.LayoutParams(-2, dp(44));
         addressLayout.topMargin = dp(8);
         header.addView(address, addressLayout);
-        root.addView(header);
+        LinearLayout storefront = column();
+        storefront.addView(header);
 
         LinearLayout catalog = column();
         catalog.setBackgroundColor(CREAM);
-        root.addView(catalog, new LinearLayout.LayoutParams(-1, 0, 1));
+        storefront.addView(catalog);
         TextView browse = label(text("Shop by category", "श्रेणी से खरीदें"), 17);
         browse.setTypeface(null, Typeface.BOLD);
         browse.setAccessibilityHeading(true);
@@ -122,6 +130,12 @@ public final class BodhiMartShopActivity extends Activity {
         categoryRow.setPadding(dp(12), dp(2), dp(12), dp(8));
         categoryStrip.addView(categoryRow);
         catalog.addView(categoryStrip);
+
+        TextView productsHeading = label(text("Browse products", "उत्पाद देखें"), 19);
+        productsHeading.setTypeface(null, Typeface.BOLD);
+        productsHeading.setAccessibilityHeading(true);
+        productsHeading.setPadding(dp(16), dp(8), dp(16), 0);
+        catalog.addView(productsHeading);
         status = label("", 15);
         status.setPadding(dp(16), dp(6), dp(16), dp(6));
         status.setTypeface(null, Typeface.BOLD);
@@ -134,7 +148,10 @@ public final class BodhiMartShopActivity extends Activity {
         list.setDivider(new android.graphics.drawable.ColorDrawable(CREAM));
         list.setDividerHeight(dp(8));
         list.setClipToPadding(false);
-        list.setPadding(dp(12), 0, dp(12), dp(8));
+        list.setBackgroundColor(CREAM);
+        list.setPadding(0, 0, 0, dp(8));
+        list.setItemsCanFocus(true);
+        list.addHeaderView(storefront, null, false);
         adapter = new BaseAdapter() {
             @Override public int getCount() { return visible.size(); }
             @Override public JSONObject getItem(int position) { return visible.get(position); }
@@ -142,17 +159,27 @@ public final class BodhiMartShopActivity extends Activity {
             @Override public View getView(int position, View convertView, ViewGroup parent) {
                 LinearLayout row = convertView == null ? productCard() : (LinearLayout) convertView;
                 JSONObject item = getItem(position);
-                ((TextView) row.getChildAt(0)).setText(item.optString("name"));
-                ((TextView) row.getChildAt(1)).setText(price(item));
+                LinearLayout card = (LinearLayout) row.getChildAt(0);
+                ((TextView) card.getChildAt(0)).setText(item.optString("name"));
+                ((TextView) card.getChildAt(1)).setText(price(item));
                 return row;
             }
         };
         list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, item, index, id) -> showProduct(visible.get(index)));
-        catalog.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
+        list.setOnItemClickListener((parent, item, index, id) -> {
+            Object product = parent.getItemAtPosition(index);
+            if (product instanceof JSONObject) showProduct((JSONObject) product);
+        });
+        root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
 
         LinearLayout nav = new LinearLayout(this);
-        addTab(nav, text("Shop", "खरीदारी"), true, () -> { selected = ""; search.setText(""); renderCategories(); filter(); });
+        addTab(nav, text("Shop", "खरीदारी"), true, () -> {
+            selected = "";
+            search.setText("");
+            renderCategories();
+            filter();
+            list.setSelection(0);
+        });
         addTab(nav, text("Categories", "श्रेणियाँ"), false, this::showCategories);
         addTab(nav, text("Account", "खाता"), false, this::showAccount);
         addTab(nav, text("Cart", "टोकरी"), false, () -> openPage("/bodhimart/cart"));
@@ -370,13 +397,16 @@ public final class BodhiMartShopActivity extends Activity {
 
     private LinearLayout productCard() {
         LinearLayout row = column();
-        row.setPadding(dp(16), dp(13), dp(16), dp(13));
-        row.setBackground(surface(Color.WHITE, 16));
+        row.setPadding(dp(12), 0, dp(12), 0);
+        LinearLayout card = column();
+        card.setPadding(dp(16), dp(13), dp(16), dp(13));
+        card.setBackground(surface(Color.WHITE, 16));
+        row.addView(card, new LinearLayout.LayoutParams(-1, -2));
         TextView name = label("", 16);
         name.setTypeface(null, Typeface.BOLD);
-        row.addView(name);
+        card.addView(name);
         TextView amount = label("", 15);
-        row.addView(amount);
+        card.addView(amount);
         return row;
     }
 
