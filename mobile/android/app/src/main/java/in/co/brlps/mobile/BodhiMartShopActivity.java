@@ -2,7 +2,6 @@ package in.co.brlps.mobile;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.content.Intent;
@@ -21,7 +20,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -236,7 +234,7 @@ public final class BodhiMartShopActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONArray departments = request("marketplace_categories?select=id,name,slug,parent_id&is_active=eq.true&order=name.asc");
-                JSONArray products = request("marketplace_public_products?select=id,product_id,name,unit,selling_price,mrp,category_id,description,brand,weight,image_url,minimum_order_quantity,delivery_available&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
+                JSONArray products = request("marketplace_public_products?select=id,product_id,name,unit,selling_price,mrp,category_id,description,brand,weight,image_url,delivery_available&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
                 Map<String, Double> available = readStock(products);
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
@@ -425,76 +423,9 @@ public final class BodhiMartShopActivity extends Activity {
 
     private void showProduct(JSONObject item) {
         String code = field(item, "product_id");
-        if (code.isEmpty()) return;
-
-        Dialog details = new Dialog(this, android.R.style.Theme_Material_Light_NoActionBar);
-        LinearLayout page = column();
-        page.setBackgroundColor(CREAM);
-        Button back = button(text("‹ Back to shop", "‹ दुकान पर लौटें"), details::dismiss);
-        page.addView(back);
-
-        ScrollView scroller = new ScrollView(this);
-        page.addView(scroller, new LinearLayout.LayoutParams(-1, 0, 1));
-        LinearLayout body = column();
-        body.setPadding(dp(16), dp(8), dp(16), dp(24));
-        scroller.addView(body);
-
-        String name = item.optString("name");
-        TextView title = label(name, 28);
-        title.setTypeface(null, Typeface.BOLD);
-        title.setAccessibilityHeading(true);
-        body.addView(title);
-
-        TextView amount = label(price(item), 21);
-        amount.setTypeface(null, Typeface.BOLD);
-        amount.setPadding(0, dp(6), 0, dp(12));
-        body.addView(amount);
-
-        ImageView photo = new ImageView(this);
-        photo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        photo.setBackground(surface(Color.WHITE, 16));
-        photo.setContentDescription(name);
-        photo.setVisibility(View.GONE);
-        body.addView(photo, new LinearLayout.LayoutParams(-1, dp(240)));
-
-        String brand = field(item, "brand");
-        if (!brand.isEmpty()) body.addView(label(text("Brand: ", "ब्रांड: ") + brand, 16));
-        double minimum = item.optDouble("minimum_order_quantity", 0);
-        if (minimum > 0) {
-            NumberFormat quantity = NumberFormat.getNumberInstance();
-            body.addView(label(text("Minimum order: ", "न्यूनतम ऑर्डर: ") + quantity.format(minimum)
-                + " " + field(item, "unit"), 16));
+        if (!code.isEmpty()) {
+            openPage("/bodhimart/products/" + android.net.Uri.encode(code) + "?from=%2Fbodhimart");
         }
-        String description = field(item, "description");
-        if (!description.isEmpty()) {
-            TextView about = label(text("About this product", "इस उत्पाद के बारे में"), 19);
-            about.setTypeface(null, Typeface.BOLD);
-            about.setAccessibilityHeading(true);
-            about.setPadding(0, dp(16), 0, dp(6));
-            body.addView(about);
-            body.addView(label(description, 16));
-        }
-
-        Button buy = button(text("View buying options  ›", "खरीदने के विकल्प  ›"),
-            () -> openPage("/bodhimart/products/" + android.net.Uri.encode(code)));
-        buy.setTextColor(Color.WHITE);
-        buy.setBackground(surface(GREEN, 14));
-        LinearLayout.LayoutParams action = new LinearLayout.LayoutParams(-1, dp(52));
-        action.setMargins(dp(16), dp(8), dp(16), dp(12));
-        page.addView(buy, action);
-        details.setContentView(page);
-        details.show();
-        if (details.getWindow() != null) details.getWindow().setLayout(-1, -1);
-
-        String image = field(item, "image_url");
-        if (!image.isEmpty()) io.execute(() -> {
-            Bitmap bitmap = loadProductPhoto(image);
-            if (bitmap != null) runOnUiThread(() -> {
-                if (!details.isShowing() || isFinishing() || isDestroyed()) return;
-                photo.setImageBitmap(bitmap);
-                photo.setVisibility(View.VISIBLE);
-            });
-        });
     }
 
     private static Bitmap loadProductPhoto(String address) {
