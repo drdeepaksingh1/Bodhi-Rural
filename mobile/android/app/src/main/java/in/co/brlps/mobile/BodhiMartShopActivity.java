@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -68,15 +70,20 @@ public final class BodhiMartShopActivity extends Activity {
         header.setPadding(dp(16), dp(12), dp(16), dp(12));
         TextView title = label("BodhiMart", 27);
         title.setTextColor(Color.WHITE);
+        title.setTypeface(null, Typeface.BOLD);
         title.setAccessibilityHeading(true);
         header.addView(title);
         search = new EditText(this);
         search.setSingleLine(true);
-        search.setTextColor(Color.WHITE);
-        search.setHintTextColor(0xffd5e6da);
+        search.setTextColor(GREEN);
+        search.setHintTextColor(0xff546b60);
+        search.setBackground(surface(Color.WHITE, 14));
+        search.setPadding(dp(14), dp(10), dp(14), dp(10));
         search.setHint(text("Search products", "उत्पाद खोजें"));
         search.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        header.addView(search);
+        LinearLayout.LayoutParams searchLayout = new LinearLayout.LayoutParams(-1, dp(48));
+        searchLayout.topMargin = dp(12);
+        header.addView(search, searchLayout);
         root.addView(header);
 
         HorizontalScrollView categoryStrip = new HorizontalScrollView(this);
@@ -92,6 +99,9 @@ public final class BodhiMartShopActivity extends Activity {
         root.addView(retry);
 
         ListView list = new ListView(this);
+        list.setDivider(null);
+        list.setClipToPadding(false);
+        list.setPadding(dp(12), 0, dp(12), dp(8));
         adapter = new BaseAdapter() {
             @Override public int getCount() { return visible.size(); }
             @Override public JSONObject getItem(int position) { return visible.get(position); }
@@ -99,6 +109,8 @@ public final class BodhiMartShopActivity extends Activity {
             @Override public View getView(int position, View convertView, ViewGroup parent) {
                 TextView row = convertView == null ? label("", 17) : (TextView) convertView;
                 row.setPadding(dp(17), dp(15), dp(17), dp(15));
+                row.setMinHeight(dp(76));
+                row.setBackground(surface(Color.WHITE, 16));
                 JSONObject item = getItem(position);
                 row.setText(item.optString("name") + "\n" + price(item));
                 return row;
@@ -111,8 +123,10 @@ public final class BodhiMartShopActivity extends Activity {
         LinearLayout nav = new LinearLayout(this);
         addTab(nav, text("Shop", "खरीदारी"), () -> { selected = ""; search.setText(""); renderCategories(); filter(); });
         addTab(nav, text("Categories", "श्रेणियाँ"), this::showCategories);
-        addTab(nav, text("Account", "खाता"), () -> openPage("/bodhimart/account"));
+        addTab(nav, text("Account", "खाता"), this::showAccount);
         addTab(nav, text("Cart", "टोकरी"), () -> openPage("/bodhimart/cart"));
+        nav.setBackgroundColor(Color.WHITE);
+        nav.setPadding(dp(4), dp(4), dp(4), dp(4));
         root.addView(nav);
         setContentView(root);
         search.addTextChangedListener(new TextWatcher() {
@@ -266,9 +280,37 @@ public final class BodhiMartShopActivity extends Activity {
             .show();
     }
 
+    private void showAccount() {
+        String[] options = {
+            text("My buyer account", "मेरा खरीदार खाता"),
+            text("Seller sign-in", "विक्रेता लॉग इन"),
+            text("Register as a seller", "विक्रेता के रूप में आवेदन"),
+            text("Delivery partner sign-in", "डिलीवरी पार्टनर लॉग इन"),
+            text("Apply as a delivery partner", "डिलीवरी पार्टनर के लिए आवेदन"),
+            text("Privacy and account deletion", "गोपनीयता और खाता हटाना")
+        };
+        String[] paths = {
+            "/bodhimart/account",
+            "/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard",
+            "/bodhimart/seller/register",
+            "/login?redirect=%2Fbodhimart%2Fdelivery",
+            "/bodhimart/delivery/register",
+            "/privacy-policy/bodhimart"
+        };
+        new AlertDialog.Builder(this).setTitle(text("Account", "खाता"))
+            .setItems(options, (dialog, index) -> openPage(paths[index])).show();
+    }
+
+    private GradientDrawable surface(int color, int radius) {
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(color);
+        background.setCornerRadius(dp(radius));
+        return background;
+    }
+
     private void openPage(String path) {
         startActivity(new Intent(this, BodhiWorkspaceActivity.class)
-            .putExtra(BodhiWorkspaceActivity.PAGE_URL, "https://www.brlps.co.in" + path + "?app_lang=" + (hindi ? "hi" : "en"))
+            .putExtra(BodhiWorkspaceActivity.PAGE_URL, "https://www.brlps.co.in" + path + (path.contains("?") ? "&app_lang=" : "?app_lang=") + (hindi ? "hi" : "en"))
             .putExtra(BodhiWorkspaceActivity.HINDI, hindi));
     }
 
@@ -287,7 +329,15 @@ public final class BodhiMartShopActivity extends Activity {
     }
 
     private void addTab(LinearLayout nav, String value, Runnable action) {
-        nav.addView(button(value, action), new LinearLayout.LayoutParams(0, -2, 1));
+        Button tab = button(value, action);
+        tab.setBackground(surface(0xffedf4ec, 12));
+        tab.setTextColor(GREEN);
+        tab.setTextSize(12);
+        tab.setMinWidth(0);
+        tab.setPadding(dp(2), 0, dp(2), 0);
+        LinearLayout.LayoutParams tabLayout = new LinearLayout.LayoutParams(0, dp(50), 1);
+        tabLayout.setMargins(dp(2), 0, dp(2), 0);
+        nav.addView(tab, tabLayout);
     }
 
     private Button button(String value, Runnable action) {
