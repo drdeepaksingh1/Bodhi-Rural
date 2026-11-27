@@ -972,13 +972,10 @@ export default function BodhiMartProductsPage() {
                             </span>
                           )}
                         </div>
-
-                          </p>
-                        )}
                       </div>
 
                       {/* Stock */}
-                      <div className="mt-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2">
                         {outOfStock ? (
                           <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
                             <span className="h-2 w-2 rounded-full bg-red-500" />
@@ -997,7 +994,6 @@ export default function BodhiMartProductsPage() {
                             <Copy en="In Stock" hi="स्टॉक में" />
                           </span>
                         )}
-                      </div>
 
                       <button
                         type="button"
@@ -1010,6 +1006,7 @@ export default function BodhiMartProductsPage() {
                         </span>
                         {compareIds.includes(product.id) ? "Compared" : "Compare"}
                       </button>
+                      </div>
 
                       <div className="[display:grid] grid-cols-2 gap-1">
                       <Link
