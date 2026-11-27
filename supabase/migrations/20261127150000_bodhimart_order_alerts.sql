@@ -46,6 +46,7 @@ create table public.bodhimart_order_alert_outbox (
   reference text not null,
   status text not null default 'pending' check (status in ('pending', 'sending', 'accepted', 'skipped', 'failed', 'review')),
   attempts integer not null default 0,
+  created_at timestamptz not null default now(),
   next_attempt_at timestamptz not null default now(),
   claimed_at timestamptz,
   unique(order_id, user_id, audience, channel, reference)
@@ -78,7 +79,7 @@ revoke all on function public.bodhimart_enqueue_order_alerts() from public, anon
 create trigger bodhimart_enqueue_order_alerts after insert on public.marketplace_seller_orders
 for each row execute function public.bodhimart_enqueue_order_alerts();
 
-create function public.bodhimart_claim_order_alerts()
+create function public.bodhimart_claim_order_alerts(p_channels text[])
 returns table(id bigint, audience text, channel text, reference text, destination text, attempts integer)
 language plpgsql security definer set search_path = pg_catalog, public
 as $$
@@ -89,7 +90,8 @@ begin
   return query
   with candidates as (
     select q.id from public.bodhimart_order_alert_outbox q
-    where q.status = 'pending' and q.next_attempt_at <= statement_timestamp()
+    where q.status = 'pending' and q.channel = any(p_channels)
+      and q.next_attempt_at <= statement_timestamp()
     order by q.next_attempt_at, q.id limit 30 for update skip locked
   ), claimed as (
     update public.bodhimart_order_alert_outbox q
@@ -99,6 +101,7 @@ begin
   )
   select q.id, q.audience, q.channel, q.reference,
     case
+      when q.created_at < statement_timestamp() - interval '24 hours' then null
       when o.order_status in ('CANCELLED', 'REFUNDED', 'RETURNED') then null
       when q.channel = 'email' and u.email_confirmed_at is not null then u.email::text
       when q.channel in ('sms', 'whatsapp') and u.phone_confirmed_at is not null
@@ -113,5 +116,5 @@ begin
   left join public.bodhimart_order_alert_preferences pref on pref.user_id = u.id;
 end;
 $$;
-revoke all on function public.bodhimart_claim_order_alerts() from public, anon, authenticated;
-grant execute on function public.bodhimart_claim_order_alerts() to service_role;
+revoke all on function public.bodhimart_claim_order_alerts(text[]) from public, anon, authenticated;
+grant execute on function public.bodhimart_claim_order_alerts(text[]) to service_role;

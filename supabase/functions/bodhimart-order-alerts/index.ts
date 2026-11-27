@@ -17,14 +17,19 @@ type Status = 'accepted' | 'skipped' | 'pending' | 'failed' | 'review';
 
 const setting = (key: string) => Deno.env.get(key)?.trim() ?? '';
 const respond = (status: number, body: Record<string, unknown>) => Response.json(body, { status });
-const required = [
-  'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'BODHI_ORDER_ALERT_WORKER_TOKEN',
-  'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_SMS_SENDER', 'TWILIO_DLT_PE_ID',
-  'TWILIO_BUYER_SMS_TEMPLATE_ID', 'TWILIO_SELLER_SMS_TEMPLATE_ID',
-  'TWILIO_BUYER_SMS_BODY', 'TWILIO_SELLER_SMS_BODY',
-  'TWILIO_WHATSAPP_SENDER', 'TWILIO_BUYER_WHATSAPP_CONTENT_SID', 'TWILIO_SELLER_WHATSAPP_CONTENT_SID',
-  'SENDGRID_API_KEY', 'BODHI_ORDER_EMAIL_FROM',
-];
+const commonSettings = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const channelSettings: Record<Alert['channel'], string[]> = {
+  email: ['RESEND_API_KEY'],
+  sms: [
+    'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_SMS_SENDER', 'TWILIO_DLT_PE_ID',
+    'TWILIO_BUYER_SMS_TEMPLATE_ID', 'TWILIO_SELLER_SMS_TEMPLATE_ID',
+    'TWILIO_BUYER_SMS_BODY', 'TWILIO_SELLER_SMS_BODY',
+  ],
+  whatsapp: [
+    'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_WHATSAPP_SENDER',
+    'TWILIO_BUYER_WHATSAPP_CONTENT_SID', 'TWILIO_SELLER_WHATSAPP_CONTENT_SID',
+  ],
+};
 
 function providerRequest(row: Alert, destination: string): Promise<Response> {
   const buyer = row.audience === 'buyer';
@@ -37,14 +42,18 @@ function providerRequest(row: Alert, destination: string): Promise<Response> {
     const portal = buyer ? '/bodhimart/orders' : '/bodhimart/seller/orders';
     const message = subject + '.\nOrder reference: ' + row.reference
       + '\nView order: https://www.brlps.co.in' + portal;
-    return fetch('https://api.sendgrid.com/v3/mail/send', {
+    return fetch('https://api.resend.com/emails', {
       method: 'POST', signal, redirect: 'error',
-      headers: { Authorization: 'Bearer ' + setting('SENDGRID_API_KEY'), 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: 'Bearer ' + setting('RESEND_API_KEY'),
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'bodhimart-order-alert/' + row.id,
+      },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: destination }] }],
-        from: { email: setting('BODHI_ORDER_EMAIL_FROM') },
+        to: [destination],
+        from: 'BodhiMart <ceo@brlps.co.in>',
         subject,
-        content: [{ type: 'text/plain', value: message }],
+        text: message,
       }),
     });
   }
@@ -88,7 +97,11 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return respond(405, { error: 'Method not allowed' });
   const token = setting('BODHI_ORDER_ALERT_WORKER_TOKEN');
   if (!token || request.headers.get('x-bodhi-worker-token') !== token) return respond(401, { error: 'Unauthorized' });
-  if (setting('BODHI_ORDER_ALERTS_ENABLED') !== 'true' || required.some((key) => !setting(key))) {
+  const requested = setting('BODHI_ORDER_ALERT_CHANNELS') || 'email';
+  const channels = (Object.keys(channelSettings) as Alert['channel'][])
+    .filter((channel) => requested.split(',').map((value) => value.trim()).includes(channel));
+  const required = commonSettings.concat(channels.flatMap((channel) => channelSettings[channel]));
+  if (setting('BODHI_ORDER_ALERTS_ENABLED') !== 'true' || !channels.length || required.some((key) => !setting(key))) {
     return respond(503, { error: 'Order alert delivery is disabled or incomplete' });
   }
 
@@ -96,7 +109,7 @@ Deno.serve(async (request) => {
   const api = setting('SUPABASE_URL').replace(/\/$/, '') + '/rest/v1/';
   const headers = { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' };
   const claim = await fetch(api + 'rpc/bodhimart_claim_order_alerts', {
-    method: 'POST', headers, body: '{}', signal: AbortSignal.timeout(8000),
+    method: 'POST', headers, body: JSON.stringify({ p_channels: channels }), signal: AbortSignal.timeout(8000),
   });
   if (!claim.ok) return respond(502, { error: 'Unable to claim alerts' });
   const jobs = await claim.json() as Alert[];
