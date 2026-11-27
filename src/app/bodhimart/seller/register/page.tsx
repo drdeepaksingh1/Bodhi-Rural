@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileVerification } from '../../../../components/onboarding/MobileVerification';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useBodhiMartLanguage } from '../../language';
@@ -366,6 +367,8 @@ export default function SellerRegistrationPage() {
         </div>
 
         {/* SUCCESS */}
+        {userId && <MobileVerification />}
+
         {success && (
           <div
             style={{

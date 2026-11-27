@@ -1,3 +1,4 @@
+import { MobileVerification } from '../../../components/onboarding/MobileVerification';
 import { DigiLockerVerification } from '../../../components/onboarding/DigiLockerVerification';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -57,6 +58,7 @@ export default async function DeliveryPartnerPage({ searchParams }: { searchPara
       <h1 className="mt-4 text-3xl font-bold text-green-950">
         <Copy en="Delivery partner" hi="डिलीवरी पार्टनर" />
       </h1>
+      <MobileVerification />
       <DigiLockerVerification role="delivery" />
       {handover === 'delivered' && <p role="status"><Copy en="Code verified. Order marked delivered." hi="कोड सत्यापित हुआ। ऑर्डर की डिलीवरी दर्ज हो गई।" /></p>}
       {handover === 'invalid' && <p role="alert"><Copy en="The code is incorrect, expired, or unavailable. Ask the buyer to open My Orders." hi="कोड गलत है, उसकी अवधि समाप्त हो गई है या वह उपलब्ध नहीं है। खरीदार से मेरे ऑर्डर खोलने को कहें।" /></p>}

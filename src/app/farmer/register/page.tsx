@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileVerification } from '../../../components/onboarding/MobileVerification';
 import { DigiLockerVerification } from '../../../components/onboarding/DigiLockerVerification';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { createClient } from '../../../lib/supabase/client';
@@ -435,6 +436,7 @@ export default function FarmerRegisterPage() {
           Register as a Bodhi Rural farmer.
         </p>
 
+        <MobileVerification />
         <DigiLockerVerification role="farmer" />
         {message && (
           <div

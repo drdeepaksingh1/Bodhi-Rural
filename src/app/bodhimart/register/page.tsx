@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileVerification } from '../../../components/onboarding/MobileVerification';
 import { Copy } from '../language';
 import { FormEvent, Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ function BuyerRegistrationForm() {
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState<'email' | 'code' | 'password'>('email');
+  const [step, setStep] = useState<'email' | 'code' | 'password' | 'mobile'>('email');
   const [otp, setOtp] = useState('');
   const [verifiedUserId, setVerifiedUserId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -86,6 +87,10 @@ function BuyerRegistrationForm() {
       }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+      if (process.env.NEXT_PUBLIC_BODHI_SMS_VERIFICATION === 'true') {
+        setStep('mobile');
+        return;
+      }
       window.location.assign(getSafeRedirectPath());
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to finish registration. Please try again.');
@@ -109,7 +114,10 @@ function BuyerRegistrationForm() {
           <p className="mt-3 text-sm leading-6 text-[#69766d]"><Copy en="Use your email to shop, save products and follow your orders." hi="खरीदारी, उत्पाद सहेजने और ऑर्डर की स्थिति देखने के लिए अपना ईमेल इस्तेमाल करें।" /></p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {step === 'mobile' && (
+          <MobileVerification onVerified={() => window.location.assign(getSafeRedirectPath())} />
+        )}
+        {step !== 'mobile' && <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
             <label htmlFor="buyer-email" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Email address" hi="ईमेल पता" /></label>
             <input id="buyer-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" autoComplete="email" required disabled={submitting || step !== 'email'} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
@@ -146,7 +154,7 @@ function BuyerRegistrationForm() {
               : step === 'code' ? <Copy en="Verify email" hi="ईमेल सत्यापित करें" />
               : <Copy en="Set password and continue" hi="पासवर्ड बनाएँ और आगे बढ़ें" />}
           </button>
-        </form>
+        </form>}
 
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account? <Link href={loginHref} className="font-semibold text-green-800 underline"><Copy en="Buyer login" hi="खरीदार लॉग इन" /></Link>

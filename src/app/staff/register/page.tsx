@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileVerification } from '../../../components/onboarding/MobileVerification';
 import { DigiLockerVerification } from '../../../components/onboarding/DigiLockerVerification';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -537,6 +538,7 @@ export default function StaffRegistrationPage() {
 
         </div>
 
+        <MobileVerification />
         <DigiLockerVerification role="staff" />
         {/* PROGRESS */}
 
