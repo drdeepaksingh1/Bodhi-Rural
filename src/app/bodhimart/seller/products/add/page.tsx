@@ -195,14 +195,20 @@ export default function AddProductPage() {
     setImagePreviewUrl(URL.createObjectURL(file));
   }
 
+  function updateGallerySelection(files: File[]) {
+    setGalleryFiles(files);
+    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    setGalleryInputKey((current) => current + 1);
+  }
+
   function handleGallerySelection(fileList: FileList | null) {
     setError('');
     const files = Array.from(fileList || []);
+    if (!files.length) return;
 
-    if (files.length > 4) {
-      setError('Choose up to four additional product photos.');
-      setGalleryFiles([]);
-      setGalleryPreviewUrls([]);
+    const nextFiles = [...galleryFiles, ...files];
+    if (nextFiles.length > 4) {
+      setError('Add up to four extra photos beside the cover. Remove a photo to free a slot.');
       setGalleryInputKey((current) => current + 1);
       return;
     }
@@ -218,14 +224,11 @@ export default function AddProductPage() {
           ? 'Choose JPG, PNG, or WebP product photos.'
           : 'Each product photo must be 5 MB or smaller.'
       );
-      setGalleryFiles([]);
-      setGalleryPreviewUrls([]);
       setGalleryInputKey((current) => current + 1);
       return;
     }
 
-    setGalleryFiles(files);
-    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    updateGallerySelection(nextFiles);
   }
 
   function validateForm() {
@@ -738,7 +741,7 @@ export default function AddProductPage() {
               </p>
             </Field>
 
-            <Field label="Add more product angles">
+            <Field label={`Additional angles (${galleryFiles.length}/4)`}>
               <input
                 key={galleryInputKey}
                 type="file"
@@ -750,22 +753,31 @@ export default function AddProductPage() {
                 style={inputStyle}
               />
               <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
-                Select up to four extra JPG, PNG, or WebP photos, 5 MB each.
+                Aim for 4–5 total photos: front cover, back label, two sides, and a close-up. JPG, PNG, or WebP, up to 5 MB each.
                 If no main photo is set, the first selected photo becomes the cover.
               </p>
               {galleryPreviewUrls.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   {galleryPreviewUrls.map((url, index) => (
-                    <Image
-                      key={url}
-                      src={url}
-                      alt={`Additional product photo ${index + 1}`}
-                      width={96}
-                      height={76}
-                      loader={marketplacePhotoLoader}
-                      unoptimized
-                      className="h-[76px] w-24 rounded-lg border border-gray-200 bg-white object-contain p-1"
-                    />
+                    <div key={url} className="relative">
+                      <Image
+                        src={url}
+                        alt={`Additional product photo ${index + 1}`}
+                        width={96}
+                        height={76}
+                        loader={marketplacePhotoLoader}
+                        unoptimized
+                        className="h-[76px] w-24 rounded-lg border border-gray-200 bg-white object-contain p-1"
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove new photo ${index + 1}`}
+                        onClick={() => updateGallerySelection(galleryFiles.filter((_, position) => position !== index))}
+                        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-700 font-bold text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
