@@ -322,14 +322,20 @@ export default function EditProductPage() {
     setImagePreviewUrl(URL.createObjectURL(file));
   }
 
+  function updateGallerySelection(files: File[]) {
+    setGalleryFiles(files);
+    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    setGalleryInputKey((current) => current + 1);
+  }
+
   function handleGallerySelection(fileList: FileList | null) {
     setError('');
     const files = Array.from(fileList || []);
+    if (!files.length) return;
 
-    if (galleryUrls.length + files.length > 4) {
-      setError('A product can have up to four additional photos. Remove an existing photo first.');
-      setGalleryFiles([]);
-      setGalleryPreviewUrls([]);
+    const nextFiles = [...galleryFiles, ...files];
+    if (galleryUrls.length + nextFiles.length > 4) {
+      setError('Add up to four extra photos beside the cover. Remove a photo to free a slot.');
       setGalleryInputKey((current) => current + 1);
       return;
     }
@@ -345,14 +351,11 @@ export default function EditProductPage() {
           ? 'Choose JPG, PNG, or WebP product photos.'
           : 'Each product photo must be 5 MB or smaller.'
       );
-      setGalleryFiles([]);
-      setGalleryPreviewUrls([]);
       setGalleryInputKey((current) => current + 1);
       return;
     }
 
-    setGalleryFiles(files);
-    setGalleryPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    updateGallerySelection(nextFiles);
   }
 
   function validateForm() {
@@ -977,7 +980,7 @@ export default function EditProductPage() {
               )}
             </Field>
 
-            <Field label={`More product photos (${galleryUrls.length}/4)`}>
+            <Field label={`Additional angles (${galleryUrls.length + galleryFiles.length}/4)`}>
               <input
                 key={galleryInputKey}
                 type="file"
@@ -989,7 +992,7 @@ export default function EditProductPage() {
                 style={inputStyle}
               />
               <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: 12 }}>
-                Add up to four extra JPG, PNG, or WebP photos. Each can be up to 5 MB.
+                Aim for 4–5 total photos: front cover, back label, two sides, and a close-up. JPG, PNG, or WebP, up to 5 MB each.
               </p>
               {(galleryUrls.length > 0 || galleryPreviewUrls.length > 0) && (
                 <div className="mt-3 flex flex-wrap gap-3">
@@ -1019,16 +1022,25 @@ export default function EditProductPage() {
                     </div>
                   ))}
                   {galleryPreviewUrls.map((url, index) => (
-                    <Image
-                      key={url}
-                      src={url}
-                      alt={`New additional photo ${index + 1}`}
-                      width={88}
-                      height={72}
-                      loader={marketplacePhotoLoader}
-                      unoptimized
-                      className="h-[72px] w-[88px] rounded-lg border border-dashed border-green-400 bg-white object-contain p-1"
-                    />
+                    <div key={url} className="relative">
+                      <Image
+                        src={url}
+                        alt={`New additional photo ${index + 1}`}
+                        width={88}
+                        height={72}
+                        loader={marketplacePhotoLoader}
+                        unoptimized
+                        className="h-[72px] w-[88px] rounded-lg border border-dashed border-green-400 bg-white object-contain p-1"
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove new photo ${index + 1}`}
+                        onClick={() => updateGallerySelection(galleryFiles.filter((_, position) => position !== index))}
+                        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-700 font-bold text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
