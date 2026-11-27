@@ -391,14 +391,6 @@ export default function BodhiMartProductsPage() {
     return Math.max(0, Number(item.available_quantity || 0));
   }
 
-  function getSavings(product: Product) {
-    return Math.max(
-      0,
-      Number(product.mrp) -
-        Number(product.selling_price)
-    );
-  }
-
   function getSavingsPercent(product: Product) {
     if (!product.mrp || product.mrp <= 0) return 0;
 
@@ -779,20 +771,18 @@ export default function BodhiMartProductsPage() {
             >
               <Copy en="Saved" hi="सहेजे गए" />
             </Link>
-            <Link
-              href="/bodhimart/addresses"
-              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-green-700 px-1 text-center text-xs font-semibold text-green-800 hover:bg-green-50"
-            >
-              <Copy en="Delivery address" hi="डिलीवरी के पते" />
-            </Link>
             <a
               href="/bodhimart/cart"
               className="flex min-h-11 min-w-0 items-center justify-center rounded-lg bg-green-700 px-1 text-center text-xs font-semibold text-white hover:bg-green-800"
             >
               <Copy en="Cart" hi="कार्ट" />
             </a>
-
-
+            <Link
+              href="/bodhimart/addresses"
+              className="flex min-h-11 min-w-0 items-center justify-center rounded-lg border border-green-700 px-1 text-center text-xs font-semibold text-green-800 hover:bg-green-50"
+            >
+              <Copy en="Delivery address" hi="डिलीवरी के पते" />
+            </Link>
           </div>
         </div>
 
