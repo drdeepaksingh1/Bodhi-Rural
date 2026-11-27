@@ -46,18 +46,18 @@ export default function ShopProducts() {
       {products === null ? <p role="status"><Copy en="Loading products…" hi="उत्पाद लोड हो रहे हैं…" /></p>
         : failed ? <p role="status"><Copy en="Products could not load. Try the full catalogue." hi="उत्पाद लोड नहीं हुए। पूरा कैटलॉग खोलें।" /></p>
         : products.length === 0 ? <p><Copy en="New products will appear here when available." hi="नए उत्पाद उपलब्ध होने पर यहाँ दिखेंगे।" /></p>
-        : <ul className="flex snap-x gap-3 overflow-x-auto pb-3">
+        : <ul className="m-0 list-none [display:grid] grid-cols-2 gap-2 p-0 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((item) => (
-            <li key={item.product_id} className="w-36 shrink-0 snap-start sm:w-44">
+            <li key={item.product_id} className="min-w-0">
               <Link href={'/bodhimart/products/' + encodeURIComponent(item.product_id) + '?from=%2Fbodhimart'}
-                className="block h-full overflow-hidden rounded-2xl border border-[#e2e8dd] bg-white">
-                <div className="relative grid aspect-square place-items-center bg-[#edf2e8]">
+                className="block h-full overflow-hidden rounded-xl border border-[#e2e8dd] bg-white shadow-sm">
+                <div className="relative flex h-24 items-center justify-center sm:h-44 bg-[#edf2e8]">
                   <Package size={28} aria-hidden="true" />
                   {item.image_url?.startsWith('https://') && <Image src={item.image_url} loader={photoLoader} unoptimized
-                    alt="" fill sizes="176px" className="bg-white object-contain p-2"
+                    alt="" fill sizes="(max-width: 1024px) 50vw, 25vw" className="bg-white object-contain p-2"
                     onError={(event) => { event.currentTarget.hidden = true; }} />}
                 </div>
-                <div className="space-y-1 p-3">
+                <div className="space-y-1 p-2 sm:p-3">
                   <p className="line-clamp-2 text-sm font-semibold">{item.name}</p>
                   <p className="text-sm font-bold">{money.format(item.selling_price)}{item.unit ? ' / ' + item.unit : ''}</p>
                   <ProductCardSummary product={item} />
