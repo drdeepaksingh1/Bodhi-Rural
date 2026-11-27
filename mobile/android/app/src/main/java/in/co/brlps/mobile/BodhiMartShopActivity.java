@@ -188,13 +188,19 @@ public final class BodhiMartShopActivity extends Activity {
         list.setItemsCanFocus(true);
         list.addHeaderView(storefront, null, false);
         adapter = new BaseAdapter() {
-            @Override public int getCount() { return visible.size(); }
-            @Override public JSONObject getItem(int position) { return visible.get(position); }
+            @Override public int getCount() { return (visible.size() + 1) / 2; }
+            @Override public JSONObject getItem(int position) { return visible.get(position * 2); }
             @Override public long getItemId(int position) { return position; }
             @Override public View getView(int position, View convertView, ViewGroup parent) {
-                ProductCard card = convertView == null ? new ProductCard() : (ProductCard) convertView;
-                card.bind(getItem(position));
-                return card;
+                LinearLayout row = convertView == null ? productRow() : (LinearLayout) convertView;
+                for (int column = 0; column < 2; column++) {
+                    ProductCard card = (ProductCard) row.getChildAt(column);
+                    int index = position * 2 + column;
+                    boolean populated = index < visible.size();
+                    card.setVisibility(populated ? View.VISIBLE : View.INVISIBLE);
+                    if (populated) card.bind(visible.get(index));
+                }
+                return row;
             }
         };
         list.setAdapter(adapter);
@@ -577,6 +583,15 @@ public final class BodhiMartShopActivity extends Activity {
         return view;
     }
 
+    private LinearLayout productRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setPadding(dp(8), 0, dp(8), 0);
+        for (int i = 0; i < 2; i++) {
+            row.addView(new ProductCard(), new LinearLayout.LayoutParams(0, -2, 1));
+        }
+        return row;
+    }
+
     private final class ProductCard extends LinearLayout {
         private final ImageView photo;
         private final TextView category, name, metadata, summary, amount, savings, availability, code;
@@ -585,18 +600,18 @@ public final class BodhiMartShopActivity extends Activity {
         ProductCard() {
             super(BodhiMartShopActivity.this);
             setOrientation(VERTICAL);
-            setPadding(dp(12), 0, dp(12), 0);
+            setPadding(dp(4), 0, dp(4), 0);
             LinearLayout card = column();
-            card.setPadding(dp(12), dp(8), dp(12), dp(8));
+            card.setPadding(dp(8), dp(8), dp(8), dp(8));
             card.setBackground(surface(Color.WHITE, 16));
             addView(card, new LinearLayout.LayoutParams(-1, -2));
 
             photo = new ImageView(BodhiMartShopActivity.this);
             photo.setScaleType(ImageView.ScaleType.FIT_CENTER);
             photo.setBackground(surface(CREAM, 12));
-            card.addView(photo, new LinearLayout.LayoutParams(-1, dp(132)));
+            card.addView(photo, new LinearLayout.LayoutParams(-1, dp(96)));
             category = line(card, 13, true);
-            name = line(card, 21, true);
+            name = line(card, 16, true);
             metadata = line(card, 12, false);
             metadata.setSingleLine(true);
             metadata.setEllipsize(android.text.TextUtils.TruncateAt.END);
