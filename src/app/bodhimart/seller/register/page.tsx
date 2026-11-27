@@ -221,6 +221,18 @@ export default function SellerRegistrationPage() {
         );
       }
 
+      const pan = form.pan_number.trim().toUpperCase();
+      const gstin = form.gstin.trim().toUpperCase();
+      if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+        throw new Error(t('Enter a valid PAN format.', 'पैन सही प्रारूप में दर्ज करें।'));
+      }
+      if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]{3}$/.test(gstin)) {
+        throw new Error(t('Enter a valid GSTIN format.', 'जीएसटीआईएन सही प्रारूप में दर्ज करें।'));
+      }
+      if (pan && gstin && gstin.slice(2, 12) !== pan) {
+        throw new Error(t('GSTIN must match the PAN of the selling business.', 'जीएसटीआईएन विक्रेता व्यवसाय के पैन से मेल खाना चाहिए।'));
+      }
+
       const { data: userData, error: authError } =
         await supabase.auth.getUser();
 
@@ -242,10 +254,8 @@ export default function SellerRegistrationPage() {
           mobile: form.mobile.trim(),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
-          pan_number:
-            form.pan_number.trim() || null,
-          gstin:
-            form.gstin.trim() || null,
+          pan_number: pan || null,
+          gstin: gstin || null,
           upi_id:
             form.upi_id.trim() || null,
           business_type:
@@ -555,7 +565,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label={t("PAN Number", "पैन नंबर")}
+              label={t("PAN of the selling business (if applicable)", "विक्रेता व्यवसाय का पैन (यदि लागू हो)")}
               value={form.pan_number}
               onChange={(value) =>
                 updateField(
@@ -566,7 +576,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="GSTIN"
+              label={t("GSTIN (if registered)", "जीएसटीआईएन (यदि पंजीकृत हैं)")}
               value={form.gstin}
               onChange={(value) =>
                 updateField('gstin', value)
