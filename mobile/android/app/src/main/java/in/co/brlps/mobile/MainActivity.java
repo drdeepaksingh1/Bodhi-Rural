@@ -197,7 +197,7 @@ public final class MainActivity extends Activity {
         switch (screen) {
             case HOME:
                 addButton(content, text("BodhiFarm\nFarm operations", "BodhiFarm\nफार्म संचालन"), true, () -> openModule(Screen.FARM));
-                addButton(content, text("BodhiMart\nShop, sell or deliver", "BodhiMart\nखरीदें, बेचें या डिलीवरी करें"), true, () -> openModule(Screen.MART));
+                addButton(content, text("BodhiMart\nShop, sell or deliver", "BodhiMart\nखरीदें, बेचें या डिलीवरी करें"), true, this::openNativeShop);
                 break;
             case FARM:
                 addButton(content, text("Skills & Training", "कौशल और प्रशिक्षण"), true,
@@ -208,8 +208,6 @@ public final class MainActivity extends Activity {
                 addButton(content, text("Management", "प्रबंधन"), true, () -> show(Screen.MANAGEMENT));
                 break;
             case MART:
-                addButton(content, text("My account", "मेरा खाता"), false,
-                    () -> openPage("/bodhimart/account"));
                 addButton(content, text("Shop BodhiMart", "BodhiMart पर खरीदें"), true,
                     this::openNativeShop);
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
