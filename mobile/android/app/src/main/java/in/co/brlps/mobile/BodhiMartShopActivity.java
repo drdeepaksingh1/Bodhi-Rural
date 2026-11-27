@@ -179,7 +179,7 @@ public final class BodhiMartShopActivity extends Activity {
     private List<JSONObject> children(String parent) {
         List<JSONObject> result = new ArrayList<>();
         for (JSONObject category : categories.values()) {
-            if (parent.equals(category.optString("parent_id", ""))) result.add(category);
+            if (parent.equals(field(category, "parent_id"))) result.add(category);
         }
         result.sort((a, b) -> a.optString("name").compareToIgnoreCase(b.optString("name")));
         return result;
@@ -227,7 +227,7 @@ public final class BodhiMartShopActivity extends Activity {
         for (int depth = 0; depth < 12 && !id.isEmpty(); depth++) {
             if (selected.equals(id)) return true;
             JSONObject category = categories.get(id);
-            id = category == null ? "" : category.optString("parent_id", "");
+            id = category == null ? "" : field(category, "parent_id");
         }
         return false;
     }
@@ -247,14 +247,18 @@ public final class BodhiMartShopActivity extends Activity {
             : visible.size() + text(" products", " उत्पाद")));
     }
 
+    private static String field(JSONObject item, String key) {
+        return item.isNull(key) ? "" : item.optString(key, "");
+    }
+
     private String price(JSONObject item) {
-        String unit = item.optString("unit", "");
+        String unit = field(item, "unit");
         return money.format(item.optDouble("selling_price", 0)) + (unit.isEmpty() ? "" : " / " + unit);
     }
 
     private void showProduct(JSONObject item) {
         String code = android.net.Uri.encode(item.optString("product_id"));
-        String description = item.optString("description", "");
+        String description = field(item, "description");
         new AlertDialog.Builder(this).setTitle(item.optString("name"))
             .setMessage(price(item) + (description.isEmpty() ? "" : "\n\n" + description))
             .setNegativeButton(android.R.string.cancel, null)
