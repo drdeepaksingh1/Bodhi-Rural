@@ -127,10 +127,16 @@ public final class BodhiMartShopActivity extends Activity {
         categoryGrid.setPadding(dp(12), 0, dp(12), dp(4));
         catalog.addView(categoryGrid);
 
-        TextView productsHeading = label(text("Browse products", "उत्पाद देखें"), 19);
+        Button productsHeading = button(text("Browse products  ›", "उत्पाद देखें  ›"), this::openCatalogue);
+        productsHeading.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        productsHeading.setBackground(surface(CREAM, 0));
+        productsHeading.setStateListAnimator(null);
+        productsHeading.setTextColor(GREEN);
+        productsHeading.setTextSize(19);
+        productsHeading.setMinHeight(dp(48));
         productsHeading.setTypeface(null, Typeface.BOLD);
         productsHeading.setAccessibilityHeading(true);
-        productsHeading.setPadding(dp(16), dp(8), dp(16), 0);
+        productsHeading.setPadding(dp(16), 0, dp(16), 0);
         catalog.addView(productsHeading);
         status = label("", 15);
         status.setPadding(dp(16), dp(6), dp(16), dp(6));
@@ -198,7 +204,7 @@ public final class BodhiMartShopActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONArray departments = request("marketplace_categories?select=id,name,slug,parent_id&is_active=eq.true&order=name.asc");
-                JSONArray products = request("marketplace_public_products?select=product_id,name,unit,selling_price,category_id,description&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
+                JSONArray products = request("marketplace_public_products?select=product_id,name,unit,selling_price,category_id&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     categories.clear();
@@ -370,14 +376,19 @@ public final class BodhiMartShopActivity extends Activity {
         return money.format(item.optDouble("selling_price", 0)) + (unit.isEmpty() ? "" : " / " + unit);
     }
 
+    private void openCatalogue() {
+        android.net.Uri.Builder route = new android.net.Uri.Builder().path("/bodhimart/products");
+        JSONObject category = categories.get(selected);
+        if (category != null) route.appendQueryParameter("category", selected);
+        String query = search.getText().toString().trim();
+        if (!query.isEmpty()) route.appendQueryParameter("search", query);
+        openPage(route.build().toString());
+    }
+
     private void showProduct(JSONObject item) {
-        String code = android.net.Uri.encode(item.optString("product_id"));
-        String description = field(item, "description");
-        new AlertDialog.Builder(this).setTitle(item.optString("name"))
-            .setMessage(price(item) + (description.isEmpty() ? "" : "\n\n" + description))
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(text("View buying options", "खरीदने के विकल्प"), (dialog, which) -> openPage("/bodhimart/products/" + code))
-            .show();
+        String code = field(item, "product_id");
+        if (code.isEmpty()) return;
+        openPage("/bodhimart/products/" + android.net.Uri.encode(code));
     }
 
     private void showAccount() {
