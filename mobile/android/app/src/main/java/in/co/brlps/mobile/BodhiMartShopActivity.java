@@ -46,6 +46,11 @@ public final class BodhiMartShopActivity extends Activity {
     private static final int GREEN = 0xff124531;
     private static final int CREAM = 0xfffaf7ee;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final android.util.LruCache<String, Bitmap> productPhotos =
+        new android.util.LruCache<String, Bitmap>(12 * 1024 * 1024) {
+            @Override protected int sizeOf(String key, Bitmap value) { return value.getByteCount(); }
+        };
+    private final Map<String, Double> stock = new HashMap<>();
     private final List<JSONObject> listings = new ArrayList<>();
     private final List<JSONObject> visible = new ArrayList<>();
     private final Map<String, JSONObject> categories = new HashMap<>();
@@ -163,13 +168,9 @@ public final class BodhiMartShopActivity extends Activity {
             @Override public JSONObject getItem(int position) { return visible.get(position); }
             @Override public long getItemId(int position) { return position; }
             @Override public View getView(int position, View convertView, ViewGroup parent) {
-                LinearLayout row = convertView == null ? productCard() : (LinearLayout) convertView;
-                JSONObject item = getItem(position);
-                LinearLayout card = (LinearLayout) row.getChildAt(0);
-                ((TextView) card.getChildAt(0)).setText(item.optString("name"));
-                ((TextView) card.getChildAt(1)).setText(price(item));
-                row.setOnClickListener(view -> showProduct(item));
-                return row;
+                ProductCard card = convertView == null ? new ProductCard() : (ProductCard) convertView;
+                card.bind(getItem(position));
+                return card;
             }
         };
         list.setAdapter(adapter);
@@ -184,7 +185,7 @@ public final class BodhiMartShopActivity extends Activity {
             list.setSelection(0);
         });
         addTab(nav, text("Categories", "श्रेणियाँ"), false, this::showCategories);
-        addTab(nav, text("Account", "खाता"), false, this::showAccount);
+        addTab(nav, text("Account", "खाता"), false, () -> openPage("/bodhimart/account"));
         addTab(nav, text("Cart", "टोकरी"), false, () -> openPage("/bodhimart/cart"));
         nav.setBackgroundColor(Color.WHITE);
         nav.setPadding(dp(4), dp(4), dp(4), dp(4));
@@ -205,11 +206,14 @@ public final class BodhiMartShopActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONArray departments = request("marketplace_categories?select=id,name,slug,parent_id&is_active=eq.true&order=name.asc");
-                JSONArray products = request("marketplace_public_products?select=product_id,name,unit,selling_price,category_id,description,brand,image_url,minimum_order_quantity&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
+                JSONArray products = request("marketplace_public_products?select=id,product_id,name,unit,selling_price,mrp,category_id,description,brand,image_url,minimum_order_quantity,delivery_available&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
+                Map<String, Double> available = readStock(products);
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     categories.clear();
                     listings.clear();
+                    stock.clear();
+                    stock.putAll(available);
                     for (int i = 0; i < departments.length(); i++) {
                         JSONObject item = departments.optJSONObject(i);
                         if (item != null) categories.put(item.optString("id"), item);
@@ -498,25 +502,25 @@ public final class BodhiMartShopActivity extends Activity {
         }
     }
 
-    private void showAccount() {
-        String[] options = {
-            text("My buyer account", "मेरा खरीदार खाता"),
-            text("Seller sign-in", "विक्रेता लॉग इन"),
-            text("Register as a seller", "विक्रेता के रूप में आवेदन"),
-            text("Delivery partner sign-in", "डिलीवरी पार्टनर लॉग इन"),
-            text("Apply as a delivery partner", "डिलीवरी पार्टनर के लिए आवेदन"),
-            text("Privacy and account deletion", "गोपनीयता और खाता हटाना")
-        };
-        String[] paths = {
-            "/bodhimart/account",
-            "/login?account=seller&redirect=%2Fbodhimart%2Fseller%2Fdashboard",
-            "/bodhimart/seller/register",
-            "/login?redirect=%2Fbodhimart%2Fdelivery",
-            "/bodhimart/delivery/register",
-            "/privacy-policy/bodhimart"
-        };
-        new AlertDialog.Builder(this).setTitle(text("Account", "खाता"))
-            .setItems(options, (dialog, index) -> openPage(paths[index])).show();
+    private Map<String, Double> readStock(JSONArray products) {
+        Map<String, Double> available = new HashMap<>();
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < products.length(); i++) {
+            JSONObject item = products.optJSONObject(i);
+            if (item != null && !field(item, "id").isEmpty()) ids.add(item.optString("id"));
+        }
+        if (ids.isEmpty()) return available;
+        try {
+            JSONArray rows = request("marketplace_public_inventory?select=product_id,available_quantity"
+                + "&product_id=in.(" + android.net.Uri.encode(String.join(",", ids)) + ")");
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i);
+                if (row != null) available.put(row.optString("product_id"), row.optDouble("available_quantity", 0));
+            }
+        } catch (Exception ignored) {
+            // Keep the product cards available when stock cannot be checked.
+        }
+        return available;
     }
 
     private GradientDrawable surface(int color, int radius) {
@@ -546,19 +550,101 @@ public final class BodhiMartShopActivity extends Activity {
         return view;
     }
 
-    private LinearLayout productCard() {
-        LinearLayout row = column();
-        row.setPadding(dp(12), 0, dp(12), 0);
-        LinearLayout card = column();
-        card.setPadding(dp(16), dp(13), dp(16), dp(13));
-        card.setBackground(surface(Color.WHITE, 16));
-        row.addView(card, new LinearLayout.LayoutParams(-1, -2));
-        TextView name = label("", 16);
-        name.setTypeface(null, Typeface.BOLD);
-        card.addView(name);
-        TextView amount = label("", 15);
-        card.addView(amount);
-        return row;
+    private final class ProductCard extends LinearLayout {
+        private final ImageView photo;
+        private final TextView category, name, metadata, amount, savings, availability, code;
+        private final Button details;
+
+        ProductCard() {
+            super(BodhiMartShopActivity.this);
+            setOrientation(VERTICAL);
+            setPadding(dp(12), 0, dp(12), 0);
+            LinearLayout card = column();
+            card.setPadding(dp(16), dp(14), dp(16), dp(14));
+            card.setBackground(surface(Color.WHITE, 16));
+            addView(card, new LinearLayout.LayoutParams(-1, -2));
+
+            photo = new ImageView(BodhiMartShopActivity.this);
+            photo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            photo.setBackground(surface(CREAM, 12));
+            card.addView(photo, new LinearLayout.LayoutParams(-1, dp(180)));
+            category = line(card, 13, true);
+            name = line(card, 21, true);
+            metadata = line(card, 14, false);
+            amount = line(card, 21, true);
+            savings = line(card, 14, true);
+            availability = line(card, 14, true);
+            code = line(card, 12, false);
+            details = button(text("View product details", "उत्पाद का विवरण देखें"), () -> {});
+            details.setTextColor(Color.WHITE);
+            details.setBackground(surface(GREEN, 12));
+            details.setStateListAnimator(null);
+            LayoutParams action = new LayoutParams(-1, dp(48));
+            action.topMargin = dp(10);
+            card.addView(details, action);
+        }
+
+        private TextView line(LinearLayout card, int size, boolean bold) {
+            TextView view = label("", size);
+            if (bold) view.setTypeface(null, Typeface.BOLD);
+            view.setPadding(0, dp(6), 0, 0);
+            card.addView(view);
+            return view;
+        }
+
+        void bind(JSONObject item) {
+            String title = item.optString("name");
+            name.setText(title);
+            JSONObject department = categories.get(field(item, "category_id"));
+            String delivery = item.optBoolean("delivery_available") ? text("Delivery", "डिलीवरी") : "";
+            String departmentName = department == null ? "" : department.optString("name");
+            category.setText(departmentName.isEmpty() ? delivery
+                : delivery.isEmpty() ? departmentName : departmentName + "  ·  " + delivery);
+            String brand = field(item, "brand");
+            String unit = field(item, "unit");
+            metadata.setText((brand.isEmpty() ? "" : text("Brand: ", "ब्रांड: ") + brand + "\n")
+                + (unit.isEmpty() ? "" : text("Unit: ", "इकाई: ") + unit));
+            amount.setText(price(item));
+            double sale = item.optDouble("selling_price", 0);
+            double mrp = item.optDouble("mrp", 0);
+            boolean discounted = sale > 0 && mrp > sale;
+            savings.setVisibility(discounted ? View.VISIBLE : View.GONE);
+            if (discounted) savings.setText(text("MRP ", "एमआरपी ") + money.format(mrp)
+                + "  ·  " + text("Save ", "बचत ") + money.format(mrp - sale)
+                + " (" + Math.round(100 * (mrp - sale) / mrp) + "%)");
+            Double quantity = stock.get(field(item, "id"));
+            availability.setText(quantity == null ? text("Check availability", "उपलब्धता जाँचें")
+                : quantity > 0 ? text("In stock", "स्टॉक में") : text("Out of stock", "स्टॉक में नहीं"));
+            code.setText(text("Product ID: ", "उत्पाद आईडी: ") + field(item, "product_id"));
+            details.setOnClickListener(view -> showProduct(item));
+            setOnClickListener(view -> showProduct(item));
+            bindPhoto(photo, field(item, "image_url"), title);
+        }
+    }
+
+    private void bindPhoto(ImageView view, String url, String name) {
+        if (url.equals(view.getTag())) return;
+        view.setTag(url);
+        view.setContentDescription(name);
+        view.setImageDrawable(null);
+        Bitmap cached = productPhotos.get(url);
+        view.setVisibility(cached == null ? View.GONE : View.VISIBLE);
+        if (cached != null) {
+            view.setImageBitmap(cached);
+        } else if (!url.isEmpty()) {
+            io.execute(() -> {
+                Bitmap bitmap = productPhotos.get(url);
+                if (bitmap == null) bitmap = loadProductPhoto(url);
+                if (bitmap == null) return;
+                productPhotos.put(url, bitmap);
+                Bitmap result = bitmap;
+                runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing() || !url.equals(view.getTag())) return;
+                    view.setImageBitmap(result);
+                    view.setVisibility(View.VISIBLE);
+                });
+            });
+        }
     }
 
     private void addTab(LinearLayout nav, String value, boolean active, Runnable action) {
