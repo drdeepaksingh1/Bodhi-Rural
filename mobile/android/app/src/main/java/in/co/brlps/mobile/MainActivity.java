@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
     private static final int ORANGE = Color.rgb(245, 178, 38);
     private static final String WEBSITE = "https://www.brlps.co.in";
 
-    private enum Screen { HOME, FARM, MART, FARMER, FIELD_TEAM, MANAGEMENT, BUYER, SELLER, DELIVERY, FARM_TRAINING }
+    private enum Screen { HOME, FARM, MART, FARMER, FIELD_TEAM, MANAGEMENT, BUYER, SELLER, DELIVERY }
     private Screen screen = Screen.HOME;
     private boolean hindi;
     private OnBackInvokedCallback backCallback;
@@ -201,7 +201,7 @@ public final class MainActivity extends Activity {
                 break;
             case FARM:
                 addButton(content, text("Skills & Training", "कौशल और प्रशिक्षण"), true,
-                    () -> show(Screen.FARM_TRAINING));
+                    () -> openPage("/skills-training"));
                 addHeading(content, text("Choose your sign-in", "लॉग इन का प्रकार चुनें"), 21);
                 addButton(content, text("Farmer", "किसान"), true, () -> show(Screen.FARMER));
                 addButton(content, text("Field Team", "फील्ड टीम"), true, () -> show(Screen.FIELD_TEAM));
@@ -214,20 +214,6 @@ public final class MainActivity extends Activity {
                 addButton(content, text("Buyer", "खरीदार"), false, () -> show(Screen.BUYER));
                 addButton(content, text("Seller", "विक्रेता"), false, () -> show(Screen.SELLER));
                 addButton(content, text("Delivery Partner", "डिलीवरी पार्टनर"), false, () -> show(Screen.DELIVERY));
-                break;
-            case FARM_TRAINING:
-                addHeading(content, text("Skills & Training", "कौशल और प्रशिक्षण"), 24);
-                addTrainingCard(content, text("Daily farm records", "दैनिक फार्म रिकॉर्ड"),
-                    text("Record the date, farm or batch, work completed, and anything the team needs to follow up.",
-                         "तारीख, फार्म या बैच, पूरा किया गया काम और अगली कार्रवाई दर्ज करें।"));
-                addTrainingCard(content, text("Stock checks", "स्टॉक की जाँच"),
-                    text("Count the physical stock, record its unit, and note any difference from the register before updating the system.",
-                         "वास्तविक स्टॉक गिनें, उसकी इकाई लिखें और सिस्टम अपडेट करने से पहले रजिस्टर से अंतर दर्ज करें।"));
-                addTrainingCard(content, text("Prepare for a field visit", "फील्ड दौरे की तैयारी"),
-                    text("List the places to visit and the questions to ask. After the visit, record the next action and who will handle it.",
-                         "दौरे के स्थान और सवाल लिखें। दौरे के बाद अगला काम और उसकी ज़िम्मेदारी दर्ज करें।"));
-                addButton(content, text("Open online training", "ऑनलाइन प्रशिक्षण खोलें"), false,
-                    () -> openPage("/skills-training"));
                 break;
             case FARMER:
                 addHeading(content, text("Farmer", "किसान"), 24);
@@ -266,9 +252,9 @@ public final class MainActivity extends Activity {
                     () -> openPage("/bodhimart/delivery/register"));
                 break;
         }
-        if (screen == Screen.FARM || screen == Screen.MART) {
+        if (screen == Screen.MART) {
             addButton(content, text("Account & Privacy", "खाता और गोपनीयता"), false,
-                () -> openPage(screen == Screen.FARM ? "/privacy-policy/bodhifarm" : "/privacy-policy/bodhimart"));
+                () -> openPage("/privacy-policy/bodhimart"));
         }
     }
 
@@ -293,7 +279,6 @@ public final class MainActivity extends Activity {
 
     private Screen parentScreen() {
         switch (screen) {
-            case FARM_TRAINING:
             case FARMER:
             case FIELD_TEAM:
             case MANAGEMENT:
@@ -342,16 +327,6 @@ public final class MainActivity extends Activity {
         startActivity(new Intent(this, BodhiWorkspaceActivity.class)
             .putExtra(BodhiWorkspaceActivity.PAGE_URL, localizedDestination.toString())
             .putExtra(BodhiWorkspaceActivity.HINDI, hindi));
-    }
-
-    private void addTrainingCard(LinearLayout group, String title, String details) {
-        addHeading(group, title, 18);
-        TextView description = new TextView(this);
-        description.setText(details);
-        description.setTextSize(16);
-        description.setTextColor(GREEN);
-        description.setPadding(dp(8), 0, dp(8), dp(10));
-        group.addView(description);
     }
 
     private void addHeading(LinearLayout group, String label, int size) {

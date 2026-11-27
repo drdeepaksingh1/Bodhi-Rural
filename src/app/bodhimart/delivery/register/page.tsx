@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ApplicationTerms, applicationTermsVersion } from '../../ApplicationTerms';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../../../lib/supabase/server';
 import { Copy } from '../../language';
@@ -11,13 +12,14 @@ async function submit(form: FormData) {
   const client = await createClient();
   const { data: { user } } = await client.auth.getUser();
   if (!user) redirect(login);
+  if (form.get('application_terms') !== applicationTermsVersion) redirect(route + '?failed=1');
   const full_name = String(form.get('name') ?? '').trim();
   const phone = String(form.get('phone') ?? '').trim();
   const service_area = String(form.get('area') ?? '').trim();
   if (full_name.length < 2 || full_name.length > 100 || !/^[0-9]{10}$/.test(phone)
     || service_area.length < 2 || service_area.length > 160) redirect(route + '?failed=1');
   const { error } = await client.from('bodhimart_delivery_partner_applications')
-    .insert({ user_id: user.id, full_name, phone, service_area });
+    .insert({ user_id: user.id, full_name, phone, service_area, application_terms_version: applicationTermsVersion });
   redirect(route + (error && error.code !== '23505' ? '?failed=1' : ''));
 }
 
@@ -41,6 +43,7 @@ export default async function DeliveryRegistration({ searchParams }: { searchPar
             <label className="grid gap-1"><Copy en="Full name" hi="पूरा नाम" /><input name="name" autoComplete="name" minLength={2} maxLength={100} required className="rounded-lg border p-3" /></label>
             <label className="grid gap-1"><Copy en="Mobile number" hi="मोबाइल नंबर" /><input name="phone" autoComplete="tel-national" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} required className="rounded-lg border p-3" /></label>
             <label className="grid gap-1"><Copy en="Village, block or town" hi="गाँव, प्रखंड या शहर" /><input name="area" minLength={2} maxLength={160} required className="rounded-lg border p-3" /></label>
+            <ApplicationTerms role="delivery" />
             <button className="min-h-11 rounded-lg bg-green-800 px-4 font-semibold text-white"><Copy en="Submit application" hi="आवेदन जमा करें" /></button>
           </form>
         )}

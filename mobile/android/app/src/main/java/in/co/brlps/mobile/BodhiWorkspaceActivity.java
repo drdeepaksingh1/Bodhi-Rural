@@ -11,6 +11,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
+import java.util.ArrayList;
+import java.util.List;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -30,6 +33,8 @@ public final class BodhiWorkspaceActivity extends Activity {
     static final String HINDI = "hindi";
     private static final int PICK_FILE = 401;
     private static final int SHOP_LOCATION = 402;
+    private static final int TRAINING_MEDIA = 403;
+    private PermissionRequest pendingMedia;
     private WebView workspace;
     private ValueCallback<Uri[]> fileSelection;
     private GeolocationPermissions.Callback locationCallback;
@@ -169,8 +174,32 @@ public final class BodhiWorkspaceActivity extends Activity {
             }
 
             @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                if (pendingMedia != null || !canUseTrainingMedia(request)) {
+                    request.deny();
+                    return;
+                }
+                List<String> missing = new ArrayList<>();
+                for (String resource : request.getResources()) {
+                    String permission = mediaPermission(resource);
+                    if (permission != null && checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED
+                        && !missing.contains(permission)) missing.add(permission);
+                }
+                if (missing.isEmpty()) finishMediaRequest(request);
+                else {
+                    pendingMedia = request;
+                    requestPermissions(missing.toArray(new String[0]), TRAINING_MEDIA);
+                }
+            }
+
+            @Override
+            public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (pendingMedia == request) pendingMedia = null;
+            }
+
+            @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
-                if (fileSelection != null) return false;
+                if (fileSelection != null || !isBodhiSite(Uri.parse(view.getUrl() == null ? "" : view.getUrl()))) return false;
                 fileSelection = callback;
                 try {
                     startActivityForResult(params.createIntent(), PICK_FILE);
@@ -209,6 +238,36 @@ public final class BodhiWorkspaceActivity extends Activity {
             && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443);
     }
 
+    private boolean canUseTrainingMedia(PermissionRequest request) {
+        Uri current = Uri.parse(workspace.getUrl() == null ? "" : workspace.getUrl());
+        String path = current.getPath();
+        return isBodhiSite(current) && isBodhiSite(request.getOrigin())
+            && current.getHost().equals(request.getOrigin().getHost())
+            && ("/skills-training".equals(path) || "/skills-training/".equals(path));
+    }
+
+    private static String mediaPermission(String resource) {
+        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) return Manifest.permission.CAMERA;
+        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) return Manifest.permission.RECORD_AUDIO;
+        return null;
+    }
+
+    private void finishMediaRequest(PermissionRequest request) {
+        if (!canUseTrainingMedia(request)) {
+            request.deny();
+            return;
+        }
+        List<String> allowed = new ArrayList<>();
+        for (String resource : request.getResources()) {
+            String permission = mediaPermission(resource);
+            if (permission != null && checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+                allowed.add(resource);
+            }
+        }
+        if (allowed.isEmpty()) request.deny();
+        else request.grant(allowed.toArray(new String[0]));
+    }
+
     private boolean hasLocationPermission() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
@@ -232,6 +291,11 @@ public final class BodhiWorkspaceActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(code, permissions, results);
+        if (code == TRAINING_MEDIA && pendingMedia != null) {
+            PermissionRequest request = pendingMedia;
+            pendingMedia = null;
+            finishMediaRequest(request);
+        }
         if (code == SHOP_LOCATION && locationCallback != null) {
             Uri current = Uri.parse(workspace.getUrl() == null ? "" : workspace.getUrl());
             locationCallback.invoke(locationOrigin, hasLocationPermission()
@@ -263,6 +327,7 @@ public final class BodhiWorkspaceActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (fileSelection != null) fileSelection.onReceiveValue(null);
+        if (pendingMedia != null) pendingMedia.deny();
         if (locationCallback != null) locationCallback.invoke(locationOrigin, false, false);
         if (workspace != null) {
             ((LinearLayout) workspace.getParent()).removeView(workspace);

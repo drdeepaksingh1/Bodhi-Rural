@@ -1,5 +1,7 @@
 'use client';
 
+import { ApplicationTerms, applicationTermsVersion } from '../../ApplicationTerms';
+
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useBodhiMartLanguage } from '../../language';
@@ -169,6 +171,10 @@ export default function SellerRegistrationPage() {
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+    if (new FormData(event.currentTarget).get('application_terms') !== applicationTermsVersion) {
+      setError(t("Accept the application terms to continue.", "आगे बढ़ने के लिए आवेदन की शर्तें स्वीकार करें।"));
+      return;
+    }
     if (!shopLocation || locating || submitting) return;
 
     setSubmitting(true);
@@ -202,6 +208,7 @@ export default function SellerRegistrationPage() {
         .from('marketplace_seller_applications')
         .insert({
           user_id: authenticatedUser.id,
+          application_terms_version: applicationTermsVersion,
           owner_name: form.owner_name.trim(),
           shop_name: form.shop_name.trim(),
           mobile: form.mobile.trim(),
@@ -585,6 +592,7 @@ export default function SellerRegistrationPage() {
             {t('BodhiMart reviews your application and verifies KYC before activating your seller account.', 'विक्रेता खाता सक्रिय करने से पहले BodhiMart आपके आवेदन और केवाईसी की जाँच करता है।')}
           </div>
 
+          <ApplicationTerms role="seller" />
           {/* SUBMIT */}
           <button
             type="submit"
