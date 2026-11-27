@@ -84,7 +84,7 @@ export default function ProductDetailsPage() {
       const destination = new URL(returnTo, window.location.origin);
       if (
         destination.origin === window.location.origin &&
-        destination.pathname === '/bodhimart/products'
+        (destination.pathname === '/bodhimart/products' || destination.pathname === '/bodhimart')
       ) {
         // The URL restores the shopper's last catalogue filters on initial load.
         // eslint-disable-next-line react-hooks/set-state-in-effect
