@@ -230,7 +230,7 @@ public final class BodhiMartShopActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONArray departments = request("marketplace_categories?select=id,name,slug,parent_id&is_active=eq.true&order=name.asc");
-                JSONArray products = request("marketplace_public_products?select=id,product_id,name,unit,selling_price,mrp,category_id,description,brand,image_url,minimum_order_quantity,delivery_available&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
+                JSONArray products = request("marketplace_public_products?select=id,product_id,name,unit,selling_price,mrp,category_id,description,brand,weight,image_url,minimum_order_quantity,delivery_available&status=eq.ACTIVE&order=created_at.desc,id.desc&limit=100");
                 Map<String, Double> available = readStock(products);
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
@@ -579,7 +579,7 @@ public final class BodhiMartShopActivity extends Activity {
 
     private final class ProductCard extends LinearLayout {
         private final ImageView photo;
-        private final TextView category, name, metadata, amount, savings, availability, code;
+        private final TextView category, name, metadata, summary, amount, savings, availability, code;
         private final Button details;
 
         ProductCard() {
@@ -597,7 +597,12 @@ public final class BodhiMartShopActivity extends Activity {
             card.addView(photo, new LinearLayout.LayoutParams(-1, dp(132)));
             category = line(card, 13, true);
             name = line(card, 21, true);
-            metadata = line(card, 14, false);
+            metadata = line(card, 12, false);
+            metadata.setSingleLine(true);
+            metadata.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            summary = line(card, 12, false);
+            summary.setSingleLine(true);
+            summary.setEllipsize(android.text.TextUtils.TruncateAt.END);
             amount = line(card, 21, true);
             savings = line(card, 14, true);
             availability = line(card, 14, true);
@@ -628,9 +633,13 @@ public final class BodhiMartShopActivity extends Activity {
             category.setText(departmentName.isEmpty() ? delivery
                 : delivery.isEmpty() ? departmentName : departmentName + "  ·  " + delivery);
             String brand = field(item, "brand");
-            String unit = field(item, "unit");
-            metadata.setText((brand.isEmpty() ? "" : text("Brand: ", "ब्रांड: ") + brand + "\n")
-                + (unit.isEmpty() ? "" : text("Unit: ", "इकाई: ") + unit));
+            double weight = item.optDouble("weight", 0);
+            String pack = weight > 0 ? NumberFormat.getNumberInstance().format(weight) + text(" kg", " किग्रा") : "";
+            metadata.setText(pack.isEmpty() ? brand : brand.isEmpty() ? pack : pack + "  ·  " + brand);
+            metadata.setVisibility(pack.isEmpty() && brand.isEmpty() ? View.GONE : View.VISIBLE);
+            String description = field(item, "description").trim();
+            summary.setText(description);
+            summary.setVisibility(description.isEmpty() ? View.GONE : View.VISIBLE);
             amount.setText(price(item));
             double sale = item.optDouble("selling_price", 0);
             double mrp = item.optDouble("mrp", 0);
