@@ -1,5 +1,6 @@
 "use client";
 
+import RazorpayTestButton from './RazorpayTestButton';
 import { Copy } from '../language';
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -216,6 +217,7 @@ export default function BodhiMartCheckoutPage() {
             : <Copy en="Pay the seller when your order is delivered." hi="ऑर्डर मिलने पर विक्रेता को भुगतान करें।" />}
           {" "}<Copy en="Payment remains pending until an administrator confirms it was received." hi="प्रशासक की पुष्टि तक भुगतान लंबित रहेगा।" />
         </p>
+        <RazorpayTestButton orderId={order.order_id} />
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link className="inline-block rounded-lg border border-green-700 px-5 py-3 font-semibold text-green-800" href={`/bodhimart/orders/${order.order_id}`}><Copy en="View / print summary" hi="सारांश देखें या प्रिंट करें" /></Link>
           <Link className="inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white" href="/bodhimart/orders"><Copy en="View my orders" hi="मेरे ऑर्डर देखें" /></Link>
