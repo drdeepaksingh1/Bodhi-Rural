@@ -38,10 +38,18 @@ function providerRequest(row: Alert, destination: string): Promise<Response> {
   const signal = AbortSignal.timeout(8000);
 
   if (row.channel === 'email') {
-    const subject = buyer ? 'Your BodhiMart order was placed' : 'New BodhiMart seller order';
+    const dispatchPrefix = 'out-for-delivery:';
+    const isDispatch = buyer && row.reference.startsWith(dispatchPrefix);
+    const subject = isDispatch
+      ? 'Your BodhiMart order is out for delivery'
+      : buyer ? 'Your BodhiMart order was placed' : 'New BodhiMart seller order';
     const portal = buyer ? '/bodhimart/orders' : '/bodhimart/seller/orders';
-    const message = subject + '.\nOrder reference: ' + row.reference
-      + '\nView order: https://www.brlps.co.in' + portal;
+    const orderReference = isDispatch ? row.reference.slice(dispatchPrefix.length) : row.reference;
+    const message = subject + '.\n\nOrder reference: ' + orderReference
+      + '\nView order: https://www.brlps.co.in' + portal
+      + (isDispatch
+        ? '\n\nCheck My Orders for your delivery code. Share it only after you receive your order.'
+        : '');
     return fetch('https://api.resend.com/emails', {
       method: 'POST', signal, redirect: 'error',
       headers: {
