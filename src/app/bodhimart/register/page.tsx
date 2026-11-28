@@ -15,6 +15,7 @@ function BuyerRegistrationForm() {
   const [otp, setOtp] = useState('');
   const [verifiedUserId, setVerifiedUserId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
@@ -137,12 +138,15 @@ function BuyerRegistrationForm() {
           {step === 'password' && <>
           <div>
             <label htmlFor="buyer-password" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Password" hi="पासवर्ड" /></label>
-            <input id="buyer-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
+            <input id="buyer-password" type={showPasswords ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
           </div>
           <div>
             <label htmlFor="buyer-confirm-password" className="mb-2 block text-sm font-medium text-gray-700"><Copy en="Confirm password" hi="पासवर्ड की पुष्टि करें" /></label>
-            <input id="buyer-confirm-password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter your password again" autoComplete="new-password" required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
+            <input id="buyer-confirm-password" type={showPasswords ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter your password again" autoComplete="new-password" required disabled={submitting} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100" />
           </div>
+            <button type="button" aria-pressed={showPasswords} onClick={() => setShowPasswords((visible) => !visible)} className="text-sm font-semibold text-green-800 underline">
+              {showPasswords ? 'Hide passwords' : 'Show passwords'}
+            </button>
           </>}
 
           {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}

@@ -52,6 +52,7 @@ export default function SellerRegistrationPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -472,14 +473,17 @@ export default function SellerRegistrationPage() {
             <h2 className="text-xl font-bold text-green-900">{t('Create your seller login password', 'विक्रेता लॉग इन का पासवर्ड बनाएँ')}</h2>
             <label className="block">
               {t('Password', 'पासवर्ड')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={newPassword}
+              <input type={showPasswords ? "text" : "password"} required minLength={8} autoComplete="new-password" value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
             </label>
             <label className="block">
               {t('Confirm password', 'पासवर्ड की पुष्टि करें')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword}
+              <input type={showPasswords ? "text" : "password"} required minLength={8} autoComplete="new-password" value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
             </label>
+            <button type="button" aria-pressed={showPasswords} onClick={() => setShowPasswords((visible) => !visible)} className="text-sm font-semibold text-green-800 underline">
+              {showPasswords ? 'Hide passwords' : 'Show passwords'}
+            </button>
             <button type="submit" disabled={savingPassword} className="rounded-lg bg-green-800 px-4 py-3 font-semibold text-white disabled:opacity-60">
               {savingPassword ? t('Saving…', 'सहेजा जा रहा है…') : t('Save password and continue', 'पासवर्ड सहेजें और आगे बढ़ें')}
             </button>
