@@ -41,12 +41,34 @@ export async function uploadMarketplaceProductPhoto(
     throw new Error('Product photos must be 5 MB or smaller.');
   }
 
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  // Re-encode the pixels to drop camera metadata, including GPS coordinates.
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  try {
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not prepare this photo. Try another image.');
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  } finally {
+    bitmap.close();
+  }
+
+  const photo = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/webp', 0.85);
+  });
+  const processedExtension = photo && EXTENSION_BY_TYPE[photo.type];
+  if (!photo || !processedExtension || photo.size > 5 * 1024 * 1024) {
+    throw new Error('Could not prepare this photo. Try a smaller image.');
+  }
+
+  const path = `${userId}/${crypto.randomUUID()}.${processedExtension}`;
   const { data, error } = await supabase.storage
     .from(PHOTO_BUCKET)
-    .upload(path, file, {
+    .upload(path, photo, {
       cacheControl: '3600',
-      contentType: file.type,
+      contentType: photo.type,
       upsert: false,
     });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileVerification } from '../../../../components/onboarding/MobileVerification';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useBodhiMartLanguage } from '../../language';
@@ -51,6 +52,7 @@ export default function SellerRegistrationPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -155,8 +157,11 @@ export default function SellerRegistrationPage() {
       const verifiedUser = data.user;
       if (!verifiedUser) throw new Error('Email verified, but the account could not be opened. Please try again.');
 
+      const { data: hasPassword, error: accountError } = await supabase.rpc('bodhimart_current_account_has_password');
+      if (accountError) throw new Error('Could not check your account. Sign in or try again.');
+
       setUserId(verifiedUser.id);
-      setNeedsPassword(true);
+      setNeedsPassword(!hasPassword);
       setVerificationEmail(verifiedUser.email || verificationEmail.trim().toLowerCase());
       setForm((current) => ({
         ...current,
@@ -218,6 +223,18 @@ export default function SellerRegistrationPage() {
         );
       }
 
+      const pan = form.pan_number.trim().toUpperCase();
+      const gstin = form.gstin.trim().toUpperCase();
+      if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+        throw new Error(t('Enter a valid PAN format.', 'पैन सही प्रारूप में दर्ज करें।'));
+      }
+      if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]{3}$/.test(gstin)) {
+        throw new Error(t('Enter a valid GSTIN format.', 'जीएसटीआईएन सही प्रारूप में दर्ज करें।'));
+      }
+      if (pan && gstin && gstin.slice(2, 12) !== pan) {
+        throw new Error(t('GSTIN must match the PAN of the selling business.', 'जीएसटीआईएन विक्रेता व्यवसाय के पैन से मेल खाना चाहिए।'));
+      }
+
       const { data: userData, error: authError } =
         await supabase.auth.getUser();
 
@@ -239,10 +256,8 @@ export default function SellerRegistrationPage() {
           mobile: form.mobile.trim(),
           email: form.email.trim() || null,
           address: form.address.trim() || null,
-          pan_number:
-            form.pan_number.trim() || null,
-          gstin:
-            form.gstin.trim() || null,
+          pan_number: pan || null,
+          gstin: gstin || null,
           upi_id:
             form.upi_id.trim() || null,
           business_type:
@@ -353,6 +368,8 @@ export default function SellerRegistrationPage() {
         </div>
 
         {/* SUCCESS */}
+        {userId && <MobileVerification />}
+
         {success && (
           <div
             style={{
@@ -456,14 +473,17 @@ export default function SellerRegistrationPage() {
             <h2 className="text-xl font-bold text-green-900">{t('Create your seller login password', 'विक्रेता लॉग इन का पासवर्ड बनाएँ')}</h2>
             <label className="block">
               {t('Password', 'पासवर्ड')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={newPassword}
+              <input type={showPasswords ? "text" : "password"} required minLength={8} autoComplete="new-password" value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
             </label>
             <label className="block">
               {t('Confirm password', 'पासवर्ड की पुष्टि करें')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword}
+              <input type={showPasswords ? "text" : "password"} required minLength={8} autoComplete="new-password" value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)} className="mt-1 block w-full rounded-lg border p-3" />
             </label>
+            <button type="button" aria-pressed={showPasswords} onClick={() => setShowPasswords((visible) => !visible)} className="text-sm font-semibold text-green-800 underline">
+              {showPasswords ? 'Hide passwords' : 'Show passwords'}
+            </button>
             <button type="submit" disabled={savingPassword} className="rounded-lg bg-green-800 px-4 py-3 font-semibold text-white disabled:opacity-60">
               {savingPassword ? t('Saving…', 'सहेजा जा रहा है…') : t('Save password and continue', 'पासवर्ड सहेजें और आगे बढ़ें')}
             </button>
@@ -552,7 +572,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label={t("PAN Number", "पैन नंबर")}
+              label={t("PAN of the selling business (if applicable)", "विक्रेता व्यवसाय का पैन (यदि लागू हो)")}
               value={form.pan_number}
               onChange={(value) =>
                 updateField(
@@ -563,7 +583,7 @@ export default function SellerRegistrationPage() {
             />
 
             <Field
-              label="GSTIN"
+              label={t("GSTIN (if registered)", "जीएसटीआईएन (यदि पंजीकृत हैं)")}
               value={form.gstin}
               onChange={(value) =>
                 updateField('gstin', value)

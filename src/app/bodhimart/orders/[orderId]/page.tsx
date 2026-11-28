@@ -116,6 +116,30 @@ export default function BodhiMartOrderReceiptPage() {
     void loadOrder();
   }, [loadOrder]);
 
+  const [handover, setHandover] = useState<{ delivery_code: string; expires_at: string } | null>(null);
+  const [handoverNotice, setHandoverNotice] = useState('');
+  const [requestingCode, setRequestingCode] = useState(false);
+
+  async function showHandoverCode() {
+    setRequestingCode(true);
+    setHandover(null);
+    setHandoverNotice('');
+    try {
+      const { data, error } = await supabase.rpc('bodhimart_show_handover_code', { p_order_id: orderId });
+      if (error) {
+        setHandoverNotice('Could not load the delivery code. Try again.');
+      } else if (data?.[0]) {
+        setHandover(data[0]);
+      } else {
+        setHandoverNotice('A code is unavailable for this order right now. If five attempts were used, try again after the code expires.');
+      }
+    } catch {
+      setHandoverNotice('Could not load the delivery code. Try again.');
+    } finally {
+      setRequestingCode(false);
+    }
+  }
+
   const address = order?.delivery_address_snapshot;
 
   return (
@@ -162,6 +186,22 @@ export default function BodhiMartOrderReceiptPage() {
             </div>
 
             <div className="space-y-7 p-6 sm:p-8">
+              {order.order_status === 'DISPATCHED' && order.delivery_method !== 'PICKUP' && (
+                <section className="print-controls rounded-xl border border-green-200 bg-green-50 p-4 text-sm">
+                  <h2 className="font-bold">Delivery code</h2>
+                  <p className="my-2">Ask for your code when the delivery partner arrives. Share it only after you receive your order.</p>
+                  <button type="button" onClick={showHandoverCode} disabled={requestingCode} className="rounded-lg bg-green-800 px-4 py-2 font-semibold text-white disabled:opacity-50">
+                    {requestingCode ? 'Loading…' : 'Show delivery code'}
+                  </button>
+                  {handover && (
+                    <p className="mt-2" role="status">
+                      <strong className="tracking-widest">{handover.delivery_code}</strong>
+                      {' '}· Expires at {new Date(handover.expires_at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+                    </p>
+                  )}
+                  {handoverNotice && <p className="mt-2" role="status">{handoverNotice}</p>}
+                </section>
+              )}
               {order.payment_status.toUpperCase() === 'PENDING' && (
                 <section role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
                   <h2 className="font-bold">Payment is due {order.payment_method === 'PAY_AT_PICKUP' ? 'at pickup' : 'when your order is delivered'}</h2>

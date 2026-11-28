@@ -145,6 +145,14 @@ export default function BodhiMartCheckoutPage() {
   async function placeOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting || invalidItems || !items.length) return;
+    const deliveryPin = addressId === "NEW"
+      ? addressForm.pincode.trim()
+      : addresses.find((address) => address.id === addressId)?.pincode?.trim();
+    if (deliveryMethod !== "PICKUP" && !/^[1-9][0-9]{5}$/.test(deliveryPin ?? "")) {
+      setError("Enter a valid six-digit delivery PIN code, or update your saved address. डिलीवरी के लिए सही छह अंकों का पिन कोड दर्ज करें।");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
     try {
@@ -277,7 +285,7 @@ export default function BodhiMartCheckoutPage() {
                 <label className="text-sm font-medium sm:col-span-2"><Copy en="Address line 1" hi="पते की पहली पंक्ति" /><input required value={addressForm.address_line1} onChange={(e) => setAddress("address_line1", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium"><Copy en="Address line 2" hi="पते की दूसरी पंक्ति" /><input value={addressForm.address_line2} onChange={(e) => setAddress("address_line2", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
                 <label className="text-sm font-medium"><Copy en="Landmark" hi="नज़दीकी पहचान" /><input value={addressForm.landmark} onChange={(e) => setAddress("landmark", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
-                <label className="text-sm font-medium"><Copy en="PIN code" hi="पिन कोड" /><input inputMode="numeric" value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
+                <label className="text-sm font-medium"><Copy en="PIN code" hi="पिन कोड" /><input required inputMode="numeric" autoComplete="postal-code" pattern="[1-9][0-9]{5}" maxLength={6} value={addressForm.pincode} onChange={(e) => setAddress("pincode", e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3" /></label>
               </div> : selectedAddress && <div className="mt-4 rounded-xl bg-gray-50 p-4 text-sm">
                 <strong>{selectedAddress.recipient_name}</strong><div>{selectedAddress.mobile}</div><div>{selectedAddress.address_line1}</div>
                 {selectedAddress.address_line2 && <div>{selectedAddress.address_line2}</div>}

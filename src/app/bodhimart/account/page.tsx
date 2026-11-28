@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { MobileVerification } from '../../../components/onboarding/MobileVerification';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/client';
@@ -117,6 +118,7 @@ export default function BodhiMartAccountPage() {
             </button>
           </div>
         </header>
+        <MobileVerification />
 
         {error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
 
