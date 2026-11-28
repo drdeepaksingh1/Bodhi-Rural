@@ -10,14 +10,9 @@ import {
   Search,
   Carrot,
   Droplets,
-  Hammer,
-  HeartHandshake,
-  NotebookPen,
-  Shirt,
   Leaf,
   PackageSearch,
   ShoppingBasket,
-  Truck,
   Wheat,
   Utensils,
 } from "lucide-react";
@@ -43,6 +38,15 @@ export const metadata: Metadata = {
 };
 
 const categories = [
+  {
+    name: "Hotels & restaurants",
+    detail: "Browse meals and snacks listed by local hotels and restaurants.",
+    icon: Utensils,
+    color: "bg-[#f8efd9] text-[#8b651d]",
+    href: "/bodhimart/products?category=hotels-restaurants",
+    action: "Browse meals",
+    hindi: { name: "होटल और रेस्तराँ", detail: "स्थानीय होटलों और रेस्तराँ के भोजन और नाश्ते देखें।", action: "भोजन देखें" },
+  },
   {
     name: "Seeds & crop care",
     hindi: { name: "बीज और फसल देखभाल", detail: "मौसम के अनुसार खेती के बीज और ज़रूरी सामान।", action: "बीज देखें" },
@@ -71,15 +75,6 @@ const categories = [
     action: "Shop livestock supplies",
   },
   {
-    name: "Tools & equipment",
-    hindi: { name: "औज़ार और उपकरण", detail: "खेती और ग्रामीण व्यवसायों के औज़ार।", action: "उपकरण देखें" },
-    detail: "Practical equipment for farms and rural businesses.",
-    icon: Truck,
-    color: "bg-[#e5edf2] text-[#3f6174]",
-    href: "/bodhimart/products?category=equipment",
-    action: "Shop equipment",
-  },
-  {
     name: "Groceries & daily essentials",
     hindi: { name: "किराना और रोज़मर्रा का सामान", detail: "घर और खेत के लिए किराना और ज़रूरी सामान।", action: "किराना देखें" },
     detail: "Everyday food and household essentials for home and farm.",
@@ -98,24 +93,6 @@ const categories = [
     action: "Shop fresh produce",
   },
   {
-    name: "Clothing & footwear",
-    hindi: { name: "कपड़े और जूते-चप्पल", detail: "रोज़ के कपड़े, स्कूल यूनिफ़ॉर्म और जूते-चप्पल।", action: "कपड़े देखें" },
-    detail: "Everyday clothing, school uniforms and footwear.",
-    icon: Shirt,
-    color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?category=clothing-footwear",
-    action: "Shop clothing",
-  },
-  {
-    name: "School & stationery",
-    hindi: { name: "स्टेशनरी और स्कूल का सामान", detail: "कॉपी, पेन, स्कूल बैग और पढ़ाई का सामान।", action: "स्टेशनरी देखें" },
-    detail: "Notebooks, pens, school bags and classroom supplies.",
-    icon: NotebookPen,
-    color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?category=school-stationery",
-    action: "Shop stationery",
-  },
-  {
     name: "Household & personal care",
     hindi: { name: "घरेलू सामान और व्यक्तिगत देखभाल", detail: "सफ़ाई का सामान, बर्तन और देखभाल के उत्पाद।", action: "घरेलू सामान देखें" },
     detail: "Cleaning products, cookware and personal care essentials.",
@@ -123,33 +100,6 @@ const categories = [
     color: "bg-[#e8f1e8] text-[#27623b]",
     href: "/bodhimart/products?category=household-personal-care",
     action: "Shop household essentials",
-  },
-  {
-    name: "Hardware & electrical",
-    hindi: { name: "हार्डवेयर और बिजली का सामान", detail: "बल्ब, स्विच, फिटिंग और औज़ार।", action: "हार्डवेयर देखें" },
-    detail: "Bulbs, switches, fittings and tools.",
-    icon: Hammer,
-    color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?category=hardware-electrical",
-    action: "Shop hardware",
-  },
-  {
-    name: "Made locally",
-    hindi: { name: "स्थानीय उत्पाद", detail: "स्थानीय किसानों, स्वयं सहायता समूहों और कारीगरों के उत्पाद।", action: "स्थानीय उत्पाद देखें" },
-    detail: "Products from local farmers, self-help groups and artisans.",
-    icon: HeartHandshake,
-    color: "bg-[#e8f1e8] text-[#27623b]",
-    href: "/bodhimart/products?category=made-locally",
-    action: "Shop local products",
-  },
-  {
-    name: "Hotels & restaurants",
-    detail: "Browse meals and snacks listed by local hotels and restaurants.",
-    icon: Utensils,
-    color: "bg-[#f8efd9] text-[#8b651d]",
-    href: "/bodhimart/products?category=hotels-restaurants",
-    action: "Browse meals",
-    hindi: { name: "होटल और रेस्तराँ", detail: "स्थानीय होटलों और रेस्तराँ के भोजन और नाश्ते देखें।", action: "भोजन देखें" },
   },
 ];
 
