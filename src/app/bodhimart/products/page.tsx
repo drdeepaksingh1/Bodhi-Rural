@@ -1029,7 +1029,7 @@ export default function BodhiMartProductsPage() {
                         }
                         className={`min-h-10 w-full rounded-lg px-1 py-1 text-xs font-semibold transition ${
                           outOfStock
-                            ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                            ? "cursor-not-allowed border border-red-200 bg-red-50 text-red-700"
                             : isAdding
                             ? "cursor-wait bg-green-500 text-white"
                             : "bg-green-700 text-white hover:bg-green-800"
